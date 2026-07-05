@@ -1,0 +1,38 @@
+[
+  {
+    "id": "b-1",
+    "name": "Bazooka",
+    "color": "#00aeef",
+    "svgType": "bazooka"
+  },
+  {
+    "id": "b-2",
+    "name": "Chupa Chups",
+    "color": "#e20613",
+    "svgType": "chupachups"
+  },
+  {
+    "id": "b-3",
+    "name": "Hershey's",
+    "color": "#2a120e",
+    "svgType": "hersheys"
+  },
+  {
+    "id": "b-4",
+    "name": "Reeses",
+    "color": "#f05a28",
+    "svgType": "reeses"
+  },
+  {
+    "id": "b-5",
+    "name": "Walkers",
+    "color": "#ffffff",
+    "svgType": "walkers"
+  },
+  {
+    "id": "b-6",
+    "name": "Warheads",
+    "color": "#4a2c81",
+    "svgType": "warheads"
+  }
+]

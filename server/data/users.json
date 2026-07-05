@@ -1,0 +1,60 @@
+[
+  {
+    "id": "u-1",
+    "name": "Sarah Jenkins",
+    "email": "sarah.j@gmail.com",
+    "password": "password123",
+    "role": "user"
+  },
+  {
+    "id": "u-2",
+    "name": "Matthew Taylor",
+    "email": "matthew.t@hotmail.co.nz",
+    "password": "password123",
+    "role": "user"
+  },
+  {
+    "id": "u-3",
+    "name": "Chloe Smith",
+    "email": "chloe.s@gmail.com",
+    "password": "password123",
+    "role": "user"
+  },
+  {
+    "id": "u-4",
+    "name": "Liam Wilson",
+    "email": "liam.wilson@yahoo.com",
+    "password": "password123",
+    "role": "user"
+  },
+  {
+    "id": "u-5",
+    "name": "Store Administrator",
+    "email": "admin@lollyshop.co.nz",
+    "password": "admin123",
+    "role": "admin"
+  },
+  {
+    "id": "u-6",
+    "name": "John Doe",
+    "email": "john@gmail.com",
+    "password": "user123",
+    "role": "user"
+  },
+  {
+    "id": "u-1783176724297",
+    "name": "Best Lollyshop",
+    "email": "bestlollyshopnz@gmail.com",
+    "password": "google-auth-1783176724297",
+    "role": "user"
+  },
+  {
+    "id": "u-1783177221651",
+    "name": "Prayag",
+    "email": "prayagkansara05@gmail.com",
+    "password": "Prayag05@",
+    "role": "user",
+    "resetPasswordToken": "a8d945b863d4eea66c21285b436c3a41506c8693",
+    "resetPasswordExpires": "2026-07-05T06:53:57.664Z"
+  }
+]

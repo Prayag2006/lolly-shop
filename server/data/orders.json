@@ -1,0 +1,170 @@
+[
+  {
+    "id": "ORD-955740",
+    "date": "3 Jul 2026",
+    "items": [
+      {
+        "id": "p-6",
+        "name": "Sea Salt Caramel Bar",
+        "category": "Chocolates",
+        "price": 11.5,
+        "rating": 4.9,
+        "reviewsCount": 198,
+        "description": "Creamy milk chocolate block loaded with pockets of gooey liquid gold caramel and sprinkled with fine French fleur de sel.",
+        "ingredients": "Milk Chocolate, Caramel (Corn Syrup, Sweetened Condensed Milk, Butter, Cream), French Sea Salt, Soy Lecithin.",
+        "nutrition": {
+          "calories": "190 kcal",
+          "sugar": "18g",
+          "fat": "11g",
+          "protein": "2g"
+        },
+        "gradient": "linear-gradient(135deg, #FFE259 0%, #FFA751 100%)",
+        "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": true,
+        "isNew": false,
+        "collections": [
+          "Gift",
+          "Father"
+        ],
+        "weightPrices": {
+          "100g": 11.5,
+          "250g": 25.3,
+          "500g": 46,
+          "1kg": 86.25
+        },
+        "selectedWeight": "100g",
+        "quantity": 1
+      },
+      {
+        "id": "p-15",
+        "name": "Lavender Honey Gumdrops",
+        "category": "Gummies",
+        "price": 34,
+        "rating": 4.9,
+        "reviewsCount": 94,
+        "description": "Gumdrops made with pure New Zealand clover honey and organic lavender extracts. A sweet Mother's Day treat.",
+        "ingredients": "Sugar, Honey, Gelatin, Pectin, Lavender Extract, Natural Citrus Pectin, Citric Acid.",
+        "nutrition": {
+          "calories": "125 kcal",
+          "sugar": "22g",
+          "fat": "0g",
+          "protein": "1g"
+        },
+        "gradient": "linear-gradient(135deg, #83a4d4 0%, #b6fbff 100%)",
+        "image": "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": false,
+        "isNew": false,
+        "collections": [
+          "Mother"
+        ],
+        "weightPrices": {
+          "100g": 8.5,
+          "250g": 18.7,
+          "500g": 34,
+          "1kg": 63.75
+        },
+        "selectedWeight": "500g",
+        "quantity": 1
+      }
+    ],
+    "total": 45.5,
+    "customer": {
+      "name": "Prayag Kansara",
+      "email": "hetalkansara07@gmail.com",
+      "phone": "09427499372",
+      "address": "56/5,type-3",
+      "city": "Gandhinagar",
+      "zip": "3820",
+      "discountCode": "None",
+      "postalCode": "3820"
+    },
+    "userEmail": "john@gmail.com",
+    "status": "Completed",
+    "createdAt": "2026-07-03T11:59:15.757Z"
+  },
+  {
+    "id": "ORD-711034",
+    "date": "3 Jul 2026",
+    "items": [
+      {
+        "id": "p-30",
+        "name": "Toffee Apple Pop",
+        "category": "Lollipops",
+        "price": 5.2,
+        "rating": 4.6,
+        "reviewsCount": 28,
+        "description": "A delicious double-layered lollipop featuring tart green apple candy coated in rich, buttery caramel.",
+        "ingredients": "Sugar, Glucose Syrup, Citric Acid, Butter, Milk solids, Natural Apple Flavor, Color (E141, E150).",
+        "nutrition": {
+          "calories": "95 kcal",
+          "sugar": "22g",
+          "fat": "0.8g",
+          "protein": "0g"
+        },
+        "gradient": "linear-gradient(135deg, #0575E6 0%, #00F260 100%)",
+        "image": "https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": false,
+        "isNew": true,
+        "collections": [
+          "Autumn"
+        ],
+        "weightPrices": {
+          "100g": 5.2,
+          "250g": 11.44,
+          "500g": 20.8,
+          "1kg": 39
+        },
+        "selectedWeight": "100g",
+        "quantity": 1
+      },
+      {
+        "id": "p-28",
+        "name": "Strawberry Licorice Twists",
+        "category": "Gummies",
+        "price": 7.2,
+        "rating": 4.7,
+        "reviewsCount": 55,
+        "description": "Soft and chewy classic red licorice twists infused with concentrated natural strawberry juices.",
+        "ingredients": "Enriched Wheat Flour, Sugar, Corn Syrup, Water, Strawberry Juice, Glycerin, Artificial Flavor, Red 40.",
+        "nutrition": {
+          "calories": "130 kcal",
+          "sugar": "19g",
+          "fat": "0.5g",
+          "protein": "1g"
+        },
+        "gradient": "linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)",
+        "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": false,
+        "isNew": false,
+        "collections": [
+          "Parties"
+        ],
+        "weightPrices": {
+          "100g": 7.2,
+          "250g": 15.84,
+          "500g": 28.8,
+          "1kg": 54
+        },
+        "selectedWeight": "100g",
+        "quantity": 1
+      }
+    ],
+    "total": 12.4,
+    "customer": {
+      "name": "Prayag Kansara",
+      "email": "hetalkansara07@gmail.com",
+      "phone": "09427499372",
+      "address": "56/5,type-3",
+      "city": "Gandhinagar",
+      "zip": "3820",
+      "discountCode": "None"
+    },
+    "userEmail": "john@gmail.com",
+    "status": "Completed",
+    "createdAt": "2026-07-03T11:55:11.068Z"
+  }
+]
