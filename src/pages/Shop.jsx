@@ -82,7 +82,9 @@ export const Shop = ({ onProductClick }) => {
         (product.collections || []).some((tag) => tag.toLowerCase().includes(lowerQuery));
       
       const matchesCategory =
-        selectedCategory === 'All' || product.category === selectedCategory;
+        selectedCategory === 'All' || 
+        product.category === selectedCategory ||
+        product.mainCategory === selectedCategory;
       
       const matchesPrice = product.price <= maxPrice;
 

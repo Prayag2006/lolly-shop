@@ -47,24 +47,22 @@ async function seed() {
       console.log('Users already seeded.');
     }
 
-    // Seed Products
-    const productCount = await Product.countDocuments();
-    if (productCount === 0) {
-      // Map base prices into weightPrices
-      const productsToSeed = initialProducts.map(p => ({
-        ...p,
-        weightPrices: {
-          '100g': p.price,
-          '250g': Number((p.price * 2.2).toFixed(2)),
-          '500g': Number((p.price * 4.0).toFixed(2)),
-          '1kg': Number((p.price * 7.5).toFixed(2))
-        }
-      }));
-      await Product.insertMany(productsToSeed);
-      console.log(`Seeded ${productsToSeed.length} products.`);
-    } else {
-      console.log('Products already seeded.');
-    }
+    // Seed Products - Clear old generic ones to replace with real NZ lollies
+    console.log('Clearing existing product collection...');
+    await Product.deleteMany({});
+    
+    // Map base prices into weightPrices
+    const productsToSeed = initialProducts.map(p => ({
+      ...p,
+      weightPrices: {
+        '100g': p.price,
+        '250g': Number((p.price * 2.2).toFixed(2)),
+        '500g': Number((p.price * 4.0).toFixed(2)),
+        '1kg': Number((p.price * 7.5).toFixed(2))
+      }
+    }));
+    await Product.insertMany(productsToSeed);
+    console.log(`Seeded ${productsToSeed.length} products.`);
 
     // Seed Testimonials
     const testimonialCount = await Testimonial.countDocuments();

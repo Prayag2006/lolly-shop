@@ -133,6 +133,48 @@ const defaultSettings = {
       code: "CHOCO20",
       image: ""
     }
+  ],
+  megaMenu: [
+    {
+      title: 'NZ Lollies',
+      items: ['Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Other', 'Sugar Free', 'Vegan', 'Jellybeans']
+    },
+    {
+      title: 'Imported Lollies',
+      items: ['Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops', 'Sugar Free', 'Vegan']
+    },
+    {
+      title: 'Chocolates',
+      items: ['Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags', 'Sugar Free', 'Vegan']
+    },
+    {
+      title: 'Drinks',
+      items: ['Hydration', 'Cans', 'Bottles', 'Multi Pack', 'Sugar Free']
+    },
+    {
+      title: 'Snacks',
+      items: ['Chips', 'Tackies', 'Cheetos', 'Kool Aid']
+    },
+    {
+      title: 'Bulk',
+      items: ['Soft Lollies', 'Hard Lollies', 'Chocolates']
+    },
+    {
+      title: 'TikTok Viral',
+      items: ['Peel me lollies', 'Freeze Dried Candies']
+    },
+    {
+      title: 'Pick by Colour',
+      items: ['Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour']
+    },
+    {
+      title: 'Confectionery',
+      items: ['Toys', 'Toys with Lolly']
+    },
+    {
+      title: 'Special / Clearance',
+      items: ['Heading 1', 'Heading 2']
+    }
   ]
 };
 
@@ -1731,6 +1773,9 @@ app.get('/api/settings', async (req, res) => {
       if (!settings) {
         settings = new Settings({ key: 'main_settings', ...defaultSettings });
         await settings.save();
+      } else if (!settings.megaMenu || settings.megaMenu.length === 0) {
+        settings.megaMenu = defaultSettings.megaMenu;
+        await settings.save();
       }
       res.json(settings);
     } else {
@@ -1760,7 +1805,11 @@ app.put('/api/settings', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Express server running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Express server running on port ${PORT}`);
+  });
+}
+
+export default app;
 // Nodemon refresh for Mongoose connection debugging

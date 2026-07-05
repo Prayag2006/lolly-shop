@@ -136,9 +136,13 @@ export const ProductDetails = () => {
             <div className="details-image-wrapper glass-card">
               <div className="details-mesh-grid"></div>
               <img 
-                src={product.image} 
+                src={product.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
                 alt={product.name} 
                 className="details-main-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+                }}
               />
             </div>
           </div>
@@ -468,7 +472,15 @@ export const ProductDetails = () => {
             {recommendations.map(p => (
               <div key={p.id} className="rec-card glass-card" onClick={() => navigate(`/product/${p.id}`)}>
                 <div className="rec-image-wrapper">
-                  <img src={p.image} alt={p.name} className="rec-image" />
+                  <img 
+                    src={p.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
+                    alt={p.name} 
+                    className="rec-image"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+                    }}
+                  />
                 </div>
                 <h3 className="rec-name">{p.name}</h3>
                 <div className="rec-price">From ${p.price.toFixed(2)}</div>

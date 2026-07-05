@@ -90,6 +90,19 @@ export const Admin = () => {
     settings, updateSettings, updateProductQuantity, updateOrderDelivery, removeOrderItem
   } = useStore();
 
+  const activeMegaMenuFromSettings = settings?.megaMenu && settings.megaMenu.length > 0 ? settings.megaMenu : [
+    { title: 'NZ Lollies', items: ['Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Other', 'Sugar Free', 'Vegan', 'Jellybeans'] },
+    { title: 'Imported Lollies', items: ['Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops', 'Sugar Free', 'Vegan'] },
+    { title: 'Chocolates', items: ['Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags', 'Sugar Free', 'Vegan'] },
+    { title: 'Drinks', items: ['Hydration', 'Cans', 'Bottles', 'Multi Pack', 'Sugar Free'] },
+    { title: 'Snacks', items: ['Chips', 'Tackies', 'Cheetos', 'Kool Aid'] },
+    { title: 'Bulk', items: ['Soft Lollies', 'Hard Lollies', 'Chocolates'] },
+    { title: 'TikTok Viral', items: ['Peel me lollies', 'Freeze Dried Candies'] },
+    { title: 'Pick by Colour', items: ['Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour'] },
+    { title: 'Confectionery', items: ['Toys', 'Toys with Lolly'] },
+    { title: 'Special / Clearance', items: ['Heading 1', 'Heading 2'] }
+  ];
+
   const safeOrders = Array.isArray(orders) ? orders : [];
   const safeProducts = Array.isArray(products) ? products : [];
   const safeContactSubmissions = Array.isArray(contactSubmissions) ? contactSubmissions : [];
@@ -100,7 +113,8 @@ export const Admin = () => {
   // Add Product Form State
   const [newProduct, setNewProduct] = useState({
     name: '',
-    category: 'Gummies',
+    category: '',
+    mainCategory: '',
     price: '',
     price100g: '',
     price250g: '',
@@ -259,7 +273,8 @@ export const Admin = () => {
     setEditingProductId(null);
     setNewProduct({
       name: '',
-      category: 'Gummies',
+      category: '',
+      mainCategory: '',
       price: '',
       price100g: '',
       price250g: '',
@@ -283,7 +298,8 @@ export const Admin = () => {
   const [tempSettings, setTempSettings] = useState({
     marqueeText: '',
     popupOffer: { enabled: true, delay: 3000, title: '', description: '', code: '', image: '' },
-    popupOffers: []
+    popupOffers: [],
+    megaMenu: []
   });
   const [settingsSuccess, setSettingsSuccess] = useState('');
 
@@ -356,6 +372,7 @@ export const Admin = () => {
     setNewProduct({
       name: product.name,
       category: product.category,
+      mainCategory: product.mainCategory || '',
       price: product.price.toString(),
       price100g: product.weightPrices?.['100g']?.toString() || product.price.toString(),
       price250g: product.weightPrices?.['250g']?.toString() || '',
@@ -382,6 +399,7 @@ export const Admin = () => {
     const payload = {
       name: newProduct.name,
       category: newProduct.category,
+      mainCategory: newProduct.mainCategory || '',
       price: Number(newProduct.price),
       weightPrices: {
         '100g': Number(newProduct.price100g || newProduct.price),
@@ -1056,7 +1074,7 @@ export const Admin = () => {
                 )}
                 
                 <form onSubmit={handleAddProductSubmit}>
-                  <div className="form-row two-cols">
+                  <div className="form-row three-cols">
                     <div className="form-group">
                       <label htmlFor="pname">Candy Name *</label>
                       <input
@@ -1069,15 +1087,131 @@ export const Admin = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <label htmlFor="pcategory">Category *</label>
+                      <label htmlFor="pmaincategory" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Main Category *</span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              const name = prompt('Enter new Main Category title:');
+                              if (!name || !name.trim()) return;
+                              const trimmed = name.trim();
+                              if (activeMegaMenuFromSettings.some(g => g.title.toLowerCase() === trimmed.toLowerCase())) {
+                                alert('Main Category already exists!');
+                                return;
+                              }
+                              const updatedMenu = [...activeMegaMenuFromSettings, { title: trimmed, items: [] }];
+                              await updateSettings({ ...settings, megaMenu: updatedMenu });
+                              setNewProduct(prev => ({ ...prev, mainCategory: trimmed, category: '' }));
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: 'var(--color-primary)' }}
+                            title="Add Main Category"
+                          >
+                            ➕ Add
+                          </button>
+                          {newProduct.mainCategory && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (!confirm(`Are you sure you want to delete the main category "${newProduct.mainCategory}" and all its subcategories?`)) return;
+                                const updatedMenu = activeMegaMenuFromSettings.filter(g => g.title !== newProduct.mainCategory);
+                                await updateSettings({ ...settings, megaMenu: updatedMenu });
+                                setNewProduct(prev => ({ ...prev, mainCategory: '', category: '' }));
+                              }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: '#dc2626' }}
+                              title="Delete Main Category"
+                            >
+                              🗑️ Delete
+                            </button>
+                          )}
+                        </div>
+                      </label>
                       <select
-                        id="pcategory"
+                        id="pmaincategory"
                         className="admin-select"
-                        value={newProduct.category}
-                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                        value={newProduct.mainCategory || ''}
+                        onChange={(e) => {
+                          const mainCat = e.target.value;
+                          const group = activeMegaMenuFromSettings.find(g => g.title === mainCat);
+                          const defaultSub = group && group.items.length > 0 ? group.items[0] : '';
+                          setNewProduct(prev => ({ 
+                            ...prev, 
+                            mainCategory: mainCat,
+                            category: defaultSub
+                          }));
+                        }}
                       >
-                        {categories.map((cat) => (
-                          <option key={cat} value={cat}>{cat}</option>
+                        <option value="">-- Select Main Category --</option>
+                        {activeMegaMenuFromSettings.map((group) => (
+                          <option key={group.title} value={group.title}>{group.title}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="psubcategory" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span>Subcategory *</span>
+                        {newProduct.mainCategory && (
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const name = prompt(`Enter new subcategory for "${newProduct.mainCategory}":`);
+                                if (!name || !name.trim()) return;
+                                const trimmed = name.trim();
+                                const group = activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory);
+                                if (group && group.items.some(i => i.toLowerCase() === trimmed.toLowerCase())) {
+                                  alert('Subcategory already exists in this main category!');
+                                  return;
+                                }
+                                const updatedMenu = activeMegaMenuFromSettings.map(g => {
+                                  if (g.title === newProduct.mainCategory) {
+                                    return { ...g, items: [...(g.items || []), trimmed] };
+                                  }
+                                  return g;
+                                });
+                                await updateSettings({ ...settings, megaMenu: updatedMenu });
+                                setNewProduct(prev => ({ ...prev, category: trimmed }));
+                              }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: 'var(--color-primary)' }}
+                              title="Add Subcategory"
+                            >
+                              ➕ Add
+                            </button>
+                            {newProduct.category && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  if (!confirm(`Are you sure you want to delete the subcategory "${newProduct.category}" from "${newProduct.mainCategory}"?`)) return;
+                                  const updatedMenu = activeMegaMenuFromSettings.map(g => {
+                                    if (g.title === newProduct.mainCategory) {
+                                      return { ...g, items: (g.items || []).filter(item => item !== newProduct.category) };
+                                    }
+                                    return g;
+                                  });
+                                  await updateSettings({ ...settings, megaMenu: updatedMenu });
+                                  const group = updatedMenu.find(g => g.title === newProduct.mainCategory);
+                                  const nextSub = group && group.items.length > 0 ? group.items[0] : '';
+                                  setNewProduct(prev => ({ ...prev, category: nextSub }));
+                                }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: '#dc2626' }}
+                                title="Delete Subcategory"
+                              >
+                                🗑️ Delete
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </label>
+                      <select
+                        id="psubcategory"
+                        className="admin-select"
+                        value={newProduct.category || ''}
+                        onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
+                        disabled={!newProduct.mainCategory}
+                      >
+                        <option value="">-- Select Subcategory --</option>
+                        {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).map((sub) => (
+                          <option key={sub} value={sub}>{sub}</option>
                         ))}
                       </select>
                     </div>
@@ -1941,6 +2075,88 @@ export const Admin = () => {
                       ➕ Add Another Promo Offer
                     </button>
                   </div>
+                </div>
+
+                {/* Category Mega Menu Manager */}
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '20px', marginTop: '10px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '6px', color: 'var(--color-primary)' }}>
+                    📂 Category Mega Menu Layout
+                  </h3>
+                  <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
+                    Configure the columns and subcategory links displayed in the storefront navigation header. Changes are saved automatically when clicking Save Settings below.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
+                    {(tempSettings.megaMenu || []).map((col, idx) => (
+                      <div key={idx} className="glass-card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div className="form-group" style={{ flex: 1, marginRight: '12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontWeight: '700', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Column {idx + 1} Title</label>
+                            <input 
+                              type="text"
+                              value={col.title || ''}
+                              onChange={(e) => {
+                                const updated = [...(tempSettings.megaMenu || [])];
+                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                setTempSettings(prev => ({ ...prev, megaMenu: updated }));
+                              }}
+                              style={{
+                                padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--color-border)',
+                                background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none'
+                              }}
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (tempSettings.megaMenu || []).filter((_, i) => i !== idx);
+                              setTempSettings(prev => ({ ...prev, megaMenu: updated }));
+                            }}
+                            style={{
+                              background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700', alignSelf: 'flex-end', height: '36px'
+                            }}
+                          >
+                            <Trash2 size={13} /> Remove Column
+                          </button>
+                        </div>
+
+                        <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <label style={{ fontWeight: '700', fontSize: '10px', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}>Subcategories (comma separated)</label>
+                          <textarea 
+                            rows={3}
+                            value={Array.isArray(col.items) ? col.items.join(', ') : ''}
+                            onChange={(e) => {
+                              const items = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                              const updated = [...(tempSettings.megaMenu || [])];
+                              updated[idx] = { ...updated[idx], items };
+                              setTempSettings(prev => ({ ...prev, megaMenu: updated }));
+                            }}
+                            placeholder="e.g. Soft Lollies, Hard Lollies, Sour Lollies"
+                            style={{
+                              padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--color-border)',
+                              background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', resize: 'vertical'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = [...(tempSettings.megaMenu || []), { title: 'New Column', items: [] }];
+                      setTempSettings(prev => ({ ...prev, megaMenu: updated }));
+                    }}
+                    style={{
+                      padding: '10px 16px', borderRadius: '8px', border: '2px dashed var(--color-primary)',
+                      background: 'transparent', color: 'var(--color-primary)', fontWeight: '700', fontSize: '13px',
+                      cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s ease'
+                    }}
+                  >
+                    ➕ Add New Category Column
+                  </button>
                 </div>
 
                 {settingsSuccess && (

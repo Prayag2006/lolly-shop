@@ -34,10 +34,14 @@ export const ProductCard = ({ product, onProductClick }) => {
       <div className="card-visual-wrapper">
         <div className="card-mesh"></div>
         <img 
-          src={product.image} 
+          src={product.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
           alt={product.name} 
           className="card-product-image"
           loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+          }}
         />
         {!product.inStock && (
           <div className="out-of-stock-overlay">

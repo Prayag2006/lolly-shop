@@ -21,8 +21,27 @@ export const StoreProvider = ({ children }) => {
   });
   
   const [categories, setCategories] = useState(() => {
+    const defaultCats = [
+      'NZ Lollies', 'Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Other', 'Sugar Free', 'Vegan', 'Jellybeans',
+      'Imported Lollies', 'Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops',
+      'Chocolates', 'Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags',
+      'Drinks', 'Hydration', 'Cans', 'Bottles', 'Multi Pack',
+      'Snacks', 'Chips', 'Tackies', 'Cheetos', 'Kool Aid',
+      'Bulk',
+      'TikTok Viral', 'Peel me lollies', 'Freeze Dried Candies',
+      'Pick by Colour', 'Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour',
+      'Confectionery', 'Toys', 'Toys with Lolly',
+      'Special / Clearance', 'Heading 1', 'Heading 2'
+    ];
     const saved = localStorage.getItem('hc_categories');
-    return saved ? JSON.parse(saved) : ['Gummies', 'Chocolates', 'Lollipops', 'Marshmallows'];
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed.length <= 4 && parsed.includes('Gummies')) {
+        return defaultCats;
+      }
+      return parsed;
+    }
+    return defaultCats;
   });
 
   const [cart, setCart] = useState(() => {

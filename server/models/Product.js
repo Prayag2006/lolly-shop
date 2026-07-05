@@ -9,6 +9,7 @@ const reviewSchema = new mongoose.Schema({
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   category: { type: String, required: true },
+  mainCategory: { type: String, default: '' },
   price: { type: Number, required: true },
   rating: { type: Number, default: 5.0 },
   reviewsCount: { type: Number, default: 1 },

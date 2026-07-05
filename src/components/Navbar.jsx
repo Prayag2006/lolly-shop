@@ -4,11 +4,68 @@ import { ShoppingBag, Sun, Moon, Menu, X, User, ChevronDown } from 'lucide-react
 import { useStore } from '../context/StoreContext';
 import './Navbar.css';
 
+const megaMenuData = [
+  {
+    title: 'NZ Lollies',
+    items: ['Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Other', 'Sugar Free', 'Vegan', 'Jellybeans']
+  },
+  {
+    title: 'Imported Lollies',
+    items: ['Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops', 'Sugar Free', 'Vegan']
+  },
+  {
+    title: 'Chocolates',
+    items: ['Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags', 'Sugar Free', 'Vegan']
+  },
+  {
+    title: 'Drinks',
+    items: ['Hydration', 'Cans', 'Bottles', 'Multi Pack', 'Sugar Free']
+  },
+  {
+    title: 'Snacks',
+    items: ['Chips', 'Tackies', 'Cheetos', 'Kool Aid']
+  },
+  {
+    title: 'Bulk',
+    items: ['Soft Lollies', 'Hard Lollies', 'Chocolates']
+  },
+  {
+    title: 'TikTok Viral',
+    items: ['Peel me lollies', 'Freeze Dried Candies']
+  },
+  {
+    title: 'Pick by Colour',
+    items: ['Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour']
+  },
+  {
+    title: 'Confectionery',
+    items: ['Toys', 'Toys with Lolly']
+  },
+  {
+    title: 'Special / Clearance',
+    items: ['Heading 1', 'Heading 2']
+  }
+];
+
 export const Navbar = ({ onCartOpen }) => {
-  const { theme, toggleTheme, getCartCount, currentUser, logout, categories } = useStore();
+  const { theme, toggleTheme, getCartCount, currentUser, logout, categories, settings } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
+  const [openMobileGroup, setOpenMobileGroup] = useState(null);
   const location = useLocation();
+
+  const activeMegaMenuFromSettings = settings?.megaMenu && settings.megaMenu.length > 0 ? settings.megaMenu : megaMenuData;
+  const standardCategories = new Set(activeMegaMenuFromSettings.flatMap(group => [group.title, ...group.items]));
+  const customCategories = (categories || []).filter(cat => cat && !standardCategories.has(cat));
+  
+  const activeMegaMenuData = [...activeMegaMenuFromSettings];
+  if (customCategories.length > 0) {
+    activeMegaMenuData.push({
+      title: 'More Sweets',
+      items: customCategories
+    });
+  }
 
   useEffect(() => {
     setActiveDropdown(null);
@@ -65,32 +122,6 @@ export const Navbar = ({ onCartOpen }) => {
             >
               Category <ChevronDown size={12} className="chevron-icon" />
             </span>
-            
-            {activeDropdown === 'category' && (
-              <div className="dropdown-panel animate-fade-in">
-                {(categories || []).map(cat => {
-                  let emoji = '🍬';
-                  const lowerCat = cat.toLowerCase();
-                  if (lowerCat.includes('gumm')) emoji = '🍭';
-                  else if (lowerCat.includes('choc')) emoji = '🍫';
-                  else if (lowerCat.includes('lollipop') || lowerCat.includes('pop')) emoji = '🍭';
-                  else if (lowerCat.includes('marsh') || lowerCat.includes('cloud')) emoji = '☁️';
-                  else if (lowerCat.includes('sour')) emoji = '🍋';
-                  else if (lowerCat.includes('gift') || lowerCat.includes('box')) emoji = '🎁';
-                  
-                  return (
-                    <Link 
-                      key={cat} 
-                      to={`/shop?category=${encodeURIComponent(cat)}`} 
-                      className="dropdown-item" 
-                      onClick={() => setActiveDropdown(null)}
-                    >
-                      {emoji} {cat}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
           </div>
 
 
@@ -196,6 +227,52 @@ export const Navbar = ({ onCartOpen }) => {
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+
+        {activeDropdown === 'category' && (
+          <div className="mega-menu-panel animate-fade-in">
+            {activeMegaMenuData.map((group) => {
+              const getGroupIcon = (title) => {
+                const lower = title.toLowerCase();
+                if (lower.includes('nz')) return '🇳🇿';
+                if (lower.includes('imported')) return '✈️';
+                if (lower.includes('choc')) return '🍫';
+                if (lower.includes('drink')) return '🥤';
+                if (lower.includes('snack')) return '🍿';
+                if (lower.includes('bulk')) return '📦';
+                if (lower.includes('tiktok') || lower.includes('viral')) return '🔥';
+                if (lower.includes('colour') || lower.includes('color') || lower.includes('pick')) return '🎨';
+                if (lower.includes('confectionery')) return '🧸';
+                if (lower.includes('clearance') || lower.includes('special')) return '🏷️';
+                return '🍬';
+              };
+
+              return (
+                <div key={group.title} className="mega-menu-column">
+                  <Link 
+                    to={`/shop?category=${encodeURIComponent(group.title)}`} 
+                    className="mega-menu-title"
+                    onClick={() => setActiveDropdown(null)}
+                  >
+                    <span className="mega-menu-title-icon" style={{ marginRight: '6px' }}>
+                      {getGroupIcon(group.title)}
+                    </span>
+                    {group.title}
+                  </Link>
+                  {group.items.map((item) => (
+                    <Link
+                      key={item}
+                      to={`/shop?category=${encodeURIComponent(item)}`}
+                      className="mega-menu-item"
+                      onClick={() => setActiveDropdown(null)}
+                    >
+                      {item}
+                    </Link>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Mobile Drawer Navigation */}
@@ -211,6 +288,59 @@ export const Navbar = ({ onCartOpen }) => {
               {link.name}
             </Link>
           ))}
+          
+          {/* Collapsible Mobile Categories Accordion */}
+          <div className="mobile-category-accordion" style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '12px', marginBottom: '8px' }}>
+            <button 
+              className="mobile-nav-link accordion-toggle-btn"
+              onClick={() => setMobileCategoriesOpen(!mobileCategoriesOpen)}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', border: 'none', background: 'none', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit', padding: '12px 16px', color: 'var(--color-text)', fontWeight: '700', fontSize: '15px' }}
+            >
+              <span>🍬 Browse Categories</span>
+              <ChevronDown size={18} style={{ transform: mobileCategoriesOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s ease', color: 'var(--color-primary)' }} />
+            </button>
+            
+            {mobileCategoriesOpen && (
+              <div className="mobile-accordion-content" style={{ paddingLeft: '16px', display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                {activeMegaMenuData.map((group) => (
+                  <div key={group.title} className="mobile-accordion-group" style={{ background: 'rgba(231, 44, 131, 0.02)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(231, 44, 131, 0.05)' }}>
+                    <button
+                      className="mobile-group-toggle"
+                      onClick={() => setOpenMobileGroup(openMobileGroup === group.title ? null : group.title)}
+                      style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', border: 'none', background: 'none', textAlign: 'left', color: 'var(--color-primary)', fontWeight: '800', padding: '4px 0', fontSize: '13.5px', cursor: 'pointer', fontFamily: 'inherit' }}
+                    >
+                      <span>{group.title}</span>
+                      <ChevronDown size={14} style={{ transform: openMobileGroup === group.title ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.15s ease' }} />
+                    </button>
+                    
+                    {openMobileGroup === group.title && (
+                      <div className="mobile-subgroup-links" style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingLeft: '10px', marginTop: '4px', borderLeft: '1.5px solid var(--color-primary)' }}>
+                        <Link 
+                          to={`/shop?category=${encodeURIComponent(group.title)}`}
+                          className="mobile-subgroup-link"
+                          onClick={() => setMobileMenuOpen(false)}
+                          style={{ fontSize: '12.5px', color: 'var(--color-text)', textDecoration: 'none', padding: '3px 0', display: 'block', fontWeight: 'bold' }}
+                        >
+                          View All {group.title}
+                        </Link>
+                        {group.items.map((item) => (
+                          <Link
+                            key={item}
+                            to={`/shop?category=${encodeURIComponent(item)}`}
+                            className="mobile-subgroup-link"
+                            onClick={() => setMobileMenuOpen(false)}
+                            style={{ fontSize: '12.5px', color: 'var(--color-text-light)', textDecoration: 'none', padding: '3px 0', display: 'block' }}
+                          >
+                            {item}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           {currentUser && currentUser.role === 'admin' && (
             <Link
               to="/admin"
