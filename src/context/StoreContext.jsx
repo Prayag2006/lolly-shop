@@ -74,6 +74,14 @@ export const StoreProvider = ({ children }) => {
     fetchContacts();
     fetchTestimonials();
     fetchSettings();
+
+    // Poll for new orders and contacts in real-time
+    const pollInterval = setInterval(() => {
+      fetchOrders();
+      fetchContacts();
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   const fetchSettings = async () => {
