@@ -34,7 +34,7 @@ export const TrackOrder = () => {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/${id}/feedback`, {
+      const res = await fetch(`/api/orders/${id}/feedback`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ rating, comment })
@@ -53,7 +53,7 @@ export const TrackOrder = () => {
   // Real-time polling order details from backend every 3 seconds to react to Admin status updates
   useEffect(() => {
     const fetchOrder = () => {
-      fetch(`http://localhost:5000/api/orders`)
+      fetch(`/api/orders`)
         .then(res => res.json())
         .then(data => {
           const matched = data.find(o => o.id === id);
