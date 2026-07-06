@@ -60,23 +60,44 @@ mongoose.connect(MONGODB_URI)
 
 // ── LOCAL FILE DATABASE UTILITIES ──
 const DATA_DIR = path.resolve(__dirname, 'data');
-if (!fs.existsSync(DATA_DIR)) {
-  fs.mkdirSync(DATA_DIR);
+try {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR);
+  }
+} catch (err) {
+  console.log('Local data directory check deferred (expected in read-only serverless environment):', err.message);
 }
 
 const getLocalFile = (filename) => path.join(DATA_DIR, filename);
 
+const localCache = {};
+
 const readLocalData = (filename, defaultVal = []) => {
   const file = getLocalFile(filename);
-  if (!fs.existsSync(file)) {
-    fs.writeFileSync(file, JSON.stringify(defaultVal, null, 2));
-    return defaultVal;
+  try {
+    if (!fs.existsSync(file)) {
+      try {
+        fs.writeFileSync(file, JSON.stringify(defaultVal, null, 2));
+      } catch (writeErr) {
+        // Safe to ignore on serverless environments
+      }
+      return defaultVal;
+    }
+    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+  } catch (err) {
+    if (!localCache[filename]) {
+      localCache[filename] = defaultVal;
+    }
+    return localCache[filename];
   }
-  return JSON.parse(fs.readFileSync(file, 'utf-8'));
 };
 
 const writeLocalData = (filename, data) => {
-  fs.writeFileSync(getLocalFile(filename), JSON.stringify(data, null, 2));
+  try {
+    fs.writeFileSync(getLocalFile(filename), JSON.stringify(data, null, 2));
+  } catch (err) {
+    localCache[filename] = data;
+  }
 };
 
 // Map seed products to include weightPrices
@@ -210,7 +231,7 @@ app.get('/api/products/:id', async (req, res) => {
       res.json(product);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const product = products.find(p => p.id === req.params.id);
+      const product = products.find(p => String(p.id) === String(req.params.id));
       if (!product) return res.status(404).json({ message: 'Product not found' });
       res.json(product);
     }
@@ -268,7 +289,7 @@ app.put('/api/products/:id', async (req, res) => {
       res.json(updated);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => p.id === req.params.id);
+      const index = products.findIndex(p => String(p.id) === String(req.params.id));
       if (index === -1) return res.status(404).json({ message: 'Product not found' });
       
       const updatedProduct = {
@@ -294,7 +315,7 @@ app.delete('/api/products/:id', async (req, res) => {
       res.json({ message: 'Product successfully deleted' });
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const filtered = products.filter(p => p.id !== req.params.id);
+      const filtered = products.filter(p => String(p.id) !== String(req.params.id));
       if (products.length === filtered.length) {
         return res.status(404).json({ message: 'Product not found' });
       }
@@ -326,7 +347,7 @@ app.put('/api/products/:id/stock', async (req, res) => {
       res.json(updated);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => p.id === req.params.id);
+      const index = products.findIndex(p => String(p.id) === String(req.params.id));
       if (index === -1) return res.status(404).json({ message: 'Product not found' });
       
       products[index].inStock = inStock;
