@@ -444,11 +444,15 @@ export const StoreProvider = ({ children }) => {
         body: JSON.stringify(newOrder)
       });
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Server error occurred while creating your order.');
+      }
       setOrders(prev => [data, ...prev]);
       clearCart();
       return data;
     } catch (error) {
       console.error('Error placing order:', error);
+      throw error;
     }
   };
 

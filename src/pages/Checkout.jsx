@@ -16,6 +16,7 @@ export const Checkout = () => {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
+  const [submitError, setSubmitError] = useState('');
 
   // Form Field States
   const [shippingForm, setShippingForm] = useState({
@@ -92,21 +93,31 @@ export const Checkout = () => {
     e.preventDefault();
     if (!isPaymentValid()) return;
 
-    // Submit order
-    const order = await placeOrder({
-      ...shippingForm,
-      discountCode: discountPercent > 0 ? 'SWEET10' : 'None'
-    }, finalTotal, shippingFee);
+    setSubmitError('');
+    try {
+      // Submit order
+      const order = await placeOrder({
+        ...shippingForm,
+        discountCode: discountPercent > 0 ? 'SWEET10' : 'None'
+      }, finalTotal, shippingFee);
 
-    setPlacedOrderDetails(order);
-    setStep(3);
+      if (order && order.id) {
+        setPlacedOrderDetails(order);
+        setStep(3);
 
-    // Throw confetti!
-    confetti({
-      particleCount: 150,
-      spread: 80,
-      origin: { y: 0.6 }
-    });
+        // Throw confetti!
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+      } else {
+        setSubmitError('Failed to place order: Server returned an invalid response. Please verify details and try again.');
+      }
+    } catch (err) {
+      console.error(err);
+      setSubmitError(err.message || 'Failed to place order. Database connection might be offline. Please verify MongoDB is running.');
+    }
   };
 
   if (cart.length === 0 && step !== 3) {
@@ -295,6 +306,23 @@ export const Checkout = () => {
                     />
                   </div>
                 </div>
+
+                {submitError && (
+                  <div className="checkout-submit-error" style={{
+                    color: '#e72c83',
+                    background: '#fcedee',
+                    padding: '12px 16px',
+                    borderRadius: '12px',
+                    fontSize: '13px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    marginBottom: '20px',
+                    border: '1.5px solid rgba(231, 44, 131, 0.15)',
+                    lineHeight: '1.4'
+                  }}>
+                    ❌ {submitError}
+                  </div>
+                )}
 
                 <div className="form-actions two-btns">
                   <button type="button" className="btn btn-secondary back-btn" onClick={handleBackStep}>
