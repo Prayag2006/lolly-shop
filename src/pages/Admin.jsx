@@ -709,7 +709,15 @@ export const Admin = () => {
                           <span className="p-cell-category">{p.category}</span>
                         </td>
                         <td>
-                          <span className="p-cell-category">{p.collections?.join(', ') || '—'}</span>
+                          <div className="p-cell-collections-list">
+                            {Array.isArray(p.collections) && p.collections.length > 0 ? (
+                              p.collections.map((col) => (
+                                <span key={col} className="p-cell-category-tag">{col}</span>
+                              ))
+                            ) : (
+                              <span className="p-cell-category-empty">—</span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           <strong>${p.price.toFixed(2)}</strong>
