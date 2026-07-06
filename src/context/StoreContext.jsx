@@ -116,7 +116,9 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/products');
       const data = await res.json();
-      setProducts(data);
+      if (Array.isArray(data)) {
+        setProducts(data);
+      }
     } catch (err) {
       console.error('Error fetching products from server:', err);
     }
@@ -126,7 +128,9 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/brands');
       const data = await res.json();
-      setBrands(data);
+      if (Array.isArray(data)) {
+        setBrands(data);
+      }
     } catch (err) {
       console.error('Error fetching brands from server:', err);
     }
@@ -136,7 +140,9 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/orders');
       const data = await res.json();
-      setOrders(data);
+      if (Array.isArray(data)) {
+        setOrders(data);
+      }
     } catch (err) {
       console.error('Error fetching orders from server:', err);
     }
@@ -146,7 +152,9 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/contacts');
       const data = await res.json();
-      setContactSubmissions(data);
+      if (Array.isArray(data)) {
+        setContactSubmissions(data);
+      }
     } catch (err) {
       console.error('Error retrieving contact requests:', err);
     }
@@ -156,7 +164,9 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/testimonials');
       const data = await res.json();
-      setTestimonials(data);
+      if (Array.isArray(data)) {
+        setTestimonials(data);
+      }
     } catch (err) {
       console.error('Error fetching testimonials from server:', err);
     }

@@ -17,9 +17,9 @@ export const Profile = () => {
   }
 
   // Filter orders matching logged-in user's email or account email
-  const userOrders = orders.filter(
-    (ord) => (ord.userEmail?.toLowerCase() === currentUser.email?.toLowerCase()) ||
-             (ord.customer?.email?.toLowerCase() === currentUser.email?.toLowerCase())
+  const userOrders = (Array.isArray(orders) ? orders : []).filter(
+    (ord) => ord && ((ord.userEmail?.toLowerCase() === currentUser.email?.toLowerCase()) ||
+             (ord.customer?.email?.toLowerCase() === currentUser.email?.toLowerCase()))
   );
 
   const getStatusColor = (status) => {
