@@ -89,71 +89,135 @@
   width: 100%;
 }
 
-.collection-tabs {
+/* Parent Categories Grid/Row */
+.parent-categories-row {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 8px 4px 16px 4px;
+  margin-bottom: 0px;
+  width: 100%;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  justify-content: flex-start;
+}
+
+.parent-categories-row::-webkit-scrollbar {
+  display: none;
+}
+
+.parent-category-card {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text-muted);
+}
+
+.parent-category-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(231, 44, 131, 0.08);
+}
+
+.parent-category-card.active {
+  background: var(--primary-gradient);
+  border-color: transparent;
+  color: white !important;
+  box-shadow: var(--glow-primary), var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.parent-emoji {
+  font-size: 20px;
+}
+
+.parent-name {
+  font-weight: 700;
+  font-size: 15px;
+  font-family: var(--font-body);
+}
+
+/* Subcategories Scroll Row */
+.subcategories-scroll-wrapper {
+  position: relative;
   width: 100%;
-  padding: 8px 0;
+  margin-bottom: 30px;
+  padding: 4px 0;
   border-bottom: 2px solid var(--color-border);
 }
 
-.collection-tab {
-  background: var(--color-background);
-  border: 1.5px solid var(--color-border);
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-text-light);
-  padding: 10px 24px;
-  border-radius: var(--radius-pill);
+.subcategories-scroll-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  white-space: nowrap;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(231, 44, 131, 0.2) transparent;
+}
+
+.subcategories-scroll-row::-webkit-scrollbar {
+  height: 6px;
+}
+
+.subcategories-scroll-row::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.subcategories-scroll-row::-webkit-scrollbar-thumb {
+  background-color: rgba(231, 44, 131, 0.2);
+  border-radius: 10px;
+}
+
+.subcategory-pill {
+  padding: 8px 18px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 30px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  position: relative;
-  transition: all var(--transition-spring);
-  text-transform: capitalize;
-  box-shadow: var(--shadow-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.2s ease;
+  font-family: var(--font-body);
 }
 
-.collection-tab:hover {
-  color: var(--color-primary);
+.subcategory-pill:hover {
   border-color: var(--color-primary);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  color: var(--color-primary);
 }
 
-.collection-tab.active {
-  background: var(--primary-gradient);
-  color: white !important;
-  border-color: transparent;
-  transform: translateY(-2px) scale(1.03);
-  box-shadow: var(--glow-primary), var(--shadow-lg);
+.subcategory-pill.active {
+  background: rgba(231, 44, 131, 0.08);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
 }
 
-[data-theme='dark'] .collection-tab {
+[data-theme='dark'] .parent-category-card {
   background: rgba(255, 255, 255, 0.02);
   border-color: rgba(255, 255, 255, 0.08);
-  color: var(--color-text-light);
 }
 
-[data-theme='dark'] .collection-tab:hover {
-  color: var(--color-primary-hover);
-  border-color: var(--color-primary-hover);
-}
-
-[data-theme='dark'] .collection-tab.active {
+[data-theme='dark'] .parent-category-card.active {
   background: var(--primary-gradient);
-  color: white !important;
-  border-color: transparent;
-  box-shadow: var(--glow-primary), 0 10px 25px rgba(231, 44, 131, 0.3);
 }
 
-.collection-active-bar {
-  display: none;
+[data-theme='dark'] .subcategory-pill {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme='dark'] .subcategory-pill.active {
+  background: rgba(231, 44, 131, 0.15);
 }
 
 .mobile-filter-bar {

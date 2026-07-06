@@ -5,12 +5,48 @@ import { ProductCard } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
 import './Shop.css';
 
+const parentGroups = {
+  'All': { name: 'All Products', emoji: '✨', categories: [] },
+  'Lollies': { 
+    name: 'Lollies', 
+    emoji: '🍬', 
+    categories: ['NZ Lollies', 'Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Sugar Free', 'Vegan', 'Jellybeans', 'Imported Lollies', 'Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops', 'Bulk'] 
+  },
+  'Chocolates': { 
+    name: 'Chocolates', 
+    emoji: '🍫', 
+    categories: ['Chocolates', 'Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags'] 
+  },
+  'Drinks': { 
+    name: 'Drinks & Snacks', 
+    emoji: '🥤', 
+    categories: ['Drinks', 'Hydration', 'Cans', 'Bottles', 'Multi Pack', 'Snacks', 'Chips', 'Tackies', 'Cheetos', 'Kool Aid'] 
+  },
+  'Viral': { 
+    name: 'TikTok Viral', 
+    emoji: '🔥', 
+    categories: ['TikTok Viral', 'Peel me lollies', 'Freeze Dried Candies'] 
+  },
+  'Colour': { 
+    name: 'Pick by Colour', 
+    emoji: '🎨', 
+    categories: ['Pick by Colour', 'Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour'] 
+  },
+  'Other': { 
+    name: 'Specials & Toys', 
+    emoji: '🎁', 
+    categories: ['Confectionery', 'Toys', 'Toys with lolly', 'Special / Clearance'] 
+  }
+};
+
 export const Shop = ({ onProductClick }) => {
   const { products } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Search, Category, Price Filter States
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedParent, setSelectedParent] = useState('All');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [maxPrice, setMaxPrice] = useState(100);
   const [sortBy, setSortBy] = useState('popular');
@@ -37,26 +73,61 @@ export const Shop = ({ onProductClick }) => {
 
   // Sync state with URL parameters
   useEffect(() => {
-    const catParam = searchParams.get('category');
-    setSelectedCategory(catParam || 'All');
+    const catParam = searchParams.get('category') || 'All';
+    setSelectedCategory(catParam);
+
+    let parentKey = 'All';
+    let subcatKey = null;
+
+    if (catParam !== 'All') {
+      const foundEntry = Object.entries(parentGroups).find(([key, val]) => 
+        key === catParam || val.name === catParam || val.categories.includes(catParam)
+      );
+
+      if (foundEntry) {
+        parentKey = foundEntry[0];
+        if (foundEntry[1].categories.includes(catParam)) {
+          subcatKey = catParam;
+        }
+      }
+    }
+
+    setSelectedParent(parentKey);
+    setSelectedSubcategory(subcatKey);
 
     const searchParam = searchParams.get('search');
     setSearchQuery(searchParam || '');
 
     const sortParam = searchParams.get('sort');
     setSortBy(sortParam || 'popular');
-  }, [searchParams]);
+  }, [searchParams, products]);
 
-  const { categories: storeCategories } = useStore();
-  const categories = ['All', ...storeCategories];
-
-  // Handle Category selection
-  const handleCategorySelect = (category) => {
-    setSelectedCategory(category);
-    if (category === 'All') {
+  // Handle Parent Category selection
+  const handleParentSelect = (parentKey) => {
+    setSelectedParent(parentKey);
+    setSelectedSubcategory(null);
+    
+    if (parentKey === 'All') {
       searchParams.delete('category');
+      setSelectedCategory('All');
     } else {
-      searchParams.set('category', category);
+      const parentName = parentGroups[parentKey].name;
+      searchParams.set('category', parentName);
+      setSelectedCategory(parentName);
+    }
+    setSearchParams(searchParams);
+  };
+
+  // Handle Subcategory selection
+  const handleSubcategorySelect = (subcat) => {
+    setSelectedSubcategory(subcat);
+    if (!subcat) {
+      const parentName = parentGroups[selectedParent].name;
+      searchParams.set('category', parentName);
+      setSelectedCategory(parentName);
+    } else {
+      searchParams.set('category', subcat);
+      setSelectedCategory(subcat);
     }
     setSearchParams(searchParams);
   };
@@ -84,7 +155,13 @@ export const Shop = ({ onProductClick }) => {
       const matchesCategory =
         selectedCategory === 'All' || 
         product.category === selectedCategory ||
-        product.mainCategory === selectedCategory;
+        product.mainCategory === selectedCategory ||
+        (selectedParent !== 'All' && !selectedSubcategory && (
+          product.category === parentGroups[selectedParent].name ||
+          product.mainCategory === parentGroups[selectedParent].name ||
+          (parentGroups[selectedParent].categories || []).includes(product.category) ||
+          (parentGroups[selectedParent].categories || []).includes(product.mainCategory)
+        ));
       
       const matchesPrice = product.price <= maxPrice;
 
@@ -116,22 +193,47 @@ export const Shop = ({ onProductClick }) => {
       </div>
 
       <div className="container shop-container">
-        {/* Horizontal Collections Bar (First screenshot style) */}
+        {/* Horizontal Grouped Categories Bar */}
         <div className="shop-collections-bar">
-          <div className="collection-tabs">
-            {categories.map((cat) => (
+          <div className="parent-categories-row">
+            {Object.entries(parentGroups).map(([key, group]) => (
               <button
-                key={cat}
+                key={key}
                 type="button"
-                className={`collection-tab ${selectedCategory === cat ? 'active' : ''}`}
-                onClick={() => handleCategorySelect(cat)}
+                className={`parent-category-card ${selectedParent === key ? 'active' : ''}`}
+                onClick={() => handleParentSelect(key)}
               >
-                <span>{cat}</span>
-                <span className="collection-active-bar"></span>
+                <span className="parent-emoji">{group.emoji}</span>
+                <span className="parent-name">{group.name}</span>
               </button>
             ))}
           </div>
         </div>
+
+        {/* Subcategories Horizontal Scroll Row */}
+        {selectedParent !== 'All' && (
+          <div className="subcategories-scroll-wrapper">
+            <div className="subcategories-scroll-row">
+              <button
+                type="button"
+                className={`subcategory-pill ${!selectedSubcategory ? 'active' : ''}`}
+                onClick={() => handleSubcategorySelect(null)}
+              >
+                All {parentGroups[selectedParent].name}
+              </button>
+              {parentGroups[selectedParent].categories.map((subcat) => (
+                <button
+                  key={subcat}
+                  type="button"
+                  className={`subcategory-pill ${selectedSubcategory === subcat ? 'active' : ''}`}
+                  onClick={() => handleSubcategorySelect(subcat)}
+                >
+                  {subcat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Mobile Filter Toggle */}
         <div className="mobile-filter-bar">
