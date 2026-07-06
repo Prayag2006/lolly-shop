@@ -83,9 +83,8 @@
 
 /* Horizontal Collections Bar */
 .shop-collections-bar {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 40px;
+  display: block;
+  margin-bottom: 24px;
   width: 100%;
 }
 
@@ -94,12 +93,11 @@
   display: flex;
   gap: 12px;
   overflow-x: auto;
-  padding: 8px 4px 16px 4px;
+  padding: 10px 4px 20px 4px;
   margin-bottom: 0px;
   width: 100%;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  justify-content: flex-start;
 }
 
 .parent-categories-row::-webkit-scrollbar {
@@ -110,22 +108,22 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 20px;
+  padding: 14px 24px;
   background: var(--color-surface);
   border: 1.5px solid var(--color-border);
-  border-radius: 16px;
+  border-radius: 20px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
   color: var(--color-text-muted);
 }
 
 .parent-category-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px) scale(1.02);
   border-color: var(--color-primary);
   color: var(--color-primary);
-  box-shadow: 0 8px 20px rgba(231, 44, 131, 0.08);
+  box-shadow: 0 12px 24px rgba(231, 44, 131, 0.1);
 }
 
 .parent-category-card.active {
@@ -136,12 +134,24 @@
   transform: translateY(-2px);
 }
 
+.parent-category-card.active:hover {
+  color: white !important;
+  box-shadow: var(--glow-primary), 0 12px 30px rgba(231, 44, 131, 0.35);
+  transform: translateY(-4px) scale(1.02);
+}
+
 .parent-emoji {
-  font-size: 20px;
+  font-size: 22px;
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  display: inline-block;
+}
+
+.parent-category-card:hover .parent-emoji {
+  transform: scale(1.25) rotate(10deg);
 }
 
 .parent-name {
-  font-weight: 700;
+  font-weight: 800;
   font-size: 15px;
   font-family: var(--font-body);
 }
