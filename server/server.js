@@ -633,10 +633,14 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
       </tr>
     `).join('');
 
+    const isTestEmail = order.customer.email.toLowerCase().includes('test') || 
+                        order.customer.email.toLowerCase() === 'prayagkansara05@gmail.com';
+    const shouldBcc = !isUpdate && !isTestEmail;
+
     const info = await transporter.sendMail({
       from: `"Lolly Shop Orders" <${smtpUser}>`,
       to: order.customer.email,
-      bcc: 'bestlollyshopnz@gmail.com',
+      ...(shouldBcc ? { bcc: 'bestlollyshopnz@gmail.com' } : {}),
       subject: isUpdate 
         ? `Lolly Shop - Order Updated! Revised Receipt & Invoice ${order.id}` 
         : `Lolly Shop - Order Confirmed! Receipt & Invoice ${order.id}`,
@@ -851,7 +855,6 @@ const sendOrderDispatchedEmail = async (order) => {
     const info = await transporter.sendMail({
       from: `"Lolly Shop Deliveries" <${smtpUser}>`,
       to: order.customer.email,
-      bcc: 'bestlollyshopnz@gmail.com',
       subject: `Lolly Shop - Package Dispatched! ORD-${order.id}`,
       text: `Your Lolly Shop order ${order.id} has been dispatched via ${order.deliveryCompany}! Tracking Reference: ${order.deliveryReference}. Track your live delivery here: ${trackingLink}`,
       html: `
@@ -1010,7 +1013,6 @@ const sendDeliveryCompleteEmail = async (order) => {
     const info = await transporter.sendMail({
       from: `"Lolly Shop Deliveries" <${smtpUser}>`,
       to: order.customer.email,
-      bcc: 'bestlollyshopnz@gmail.com',
       subject: `Lolly Shop - Package Delivered! ORD-${order.id}`,
       text: `Your Lolly Shop order ${order.id} has been delivered successfully! Please rate your confections here: ${ratingLink(5)}`,
       html: `
