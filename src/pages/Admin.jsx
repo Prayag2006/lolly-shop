@@ -260,10 +260,10 @@ export const Admin = () => {
   };
 
   Object.keys(simulatedSales).forEach(id => {
-    const numId = Number(id);
-    if (productSalesMap[numId]) {
-      productSalesMap[numId].qty += simulatedSales[numId].qty;
-      productSalesMap[numId].revenue += simulatedSales[numId].revenue;
+    const stringId = `p-${id}`;
+    if (productSalesMap[stringId]) {
+      productSalesMap[stringId].qty += simulatedSales[id].qty;
+      productSalesMap[stringId].revenue += simulatedSales[id].revenue;
     }
   });
 

@@ -679,7 +679,7 @@
 @media (max-width: 1024px) {
   .story-grid {
     grid-template-columns: 1fr;
-    gap: 60px;
+    gap: 50px;
   }
   
   .features-grid {
@@ -765,26 +765,21 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
-}
 
-@media (max-width: 576px) {
-  .brands-grid-row {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  
-  .brands-header h2 {
-    font-size: 18px;
+  .testimonials-grid-layout {
+    grid-template-columns: 1fr;
+    gap: 30px;
   }
 }
 
+/* ===== 768px TABLET / LANDSCAPE PHONE ===== */
 @media (max-width: 768px) {
   .section-padding {
     padding: 60px 0;
   }
 
   .story-title {
-    font-size: 32px;
+    font-size: 30px;
     text-align: center;
   }
 
@@ -794,50 +789,74 @@
   }
 
   .story-grid {
-    gap: 40px;
+    gap: 36px;
   }
 
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-top: 30px;
   }
   
   .testimonial-slider-container {
-    padding: 40px 30px;
+    padding: 36px 24px;
   }
   
   .testimonial-quote {
-    left: 20px;
-    font-size: 80px;
+    left: 16px;
+    font-size: 70px;
   }
   
   .t-text {
-    font-size: 16px;
+    font-size: 15px;
+  }
+
+  .section-footer-cta {
+    margin-top: 32px;
   }
 }
 
+/* ===== 576px SMALL PHONE ===== */
 @media (max-width: 576px) {
   .section-padding {
-    padding: 40px 0;
+    padding: 36px 0;
   }
 
   .story-title {
-    font-size: 26px;
+    font-size: 22px;
+  }
+
+  .story-desc {
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   .story-image-box {
-    max-width: 320px;
-    height: 320px;
+    max-width: 280px;
+    height: 280px;
+    border-radius: 28px;
   }
 
   .story-badge {
-    padding: 10px 16px;
-    right: -10px;
+    padding: 10px 14px;
+    right: -8px;
     top: 15px;
+    border-radius: 14px;
+    gap: 8px;
+  }
+
+  .story-badge h4 {
+    font-size: 11px;
+  }
+
+  .story-badge p {
+    font-size: 10px;
   }
 
   .collage-candy-wrapper {
-    width: 80px;
-    height: 80px;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
   }
 
   .testimonial-form .form-group-row {
@@ -845,33 +864,156 @@
     gap: 12px;
   }
 
+  .testimonial-slider-container {
+    padding: 28px 16px;
+  }
+
+  .testimonial-quote {
+    font-size: 60px;
+    left: 10px;
+    top: 6px;
+  }
+
+  .t-text {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .t-profile {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+
+  .t-meta {
+    text-align: center;
+  }
+
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 20px;
   }
-  
+
   .features-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
-  
+
+  .feature-card {
+    padding: 20px 14px;
+  }
+
+  .feature-card h3 {
+    font-size: 15px;
+  }
+
+  .feature-card p {
+    font-size: 12.5px;
+  }
+
   .categories-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .category-card {
+    height: 150px;
+  }
+
+  .category-card h3 {
+    font-size: 15px;
   }
   
   .instagram-grid {
     grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .instagram-item {
+    height: 140px;
   }
   
   .stats-container {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    padding: 14px 10px;
+    gap: 10px;
     text-align: center;
+  }
+
+  .stat-item h3 {
+    font-size: 22px;
+  }
+
+  .stat-item p {
+    font-size: 9px;
   }
   
   .faq-question {
-    font-size: 16px;
+    font-size: 14px;
     padding: 16px;
   }
   
   .faq-answer-inner {
     padding: 0 16px 16px;
+    font-size: 13.5px;
+  }
+
+  .brands-grid-row {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .brands-header h2 {
+    font-size: 15px;
+  }
+
+  .testimonial-form-container {
+    padding: 24px 16px;
+  }
+}
+
+/* ===== 400px VERY SMALL PHONE ===== */
+@media (max-width: 400px) {
+  .products-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .brands-grid-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .stats-container {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .stat-item h3 {
+    font-size: 18px;
+  }
+
+  .instagram-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .testimonial-slider-container {
+    padding: 20px 12px;
+  }
+
+  .faq-question {
+    font-size: 13px;
+    padding: 14px;
   }
 }

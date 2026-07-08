@@ -96,6 +96,45 @@
   }
 }
 
+@media (max-width: 576px) {
+  .contact-page {
+    padding: 24px 0;
+  }
+
+  .contact-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .contact-hero h1 {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .contact-hero p {
+    font-size: 14px;
+  }
+
+  .form-actions {
+    justify-content: stretch;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 380px) {
+  .contact-hero h1 {
+    font-size: 20px;
+  }
+
+  .contact-card {
+    padding: 16px 12px;
+  }
+}
+
 /* Custom Select Dropdown Styling */
 .custom-select-wrapper {
   position: relative;

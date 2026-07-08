@@ -235,17 +235,34 @@ export const Shop = ({ onProductClick }) => {
           </div>
         )}
 
+        {/* Sidebar backdrop overlay (mobile) */}
+        <div
+          className={`sidebar-backdrop ${showMobileFilters ? 'visible' : ''}`}
+          onClick={() => setShowMobileFilters(false)}
+          aria-hidden="true"
+        />
+
         {/* Mobile Filter Toggle */}
         <div className="mobile-filter-bar">
-          <button 
-            className="btn btn-secondary filter-toggle-btn"
+          <button
+            className="filter-toggle-btn"
             onClick={() => setShowMobileFilters(!showMobileFilters)}
           >
             <SlidersHorizontal size={16} />
             <span>Filters</span>
           </button>
+          <select
+            className="mobile-sort-select"
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="popular">Popular</option>
+            <option value="price-low">Price: Low</option>
+            <option value="price-high">Price: High</option>
+            <option value="name">A–Z</option>
+          </select>
           <div className="results-count">
-            Showing {filteredProducts.length} treats
+            {filteredProducts.length} treats
           </div>
         </div>
 

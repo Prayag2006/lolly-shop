@@ -389,41 +389,131 @@
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 768px) {
+  .hero-section {
+    padding: 48px 0 80px;
+  }
+
   .hero-title {
-    font-size: 40px;
-    letter-spacing: -1px;
+    font-size: 42px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+  }
+
+  .hero-showcase-wrapper {
+    width: 280px;
+    height: 350px;
+  }
+}
+
+@media (max-width: 576px) {
+  .hero-section {
+    padding: 28px 0 50px;
+    min-height: auto;
+  }
+
+  .hero-container {
+    gap: 36px;
+  }
+
+  .hero-badge {
+    font-size: 11px;
+    padding: 6px 14px;
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    font-size: 30px;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+    margin-bottom: 24px;
+    line-height: 1.6;
   }
   
   .hero-buttons {
     flex-direction: column;
     width: 100%;
-    gap: 12px;
+    gap: 10px;
   }
   
   .hero-btn-explore, .hero-btn-bestsellers {
     width: 100%;
     justify-content: center;
+    padding: 14px 24px;
+    font-size: 14px;
   }
 
   .hero-features-row {
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
     align-items: stretch;
   }
 
   .hero-feature-item {
     justify-content: center;
+    padding: 10px 14px;
+    font-size: 12.5px;
   }
 
   .card-left {
-    left: 0px;
-    top: 15%;
+    left: 4px;
+    top: 18%;
   }
 
   .card-right {
-    right: 0px;
-    bottom: 10%;
+    right: 4px;
+    bottom: 12%;
+  }
+
+  .info-card {
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .ic-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
+  }
+
+  .ic-details h4 { font-size: 11px; }
+  .ic-details p  { font-size: 9px; }
+
+  .hero-showcase-wrapper {
+    width: 220px;
+    height: 280px;
+  }
+
+  .showcase-image-container {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .hero-title {
+    font-size: 24px;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .hero-showcase-wrapper {
+    width: 180px;
+    height: 220px;
+  }
+
+  .hero-badge {
+    font-size: 10px;
+    padding: 5px 12px;
   }
 }

@@ -287,3 +287,82 @@
 .pop-active {
   animation: button-pop 0.3s ease-out;
 }
+
+/* ===== RESPONSIVE PRODUCT CARD ===== */
+@media (max-width: 768px) {
+  .card-visual-wrapper {
+    height: 170px;
+  }
+
+  .card-content {
+    padding: 14px;
+  }
+
+  .card-title {
+    font-size: 15px;
+  }
+
+  .amount {
+    font-size: 20px;
+  }
+
+  .currency {
+    font-size: 14px;
+  }
+
+  .card-add-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .card-rating {
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .card-visual-wrapper {
+    height: 145px;
+  }
+
+  .card-content {
+    padding: 10px 12px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .card-category {
+    font-size: 10px;
+  }
+
+  .amount {
+    font-size: 18px;
+  }
+
+  .currency {
+    font-size: 13px;
+  }
+
+  .card-add-btn {
+    padding: 7px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .card-weight-selector {
+    margin-bottom: 10px;
+  }
+
+  .weight-chip {
+    font-size: 9px;
+    padding: 5px 1px;
+  }
+
+  .p-badge {
+    font-size: 9px;
+    padding: 4px 8px;
+  }
+}

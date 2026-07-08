@@ -1,6 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send } from 'lucide-react';
+import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
 import './ChatBot.css';
+
+// Render **bold** markdown inline in bot messages
+const renderBotText = (text) => {
+  if (!text) return null;
+  const parts = text.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
 
 export const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -8,13 +20,14 @@ export const ChatBot = () => {
     {
       id: 1,
       sender: 'bot',
-      text: "Hi there! I'm your Sweet Assistant 🍭✨. Craving something delicious today? Ask me about our premium chocolates, sour gummies, shipping rates, or discount codes! 💖",
+      text: "Hello gorgeous! 🍭✨ I'm **Lolly**, your personal sweet assistant at Lolly Shop NZ! Whether you're after tangy Sour Neon Worms, dreamy Belgian Dark Truffles, or the perfect party pack — I've got you covered! What sweet craving can I help with today? 💖",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
+  const inputRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,73 +37,20 @@ export const ChatBot = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const answerPatterns = [
-    {
-      keywords: ['hello', 'hi ', 'hey', 'good morning', 'good afternoon', 'good evening', 'greetings', 'hola'],
-      answer: "Hello! Welcome to Lolly Shop! 🍭✨ I’m your Sweet Assistant. Cravings run high today! Ask me about our candy collections, delivery details, or promo codes, and let's get snacking! 🍬💖"
-    },
-    {
-      keywords: ['gumm', 'worm', 'peach', 'rings', 'sour', 'berry', 'strap'],
-      answer: "Gummies are our absolute specialty! 🍬🎉 You MUST try our top-selling Sour Neon Worms (tangy-coated bliss!) or our juicy Fuzzy Peach Rings! They are soft, chewable, and bursting with fruity joy. Available in sizes up to 1kg! 🍑😋"
-    },
-    {
-      keywords: ['choc', 'truffle', 'caramel', 'dark', 'milk', 'cocoa'],
-      answer: "Mmm, did someone say chocolate? 🍫🤤 Our top recommendations are the rich, velvety Premium Dark Truffles (Belgian ganache centers!) and the luxurious Sea Salt Caramel Bar. Absolute heaven in every single bite!"
-    },
-    {
-      keywords: ['lolli', 'pop', 'lollipop', 'suck', 'stick'],
-      answer: "Lolly lovers rejoice! 🍭 Try our gorgeous Rainbow Carousel Lollipop (perfect for retro photos!) or our fruity, fun Blueberry Bubble Pop with a bubblegum surprise inside! 🎈"
-    },
-    {
-      keywords: ['deliver', 'ship', 'shipping', 'charge', 'free', 'order', 'arrival', 'time', 'days', 'nz'],
-      answer: "Here's the scoop on shipping! 🚚 We offer FREE Express Shipping across New Zealand on all orders over $50 NZD! For smaller orders, it's just a flat $5 NZD fee. Your sweet box will arrive within 3-5 business days packed with absolute care! 📦✨"
-    },
-    {
-      keywords: ['discount', 'offer', 'coupon', 'promo', 'sale', 'deal', 'save', 'code'],
-      answer: "OMG yes! 🎟️💖 Use coupon code SWEET10 at checkout to get a sweet 10% OFF your entire order! Just type it in during checkout to save. Happy snacking! 🍭"
-    },
-    {
-      keywords: ['price', 'how much', 'cost', 'weight', '100g', '250g', '500g', '1kg', 'kg', 'gram', 'grams'],
-      answer: "We let you customize your sweet bag size! ⚖️ Every sweet is available in 100g, 250g, 500g, and 1kg bags! Check the weight selector on any product page to see the prices instantly. The larger the bag, the more you save! 📈🍭"
-    },
-    {
-      keywords: ['vegan', 'vegetarian', 'halal', 'gelatin', 'gluten', 'allergen', 'allergy'],
-      answer: "We care about your sweet preferences! 🌿 Many of our treats are gluten-free and gelatin-free. Check the ingredients accordion on any product details page for exact info, or try our delicious gelatin-free lollipops! 🍭💚"
-    },
-    {
-      keywords: ['best', 'popular', 'top', 'recommend', 'favorite'],
-      answer: "You can't go wrong with our crowd favorites! 🏆 The overall top sellers are Sour Neon Worms 🍬, Premium Dark Truffles 🍫, and Raspberry Sherbet Bombs 🍭! Try them out and thank us later!"
-    },
-    {
-      keywords: ['admin', 'login', 'portal', 'dashboard', 'owner'],
-      answer: "Looking to access the administrator panel? 🔑 You can login via the Portal Sign In page! Use username admin and password admin123 to check out the admin dashboard where you can manage orders, products, and categories! 💻⚙"
-    },
-    {
-      keywords: ['return', 'refund', 'exchange', 'cancel'],
-      answer: "Due to food safety regulations, we cannot accept returns on opened lollies. 🛡️ However, if your delivery arrived damaged or incorrect, please email us immediately at BestLollyShop@gmail.com with your order details and we'll make it right! 💖"
-    },
-    {
-      keywords: ['contact', 'support', 'help', 'email', 'phone'],
-      answer: "We are here to help! 💌 You can reach out directly by emailing us at BestLollyShop@gmail.com or by leaving a request through our Contact Form on the page! We usually respond within a few hours! ⏰"
-    },
-    {
-      keywords: ['thank you', 'thanks', 'awesome', 'perfect', 'cool'],
-      answer: "Aw, you're sweet! 🍬💖 Let me know if you need anything else, and have a delicious day!"
+  useEffect(() => {
+    if (isOpen) {
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
-  ];
-
-  const getBotResponse = (textLower) => {
-    const match = answerPatterns.find(pattern => pattern.keywords.some(k => textLower.includes(k)));
-    return match ? match.answer : "I'm here to answer all your sweet questions! 🍭 Ask me about products, shipping speeds, coupon codes, gift ideas, or portal login credentials and I'll do my best to assist! ✨";
-  };
+  }, [isOpen]);
 
   const handleSendMessage = async (textToSend) => {
-    if (!textToSend.trim()) return;
+    const trimmed = String(textToSend || '').trim();
+    if (!trimmed) return;
 
     const userMsg = {
       id: Date.now(),
       sender: 'user',
-      text: textToSend,
+      text: trimmed,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
@@ -99,95 +59,123 @@ export const ChatBot = () => {
     setIsTyping(true);
 
     try {
+      // Build multi-turn conversation for the server
+      const conversationHistory = [...messages, userMsg].slice(-12).map(m => ({
+        role: m.sender === 'bot' ? 'assistant' : 'user',
+        content: m.text
+      }));
+
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: textToSend })
+        body: JSON.stringify({ messages: conversationHistory })
       });
+
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data = await res.json();
 
-      const botMsg = {
+      setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: data.reply || "I'm here to help you pick the best candies! 🍭",
+        text: data.reply || "Oh sugar! 🍭 Let me try that again — what sweet question can I help with?",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
+      }]);
     } catch (err) {
-      console.error('Chatbot API error:', err);
-      // Fallback to local regex-like pattern matching if API fails
-      const textLower = textToSend.toLowerCase();
-      const botResponseText = getBotResponse(textLower);
-
-      const botMsg = {
+      console.error('Chatbot error:', err);
+      // Rich local fallback
+      const lower = trimmed.toLowerCase();
+      let fallback;
+      if (lower.match(/hello|hi\b|hey/)) {
+        fallback = "Hello sweetheart! 🍭✨ So glad you're here! Ask me anything about our lollies, shipping, or current deals and I'll sweeten your day!";
+      } else if (lower.match(/ship|deliver/)) {
+        fallback = "Sweet news! 🚚 FREE express shipping on NZ orders over $50! Smaller orders ship for just $5 flat. Your treats arrive in 3-5 business days. Which products are you eyeing? 🍬";
+      } else if (lower.match(/discount|code|promo/)) {
+        fallback = "Oh you clever one! 🎟️ Use code **SWEET10** at checkout for 10% OFF your whole order! Ready to treat yourself? 💖";
+      } else if (lower.match(/gumm|worm|peach|sour/)) {
+        fallback = "Gummy heaven alert! 🍬🎉 Our Sour Neon Worms are tangy-coated pure bliss, and our Fuzzy Peach Rings are soft, juicy perfection! Available in 100g up to 1kg bags — the 1kg is the best value! Which size calls your name? 😋";
+      } else if (lower.match(/choc|truffle|caramel/)) {
+        fallback = "Chocolate lover, I see you! 🍫💖 Our Premium Dark Truffles have real Belgian ganache centres — absolutely divine! Or try the Sea Salt Caramel Bar for sweet-salty perfection. Want to try both in a gift pack? 🎁";
+      } else {
+        fallback = "Oh that's a great question! 🍭 While I get my answer together — have you checked out our Raspberry Sherbet Bombs? They're currently our #1 most-loved treat! Use code **SWEET10** for 10% off! What flavour are you in the mood for? 🍓";
+      }
+      setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: botResponseText,
+        text: fallback,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-
-      setMessages((prev) => [...prev, botMsg]);
+      }]);
     } finally {
       setIsTyping(false);
     }
   };
 
-  const handleSuggestionClick = (suggestionText) => {
-    // Strip emojis for keyword parser matching if needed
-    handleSendMessage(suggestionText);
-  };
-
   const suggestions = [
-    'Recommend Chocolates 🍫',
-    'Recommend Gummies 🍬',
-    'Shipping & Delivery 🚚',
-    'Discount Codes 🎟️',
-    'Admin Portal 🔑'
+    { label: '🍬 Best Gummies', query: 'What are your best gummy sweets?' },
+    { label: '🍫 Top Chocolates', query: 'Recommend your best chocolates' },
+    { label: '🎉 Party Picks', query: 'I need sweet ideas for a kids party' },
+    { label: '🚚 Shipping Info', query: 'Tell me about shipping and delivery' },
+    { label: '🎟️ Discount Code', query: 'Do you have any discount codes?' },
+    { label: '🌿 Dietary Options', query: 'Do you have vegan or gluten free options?' },
   ];
 
   return (
     <div className="chatbot-wrapper">
       {/* Floating Toggle Button */}
-      <button 
-        className={`chatbot-toggle ${isOpen ? 'active' : ''} animate-float`} 
+      <button
+        className={`chatbot-toggle ${isOpen ? 'active' : ''} animate-float`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle Chatbot"
+        aria-label="Toggle Lolly Chat Assistant"
+        id="chatbot-toggle-btn"
       >
-        {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
+        {isOpen ? <X size={24} /> : (
+          <>
+            <MessageCircle size={24} />
+            <span className="chatbot-toggle-badge">AI</span>
+          </>
+        )}
       </button>
 
       {/* Chat Window Panel */}
       {isOpen && (
-        <div className="chatbot-panel glass-card">
+        <div className="chatbot-panel glass-card" role="dialog" aria-label="Lolly Sweet Assistant">
           {/* Header */}
           <div className="chatbot-header">
             <div className="chatbot-title">
-              <div className="bot-avatar">🍭</div>
+              <div className="bot-avatar">
+                <span className="bot-avatar-emoji">🍭</span>
+                <span className="bot-avatar-pulse"></span>
+              </div>
               <div>
-                <h3>Sweet Assistant</h3>
-                <span className="bot-status">Online and Ready</span>
+                <h3>Lolly — Sweet Assistant</h3>
+                <span className="bot-status">
+                  <span className="status-dot"></span>
+                  Powered by Gemini AI ✨
+                </span>
               </div>
             </div>
-            <button className="panel-close-btn" onClick={() => setIsOpen(false)}>
+            <button className="panel-close-btn" onClick={() => setIsOpen(false)} aria-label="Close chat">
               <X size={18} />
             </button>
           </div>
 
           {/* Messages Container */}
-          <div className="chatbot-messages">
+          <div className="chatbot-messages" id="chatbot-messages-area">
             {messages.map((msg) => (
               <div key={msg.id} className={`message-bubble-wrapper ${msg.sender === 'user' ? 'msg-user' : 'msg-bot'}`}>
+                {msg.sender === 'bot' && (
+                  <div className="msg-bot-icon">🍭</div>
+                )}
                 <div className="message-bubble">
-                  <p>{msg.text}</p>
+                  <p>{msg.sender === 'bot' ? renderBotText(msg.text) : msg.text}</p>
                   <span className="msg-time">{msg.time}</span>
                 </div>
               </div>
             ))}
-            
-            {/* Typing Loader */}
+
+            {/* Typing Indicator */}
             {isTyping && (
               <div className="message-bubble-wrapper msg-bot">
+                <div className="msg-bot-icon">🍭</div>
                 <div className="message-bubble typing-bubble">
                   <div className="typing-dot"></div>
                   <div className="typing-dot"></div>
@@ -201,34 +189,51 @@ export const ChatBot = () => {
           {/* Suggestion Chips */}
           <div className="chatbot-suggestions">
             {suggestions.map((sug) => (
-              <button 
-                key={sug} 
+              <button
+                key={sug.label}
                 className="suggestion-chip"
-                onClick={() => handleSuggestionClick(sug)}
+                onClick={() => handleSendMessage(sug.query)}
+                disabled={isTyping}
               >
-                {sug}
+                {sug.label}
               </button>
             ))}
           </div>
 
           {/* Input Footer */}
-          <form 
-            className="chatbot-input-area" 
+          <form
+            className="chatbot-input-area"
             onSubmit={(e) => {
               e.preventDefault();
               handleSendMessage(inputValue);
             }}
           >
-            <input
-              type="text"
-              placeholder="Ask about sweets, delivery..."
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-            />
-            <button type="submit" className="chatbot-send-btn" disabled={!inputValue.trim()}>
+            <div className="chatbot-input-inner">
+              <Sparkles size={15} className="chatbot-input-icon" />
+              <input
+                ref={inputRef}
+                type="text"
+                placeholder="Ask Lolly anything sweet..."
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+                disabled={isTyping}
+                id="chatbot-input"
+                aria-label="Chat message input"
+              />
+            </div>
+            <button
+              type="submit"
+              className="chatbot-send-btn"
+              disabled={!inputValue.trim() || isTyping}
+              aria-label="Send message"
+            >
               <Send size={16} />
             </button>
           </form>
+
+          <div className="chatbot-footer-note">
+            🔐 Secured · Powered by Google Gemini
+          </div>
         </div>
       )}
     </div>

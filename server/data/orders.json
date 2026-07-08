@@ -1,5 +1,165 @@
 [
   {
+    "id": "ORD-TEST-5208",
+    "date": "8/07/2026",
+    "items": [],
+    "total": 19,
+    "shipping": 19,
+    "customer": {
+      "name": "Test Customer",
+      "email": "testcustomer@example.com",
+      "phone": "0211234567",
+      "address": "123 Sweet Lane",
+      "city": "Auckland",
+      "postalCode": "1010"
+    },
+    "userEmail": "testcustomer@example.com",
+    "status": "Out for Delivery",
+    "createdAt": "2026-07-08T05:32:15.238Z",
+    "deliveryCompany": "NZ Post",
+    "deliveryReference": "EP123456789NZ",
+    "feedback": {
+      "rating": 5,
+      "comment": "Amazing!"
+    }
+  },
+  {
+    "id": "ORD-TEST-3057",
+    "date": "8/07/2026",
+    "items": [],
+    "total": 19,
+    "shipping": 19,
+    "customer": {
+      "name": "Test Customer",
+      "email": "testcustomer@example.com",
+      "phone": "0211234567",
+      "address": "123 Sweet Lane",
+      "city": "Auckland",
+      "postalCode": "1010"
+    },
+    "userEmail": "testcustomer@example.com",
+    "status": "Out for Delivery",
+    "createdAt": "2026-07-08T05:31:53.083Z",
+    "deliveryCompany": "NZ Post",
+    "deliveryReference": "EP123456789NZ",
+    "feedback": {
+      "rating": 5,
+      "comment": "Amazing!"
+    }
+  },
+  {
+    "id": "ORD-595681",
+    "date": "8 Jul 2026",
+    "items": [
+      {
+        "id": "p-13",
+        "name": "Raspberry Sherbet Bombs",
+        "category": "Soft Lollies",
+        "mainCategory": "NZ Lollies",
+        "price": 7.2,
+        "rating": 4.6,
+        "reviewsCount": 110,
+        "description": "Classic hard boiled raspberry drops filled with a fizzy sherbet center. A vintage Kiwi favorite that explodes with flavor!",
+        "ingredients": "Sugar, Glucose Syrup, Food Acid (Citric), Sodium Bicarbonate, Sherbet Flavourings, Natural Red Color.",
+        "nutrition": {
+          "calories": "95 kcal",
+          "sugar": "23g",
+          "fat": "0g",
+          "protein": "0g"
+        },
+        "gradient": "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+        "image": "https://images.unsplash.com/photo-1534080391025-a77af30d1a9e?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": true,
+        "isNew": false,
+        "collections": [
+          "Kiwi Classics",
+          "Retro",
+          "NZ Favorites"
+        ],
+        "weightPrices": {
+          "100g": 7.2,
+          "250g": 15.84,
+          "500g": 28.8,
+          "1kg": 54
+        },
+        "selectedWeight": "100g",
+        "quantity": 3
+      }
+    ],
+    "total": 40.6,
+    "shipping": 19,
+    "customer": {
+      "name": "Prayag Kansara",
+      "email": "prayagkansara05@gmail.com",
+      "phone": "09427499372",
+      "address": "56/5,type-3",
+      "city": "Gandhinagar",
+      "zip": "3820",
+      "discountCode": "None",
+      "postalCode": "3820"
+    },
+    "userEmail": "prayagkansara05@gmail.com",
+    "status": "Pending",
+    "createdAt": "2026-07-08T05:29:55.716Z"
+  },
+  {
+    "id": "ORD-646658",
+    "date": "7 Jul 2026",
+    "items": [
+      {
+        "id": "p-1",
+        "name": "Pascall Pineapple Lumps",
+        "category": "Soft Lollies",
+        "mainCategory": "NZ Lollies",
+        "price": 8.5,
+        "rating": 4.9,
+        "reviewsCount": 198,
+        "description": "The ultimate Kiwi classic! Deliciously chewy pineapple-flavored center covered in a smooth milk chocolate coating. Best enjoyed straight from the freezer!",
+        "ingredients": "Sugar, Glucose Syrup, Milk Solids, Cocoa Butter, Cocoa Mass, Vegetable Fat, Gelatin, Pineapple Juice, Food Acids, Emulsifiers, Flavors.",
+        "nutrition": {
+          "calories": "150 kcal",
+          "sugar": "25g",
+          "fat": "4.5g",
+          "protein": "1.2g"
+        },
+        "gradient": "linear-gradient(135deg, #FFE259 0%, #FFA751 100%)",
+        "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": true,
+        "isNew": false,
+        "collections": [
+          "Kiwi Classics",
+          "Chocolates",
+          "NZ Favorites"
+        ],
+        "weightPrices": {
+          "100g": 8.5,
+          "250g": 18.7,
+          "500g": 34,
+          "1kg": 63.75
+        },
+        "selectedWeight": "100g",
+        "quantity": 3
+      }
+    ],
+    "total": 44.5,
+    "shipping": 19,
+    "customer": {
+      "name": "Hetal Kansara",
+      "email": "hetalkansara07@gmail.com",
+      "phone": "0960 129 8776",
+      "address": "56/5,type-3,G.S.E.C.L. colony,Gandhinagr",
+      "city": "Gandhinagar",
+      "zip": "3820",
+      "discountCode": "None",
+      "postalCode": "3820"
+    },
+    "userEmail": "",
+    "status": "Pending",
+    "createdAt": "2026-07-07T11:44:06.676Z"
+  },
+  {
     "id": "ORD-127965",
     "date": "6 Jul 2026",
     "customer": {

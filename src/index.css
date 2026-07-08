@@ -135,6 +135,11 @@ button, input, select, textarea {
   padding: 0 24px;
 }
 
+/* Prevent any element from breaking layout width */
+img, video, canvas, svg {
+  max-width: 100%;
+}
+
 /* Animations */
 @keyframes float {
   0% { transform: translateY(0px) rotate(0deg); }
@@ -302,13 +307,20 @@ button, input, select, textarea {
 /* Responsive adjustments for global styles */
 @media (max-width: 768px) {
   .section-header {
-    margin-bottom: 40px;
-    gap: 12px;
+    margin-bottom: 32px;
+    gap: 10px;
+    padding: 0 4px;
   }
   .section-header h2 {
-    font-size: 32px;
+    font-size: 26px;
+    line-height: 1.2;
   }
   .section-header p {
+    font-size: 14px;
+    padding: 0 8px;
+  }
+  .btn {
+    padding: 11px 22px;
     font-size: 15px;
   }
 }
@@ -317,7 +329,24 @@ button, input, select, textarea {
   .container {
     padding: 0 16px;
   }
+  .section-header {
+    margin-bottom: 24px;
+  }
   .section-header h2 {
-    font-size: 26px;
+    font-size: 20px;
+  }
+  .section-header p {
+    font-size: 13px;
+    padding: 0 4px;
+  }
+  .btn {
+    padding: 12px 20px;
+    font-size: 14px;
+    width: 100%;
+    justify-content: center;
+  }
+  /* Touch-friendly minimum tap target */
+  button, .btn, input[type="submit"] {
+    min-height: 44px;
   }
 }

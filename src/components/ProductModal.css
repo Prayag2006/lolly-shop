@@ -343,7 +343,8 @@
   }
   
   .modal-visual-side {
-    min-height: 250px;
+    min-height: 240px;
+    max-height: 280px;
   }
   
   .modal-info-side {
@@ -351,7 +352,7 @@
   }
   
   .modal-title {
-    font-size: 26px;
+    font-size: 24px;
   }
   
   .nutrition-grid {
@@ -361,5 +362,55 @@
   .modal-weight-selector {
     grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal-container {
+    border-radius: 20px 20px 0 0;
+    max-height: 92dvh;
+  }
+
+  .modal-info-side {
+    padding: 16px;
+  }
+
+  .modal-title {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .modal-qty-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .modal-qty-actions > * {
+    width: 100%;
+  }
+
+  .modal-add-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-visual-side {
+    min-height: 200px;
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 380px) {
+  .modal-title {
+    font-size: 18px;
+  }
+
+  .modal-info-side {
+    padding: 12px;
   }
 }
