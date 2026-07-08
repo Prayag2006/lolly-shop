@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, ArrowRight, ArrowLeft, CheckCircle2, Ticket } from 'lucide-react';
+import { ShoppingBag, ArrowRight, ArrowLeft, CheckCircle2, Ticket, Lock, ShieldCheck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CandyVisual } from '../components/SvgCandies';
 import confetti from 'canvas-confetti';
 import './Checkout.css';
 
 export const Checkout = () => {
-  const { cart, getCartTotal, placeOrder, currentUser } = useStore();
+  const { cart, getCartTotal, placeOrder, currentUser, clearCart } = useStore();
   const navigate = useNavigate();
 
   // Wizard Step: 1 = Shipping, 2 = Payment, 3 = Success
@@ -28,13 +28,12 @@ export const Checkout = () => {
     zip: ''
   });
 
-  const [paymentForm, setPaymentForm] = useState({
-    cardNumber: '',
-    expiry: '',
-    cvv: ''
-  });
-
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
+  const [verifyingPayment, setVerifyingPayment] = useState(false);
+  const [verificationError, setVerificationError] = useState('');
+  const [redirectingToStripe, setRedirectingToStripe] = useState(false);
+  const [selectedGateway, setSelectedGateway] = useState('stripe'); // 'stripe' or 'eway'
+  const [redirectingToGateway, setRedirectingToGateway] = useState(false);
 
   // Form Validations
   const isShippingValid = () => {
@@ -45,14 +44,6 @@ export const Checkout = () => {
       shippingForm.address.trim() &&
       shippingForm.city.trim() &&
       shippingForm.zip.trim().length === 4
-    );
-  };
-
-  const isPaymentValid = () => {
-    return (
-      paymentForm.cardNumber.replace(/\s/g, '').length === 16 &&
-      paymentForm.expiry.includes('/') &&
-      paymentForm.cvv.length === 3
     );
   };
 
@@ -89,36 +80,89 @@ export const Checkout = () => {
     }
   };
 
-  const handlePlaceOrder = async (e) => {
+  const handlePaymentCheckout = async (e) => {
     e.preventDefault();
-    if (!isPaymentValid()) return;
-
     setSubmitError('');
+    setRedirectingToGateway(true);
+
     try {
-      // Submit order
-      const order = await placeOrder({
-        ...shippingForm,
-        discountCode: discountPercent > 0 ? 'SWEET10' : 'None'
-      }, finalTotal, shippingFee);
+      const endpoint = selectedGateway === 'eway' 
+        ? '/api/create-eway-access-code' 
+        : '/api/create-checkout-session';
 
-      if (order && order.id) {
-        setPlacedOrderDetails(order);
-        setStep(3);
-
-        // Throw confetti!
-        confetti({
-          particleCount: 150,
-          spread: 80,
-          origin: { y: 0.6 }
-        });
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customerDetails: shippingForm,
+          items: cart,
+          finalTotal: finalTotal,
+          shippingFee: shippingFee
+        })
+      });
+      const data = await response.json();
+      if (response.ok && data.url) {
+        window.location.href = data.url;
       } else {
-        setSubmitError('Failed to place order: Server returned an invalid response. Please verify details and try again.');
+        setSubmitError(data.message || `Failed to redirect to ${selectedGateway === 'eway' ? 'eWay' : 'Stripe'} Payment gateway. Please try again.`);
+        setRedirectingToGateway(false);
       }
     } catch (err) {
-      console.error(err);
-      setSubmitError(err.message || 'Failed to place order. Database connection might be offline. Please verify MongoDB is running.');
+      console.error(`Error redirecting to ${selectedGateway}:`, err);
+      setSubmitError('A connection error occurred. Please verify your internet connection and try again.');
+      setRedirectingToGateway(false);
     }
   };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get('status');
+    const sessionId = params.get('session_id');
+    const orderId = params.get('order_id');
+    const gateway = params.get('gateway');
+
+    if (status === 'success' && sessionId && orderId) {
+      setVerifyingPayment(true);
+      setStep(2);
+      
+      const verifyPayment = async () => {
+        try {
+          const endpoint = gateway === 'eway' 
+            ? `/api/orders/${orderId}/confirm-eway-payment` 
+            : `/api/orders/${orderId}/confirm-payment`;
+
+          const res = await fetch(endpoint, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          });
+          const data = await res.json();
+          if (res.ok) {
+            setPlacedOrderDetails(data);
+            setStep(3);
+            clearCart();
+            confetti({
+              particleCount: 150,
+              spread: 80,
+              origin: { y: 0.6 }
+            });
+          } else {
+            setVerificationError(data.message || 'Payment verification failed. Please contact customer support.');
+          }
+        } catch (err) {
+          console.error('Payment verification error:', err);
+          setVerificationError('A connection error occurred while verifying your payment. Please reload the page.');
+        } finally {
+          setVerifyingPayment(false);
+        }
+      };
+
+      verifyPayment();
+    } else if (status === 'cancel') {
+      setStep(2);
+      setSubmitError('Payment checkout session was cancelled. You can try checking out again.');
+    }
+  }, []);
 
   if (cart.length === 0 && step !== 3) {
     return (
@@ -248,95 +292,255 @@ export const Checkout = () => {
 
           {step === 2 && (
             <div className="glass-card checkout-form-card">
-              <h2>Payment Details</h2>
-              <form onSubmit={handlePlaceOrder}>
-                <div className="mock-banner">
-                  🔒 Safe Mockup Checkout Sandbox
+              <h2>Complete Your Order</h2>
+              {verifyingPayment ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 20px', gap: '15px' }}>
+                  <div className="spinner" style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '4px solid rgba(231, 44, 131, 0.1)',
+                    borderLeftColor: 'var(--color-primary)',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite'
+                  }} />
+                  <style>{`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                  `}</style>
+                  <p style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-primary)' }}>Verifying secure transaction...</p>
                 </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Card Number (16 digits)</label>
-                    <input
-                      type="text"
-                      placeholder="4111 2222 3333 4444"
-                      value={paymentForm.cardNumber}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-                        const formatted = v.match(/.{1,4}/g)?.join(' ') || v;
-                        setPaymentForm({ ...paymentForm, cardNumber: formatted.slice(0, 19) });
-                      }}
-                      maxLength="19"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="form-row two-cols">
-                  <div className="form-group">
-                    <label>Expiry Date (MM/YY)</label>
-                    <input
-                      type="text"
-                      placeholder="12/28"
-                      value={paymentForm.expiry}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\//g, '').replace(/[^0-9]/gi, '');
-                        let formatted = v;
-                        if (v.length > 2) {
-                          formatted = `${v.slice(0, 2)}/${v.slice(2, 4)}`;
-                        }
-                        setPaymentForm({ ...paymentForm, expiry: formatted.slice(0, 5) });
-                      }}
-                      maxLength="5"
-                      required
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>CVV (3 digits)</label>
-                    <input
-                      type="password"
-                      placeholder="123"
-                      value={paymentForm.cvv}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/[^0-9]/gi, '');
-                        setPaymentForm({ ...paymentForm, cvv: v.slice(0, 3) });
-                      }}
-                      maxLength="3"
-                      required
-                    />
-                  </div>
-                </div>
-
-                {submitError && (
-                  <div className="checkout-submit-error" style={{
-                    color: '#e72c83',
-                    background: '#fcedee',
-                    padding: '12px 16px',
-                    borderRadius: '12px',
-                    fontSize: '13px',
-                    fontWeight: '700',
-                    textAlign: 'center',
-                    marginBottom: '20px',
-                    border: '1.5px solid rgba(231, 44, 131, 0.15)',
-                    lineHeight: '1.4'
-                  }}>
-                    ❌ {submitError}
-                  </div>
-                )}
-
-                <div className="form-actions two-btns">
-                  <button type="button" className="btn btn-secondary back-btn" onClick={handleBackStep}>
-                    <ArrowLeft size={18} /> Back
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary place-btn"
-                    disabled={!isPaymentValid()}
-                  >
-                    Place Sweet Order (${finalTotal.toFixed(2)})
+              ) : verificationError ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px 20px', textAlign: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '40px' }}>⚠️</span>
+                  <h3 style={{ color: '#ef4444' }}>Verification Issue</h3>
+                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>{verificationError}</p>
+                  <button type="button" className="btn btn-primary" onClick={() => { setVerificationError(''); navigate('/checkout'); }} style={{ marginTop: '10px' }}>
+                    Try Checking Out Again
                   </button>
                 </div>
-              </form>
+              ) : (
+                <form onSubmit={handlePaymentCheckout}>
+                  <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
+                    Payment Method
+                  </h3>
+                  <div className="payment-options-container">
+                    {/* Option 1: Stripe */}
+                    <div 
+                      className={`payment-row ${selectedGateway === 'stripe' ? 'active' : ''}`}
+                      onClick={() => setSelectedGateway('stripe')}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="payment-radio-circle">
+                          {selectedGateway === 'stripe' && (
+                            <div className="payment-radio-dot" />
+                          )}
+                        </div>
+                        <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
+                          Credit / Debit Card (Stripe)
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {/* Visa badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '18px'
+                        }}>
+                          <span style={{ color: '#1a1f71', fontWeight: '900', fontSize: '9px', fontStyle: 'italic', letterSpacing: '-0.3px', lineHeight: 1 }}>VISA</span>
+                        </div>
+                        {/* Mastercard badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '18px',
+                          width: '28px'
+                        }}>
+                          <div style={{ display: 'flex', width: '16px', height: '10px', position: 'relative' }}>
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eb001b', position: 'absolute', left: 0 }} />
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f00', position: 'absolute', right: 0, opacity: 0.85 }} />
+                          </div>
+                        </div>
+                        {/* Amex badge */}
+                        <div style={{
+                          background: '#0070d2',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '18px'
+                        }}>
+                          <span style={{ color: 'white', fontWeight: '900', fontSize: '7px', letterSpacing: '0.1px', lineHeight: 1 }}>AMEX</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedGateway === 'stripe' && (
+                      <div className="gateway-drawer stripe">
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                          <div className="drawer-icon-box stripe">
+                            <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+                          </div>
+                          <div style={{ textAlign: 'left' }}>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
+                              Stripe Secure Checkout
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                              You'll be redirected to a secure, 256-bit SSL encrypted Stripe portal to enter your card details. Lolly Shop never stores your private payment credentials.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Option 2: eWay */}
+                    <div 
+                      className={`payment-row ${selectedGateway === 'eway' ? 'active' : ''}`}
+                      onClick={() => setSelectedGateway('eway')}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="payment-radio-circle">
+                          {selectedGateway === 'eway' && (
+                            <div className="payment-radio-dot" />
+                          )}
+                        </div>
+                        <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
+                          Secure Web Portal (eWay)
+                        </span>
+                      </div>
+                      
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        <span style={{
+                          fontSize: '11px',
+                          fontWeight: '800',
+                          color: '#007bc4',
+                          marginRight: '6px',
+                          letterSpacing: '-0.3px',
+                          fontStyle: 'italic'
+                        }}>eWay Rapid</span>
+                        {/* Visa badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '18px'
+                        }}>
+                          <span style={{ color: '#1a1f71', fontWeight: '900', fontSize: '9px', fontStyle: 'italic', letterSpacing: '-0.3px', lineHeight: 1 }}>VISA</span>
+                        </div>
+                        {/* Mastercard badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '18px',
+                          width: '28px'
+                        }}>
+                          <div style={{ display: 'flex', width: '16px', height: '10px', position: 'relative' }}>
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eb001b', position: 'absolute', left: 0 }} />
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f00', position: 'absolute', right: 0, opacity: 0.85 }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {selectedGateway === 'eway' && (
+                      <div className="gateway-drawer">
+                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                          <div className="drawer-icon-box eway">
+                            <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+                          </div>
+                          <div style={{ textAlign: 'left' }}>
+                            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
+                              eWay Tier-1 PCI-DSS Secure Connection
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                              You'll be redirected to eWay's high-speed secure portal to finalize payment. Verified with industry-standard PCI DSS Tier 1 compliance.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'center' }}>
+                    <div className="secure-badge-pill">
+                      <Lock size={14} style={{ flexShrink: 0 }} />
+                      <span>All transactions are secure and fully encrypted.</span>
+                    </div>
+                  </div>
+
+                  {submitError && (
+                    <div className="checkout-submit-error" style={{
+                      color: '#e72c83',
+                      background: '#fcedee',
+                      padding: '12px 16px',
+                      borderRadius: '12px',
+                      fontSize: '13px',
+                      fontWeight: '700',
+                      textAlign: 'center',
+                      marginBottom: '20px',
+                      border: '1.5px solid rgba(231, 44, 131, 0.15)',
+                      lineHeight: '1.4'
+                    }}>
+                      ❌ {submitError}
+                    </div>
+                  )}
+
+                  <div className="form-actions two-btns">
+                    <button type="button" className="btn btn-secondary back-btn" onClick={handleBackStep} disabled={redirectingToGateway}>
+                      <ArrowLeft size={18} /> Back
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn btn-primary place-btn"
+                      style={{
+                        background: selectedGateway === 'eway' 
+                          ? 'linear-gradient(135deg, #007bc4 0%, #00a4e4 100%)'
+                          : 'linear-gradient(135deg, #635bff 0%, #8f85ff 100%)',
+                        border: 'none',
+                        boxShadow: selectedGateway === 'eway'
+                          ? '0 6px 20px rgba(0, 123, 196, 0.3)'
+                          : '0 6px 20px rgba(99, 91, 255, 0.3)'
+                      }}
+                      disabled={redirectingToGateway}
+                    >
+                      {redirectingToGateway ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                          <div className="spinner-btn" style={{
+                            width: '14px',
+                            height: '14px',
+                            border: '2px solid rgba(255,255,255,0.3)',
+                            borderLeftColor: '#fff',
+                            borderRadius: '50%',
+                            animation: 'spin 0.6s linear infinite'
+                          }} />
+                          <span>Connecting to {selectedGateway === 'eway' ? 'eWay' : 'Stripe'}...</span>
+                        </div>
+                      ) : (
+                        <span>Pay Securely with {selectedGateway === 'eway' ? 'eWay' : 'Stripe'} (${finalTotal.toFixed(2)})</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           )}
 

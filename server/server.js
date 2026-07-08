@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
 import { ensureDatabase, sqlReady } from './db.js';
+import Stripe from 'stripe';
 
 dns.setDefaultResultOrder('ipv4first');
 try {
@@ -21,6 +22,8 @@ import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } fro
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 // Secure cryptographic password hashing helpers (PBKDF2)
 const hashPassword = (password) => {
@@ -797,6 +800,392 @@ app.post('/api/orders', async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({ message: 'Error creating order', error: error.message });
+  }
+});
+
+app.post('/api/create-checkout-session', async (req, res) => {
+  try {
+    const { customerDetails, items, finalTotal, shippingFee } = req.body;
+    
+    // Generate order ID
+    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+    
+    // 1. Create a Pending Order in the Database (Unpaid)
+    const newOrder = {
+      id: orderId,
+      date: new Date().toLocaleDateString('en-NZ', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      items: items || [],
+      total: Number(finalTotal),
+      shipping: Number(shippingFee || 19),
+      customer: {
+        ...customerDetails,
+        postalCode: customerDetails.zip || customerDetails.postalCode || ''
+      },
+      userEmail: customerDetails.email || '',
+      status: 'Pending',
+      paymentStatus: 'Unpaid'
+    };
+
+    if (sqlAvailable()) {
+      const dbOrder = new Order(newOrder);
+      await dbOrder.save();
+    } else {
+      const orders = readLocalData('orders.json', []);
+      const dbOrder = {
+        ...newOrder,
+        createdAt: new Date().toISOString()
+      };
+      orders.unshift(dbOrder);
+      writeLocalData('orders.json', orders);
+    }
+
+    // 2. Map items for Stripe Line Items
+    // Using a single summary line item ensures total paid exactly matches finalTotal (cents)
+    const itemDescription = (items || []).map(item => `${item.name} (${item.selectedWeight}) x${item.quantity}`).join(', ');
+    const lineItems = [{
+      price_data: {
+        currency: 'nzd',
+        product_data: {
+          name: `Lolly Shop Order - ${orderId}`,
+          description: itemDescription.slice(0, 500) || 'Candy treats order from Lolly Shop',
+        },
+        unit_amount: Math.round(Number(finalTotal) * 100), // convert to cents
+      },
+      quantity: 1,
+    }];
+
+    // 3. Create Stripe Checkout Session
+    const origin = req.headers.origin || 'http://localhost:5173';
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: lineItems,
+      mode: 'payment',
+      success_url: `${origin}/checkout?status=success&session_id={CHECKOUT_SESSION_ID}&order_id=${orderId}`,
+      cancel_url: `${origin}/checkout?status=cancel&order_id=${orderId}`,
+      metadata: {
+        orderId: orderId
+      },
+      client_reference_id: orderId
+    });
+
+    res.json({ url: session.url, sessionId: session.id, orderId });
+  } catch (error) {
+    console.error('Error creating Stripe session:', error);
+    res.status(500).json({ message: 'Failed to initialize payment gateway', error: error.message });
+  }
+});
+
+app.put('/api/orders/:id/confirm-payment', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const orderId = req.params.id;
+
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID is required' });
+    }
+
+    // Retrieve Stripe Checkout Session to confirm payment status
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    
+    if (session.payment_status === 'paid') {
+      let updatedOrder = null;
+
+      if (sqlAvailable()) {
+        const order = await Order.findById(orderId);
+        if (!order) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        // If already paid, return early (idempotent)
+        if (order.paymentStatus === 'Paid') {
+          return res.json(order);
+        }
+
+        order.paymentStatus = 'Paid';
+        order.status = 'Processing';
+        await order.save();
+        updatedOrder = order;
+
+        // Deduct product stock quantities
+        for (const item of order.items || []) {
+          const prod = await Product.findById(item.id);
+          if (prod) {
+            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
+            prod.inStock = prod.quantity > 0;
+            await prod.save();
+          }
+        }
+      } else {
+        const orders = readLocalData('orders.json', []);
+        const index = orders.findIndex(o => o.id === orderId);
+        if (index === -1) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // If already paid, return early (idempotent)
+        if (orders[index].paymentStatus === 'Paid') {
+          return res.json(orders[index]);
+        }
+
+        orders[index].paymentStatus = 'Paid';
+        orders[index].status = 'Processing';
+        orders[index].updatedAt = new Date().toISOString();
+        updatedOrder = orders[index];
+        writeLocalData('orders.json', orders);
+
+        // Deduct product stock quantities locally
+        const localProducts = readLocalData('products.json', seededProducts);
+        for (const item of updatedOrder.items || []) {
+          const pIndex = localProducts.findIndex(p => p.id === item.id);
+          if (pIndex !== -1) {
+            const currentQty = localProducts[pIndex].quantity !== undefined ? localProducts[pIndex].quantity : 50;
+            localProducts[pIndex].quantity = Math.max(0, currentQty - item.quantity);
+            localProducts[pIndex].inStock = localProducts[pIndex].quantity > 0;
+          }
+        }
+        writeLocalData('products.json', localProducts);
+      }
+
+      // Send confirmation email
+      sendOrderConfirmationEmail(updatedOrder);
+
+      res.json(updatedOrder);
+    } else {
+      res.status(400).json({ message: 'Payment verification failed: session not paid' });
+    }
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({ message: 'Failed to verify payment', error: error.message });
+  }
+});
+
+app.post('/api/create-eway-access-code', async (req, res) => {
+  try {
+    const { customerDetails, items, finalTotal, shippingFee } = req.body;
+    
+    // Generate order ID
+    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+    
+    // 1. Create a Pending Order in the Database (Unpaid)
+    const newOrder = {
+      id: orderId,
+      date: new Date().toLocaleDateString('en-NZ', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      items: items || [],
+      total: Number(finalTotal),
+      shipping: Number(shippingFee || 19),
+      customer: {
+        ...customerDetails,
+        postalCode: customerDetails.zip || customerDetails.postalCode || ''
+      },
+      userEmail: customerDetails.email || '',
+      status: 'Pending',
+      paymentStatus: 'Unpaid'
+    };
+
+    if (sqlAvailable()) {
+      const dbOrder = new Order(newOrder);
+      await dbOrder.save();
+    } else {
+      const orders = readLocalData('orders.json', []);
+      const dbOrder = {
+        ...newOrder,
+        createdAt: new Date().toISOString()
+      };
+      orders.unshift(dbOrder);
+      writeLocalData('orders.json', orders);
+    }
+
+    // 2. Call eWay Shared Access Code API
+    const apiKey = process.env.EWAY_API_KEY;
+    const apiPassword = process.env.EWAY_API_PASSWORD;
+
+    if (!apiKey || !apiPassword || apiKey.includes('placeholder')) {
+      throw new Error('Invalid eWay configuration API credentials.');
+    }
+
+    const origin = req.headers.origin || 'http://localhost:5173';
+    
+    const ewayBody = {
+      Payment: {
+        TotalAmount: Math.round(Number(finalTotal) * 100), // convert to cents
+        InvoiceNumber: orderId,
+        InvoiceDescription: `Lolly Shop Order - ${orderId}`,
+        CurrencyCode: 'NZD'
+      },
+      RedirectUrl: `${origin}/checkout?status=success&gateway=eway&session_id=ACCESS_CODE&order_id=${orderId}`,
+      CancelUrl: `${origin}/checkout?status=cancel&gateway=eway&order_id=${orderId}`,
+      Method: 'ProcessPayment',
+      TransactionType: 'Purchase',
+      Customer: {
+        FirstName: customerDetails.name.split(' ')[0] || 'Customer',
+        LastName: customerDetails.name.split(' ').slice(1).join(' ') || 'Name',
+        Email: customerDetails.email || '',
+        Phone: customerDetails.phone || '',
+        Address: {
+          Street1: customerDetails.address || '',
+          City: customerDetails.city || '',
+          PostalCode: customerDetails.zip || '',
+          Country: 'nz'
+        }
+      }
+    };
+
+    const authHeader = 'Basic ' + Buffer.from(apiKey + ':' + apiPassword).toString('base64');
+    
+    let ewayResponse = await fetch('https://api.sandbox.ewaypayments.com/AccessCodesShared', {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(ewayBody)
+    });
+
+    if (!ewayResponse.ok) {
+      const errText = await ewayResponse.text();
+      throw new Error(`eWay gateway response error: ${ewayResponse.status} - ${errText}`);
+    }
+
+    let ewayData = await ewayResponse.json();
+
+    // If eWay returns V6018 (Unknown Currency Code) for NZD, automatically retry with AUD for sandbox testing.
+    if (ewayData.Errors === 'V6018' && ewayBody.Payment.CurrencyCode === 'NZD') {
+      console.log('eWay sandbox returned error V6018 for NZD. Retrying automatically with AUD...');
+      ewayBody.Payment.CurrencyCode = 'AUD';
+      
+      ewayResponse = await fetch('https://api.sandbox.ewaypayments.com/AccessCodesShared', {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(ewayBody)
+      });
+
+      if (!ewayResponse.ok) {
+        const errText = await ewayResponse.text();
+        throw new Error(`eWay gateway response error: ${ewayResponse.status} - ${errText}`);
+      }
+
+      ewayData = await ewayResponse.json();
+    }
+
+    if (!ewayData.SharedPaymentUrl) {
+      const errorMsg = ewayData.Errors ? `eWay Error code: ${ewayData.Errors}` : 'Failed to generate eWay Shared Payment URL.';
+      throw new Error(errorMsg);
+    }
+
+    res.json({ url: ewayData.SharedPaymentUrl, sessionId: ewayData.AccessCode, orderId });
+  } catch (error) {
+    console.error('Error creating eWay session:', error);
+    res.status(500).json({ message: 'Failed to initialize payment gateway', error: error.message });
+  }
+});
+
+app.put('/api/orders/:id/confirm-eway-payment', async (req, res) => {
+  try {
+    const { sessionId } = req.body;
+    const orderId = req.params.id;
+
+    if (!sessionId) {
+      return res.status(400).json({ message: 'Session ID (Access Code) is required' });
+    }
+
+    const apiKey = process.env.EWAY_API_KEY;
+    const apiPassword = process.env.EWAY_API_PASSWORD;
+    const authHeader = 'Basic ' + Buffer.from(apiKey + ':' + apiPassword).toString('base64');
+
+    const ewayResponse = await fetch(`https://api.sandbox.ewaypayments.com/AccessCode/${sessionId}`, {
+      method: 'GET',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!ewayResponse.ok) {
+      const errText = await ewayResponse.text();
+      throw new Error(`eWay lookup error: ${ewayResponse.status} - ${errText}`);
+    }
+
+    const ewayData = await ewayResponse.json();
+    const isPaid = ewayData.Transactions && ewayData.Transactions[0] && ewayData.Transactions[0].TransactionStatus === true;
+
+    if (isPaid) {
+      let updatedOrder = null;
+
+      if (sqlAvailable()) {
+        const order = await Order.findById(orderId);
+        if (!order) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+        
+        if (order.paymentStatus === 'Paid') {
+          return res.json(order);
+        }
+
+        order.paymentStatus = 'Paid';
+        order.status = 'Processing';
+        await order.save();
+        updatedOrder = order;
+
+        // Deduct product stock quantities
+        for (const item of order.items || []) {
+          const prod = await Product.findById(item.id);
+          if (prod) {
+            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
+            prod.inStock = prod.quantity > 0;
+            await prod.save();
+          }
+        }
+      } else {
+        const orders = readLocalData('orders.json', []);
+        const index = orders.findIndex(o => o.id === orderId);
+        if (index === -1) {
+          return res.status(404).json({ message: 'Order not found' });
+        }
+
+        if (orders[index].paymentStatus === 'Paid') {
+          return res.json(orders[index]);
+        }
+
+        orders[index].paymentStatus = 'Paid';
+        orders[index].status = 'Processing';
+        orders[index].updatedAt = new Date().toISOString();
+        updatedOrder = orders[index];
+        writeLocalData('orders.json', orders);
+
+        // Deduct product stock quantities locally
+        const localProducts = readLocalData('products.json', seededProducts);
+        for (const item of updatedOrder.items || []) {
+          const pIndex = localProducts.findIndex(p => p.id === item.id);
+          if (pIndex !== -1) {
+            const currentQty = localProducts[pIndex].quantity !== undefined ? localProducts[pIndex].quantity : 50;
+            localProducts[pIndex].quantity = Math.max(0, currentQty - item.quantity);
+            localProducts[pIndex].inStock = localProducts[pIndex].quantity > 0;
+          }
+        }
+        writeLocalData('products.json', localProducts);
+      }
+
+      // Send confirmation email
+      sendOrderConfirmationEmail(updatedOrder);
+
+      res.json(updatedOrder);
+    } else {
+      res.status(400).json({ message: 'Payment verification failed: eWay transaction status is not approved.' });
+    }
+  } catch (error) {
+    console.error('Error confirming eWay payment:', error);
+    res.status(500).json({ message: 'Failed to verify payment', error: error.message });
   }
 });
 
