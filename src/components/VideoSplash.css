@@ -1,0 +1,182 @@
+.video-splash-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  background-color: #090514; /* Deep dark background */
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), 
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.6s;
+  visibility: visible;
+  opacity: 1;
+}
+
+.video-splash-container.exit-fade {
+  opacity: 0;
+  transform: scale(1.05);
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* Fullscreen Background Video/GIF */
+.splash-video-bg {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  z-index: 1;
+}
+
+.splash-video-bg.loading {
+  opacity: 0;
+}
+
+.splash-video-bg.loaded {
+  opacity: 1;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Loader Spinner Container */
+.splash-loader-spinner-container {
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 16px;
+  position: relative;
+  width: 320px;
+  padding: 40px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Glowing spinner ring */
+.spinner-glow-ring {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid rgba(231, 44, 131, 0.1);
+  border-top-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+  animation: spinnerRotate 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  position: absolute;
+  top: 40px;
+}
+
+.spinner-candy-icon {
+  font-size: 32px;
+  line-height: 1;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  animation: candyFloat 2s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  z-index: 6;
+}
+
+@keyframes spinnerRotate {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes candyFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.08); }
+}
+
+.spinner-title {
+  font-family: var(--font-heading), 'Nunito', sans-serif;
+  font-size: 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+  margin-top: 10px;
+}
+
+.spinner-text {
+  font-family: var(--font-body), 'Poppins', sans-serif;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Bottom-left Skip Button */
+.splash-skip-btn {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 12px 28px;
+  font-family: var(--font-nav), sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+}
+
+.splash-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4),
+              0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+.splash-skip-btn:active {
+  transform: translateY(-1px) scale(0.98);
+}
+
+.splash-skip-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.splash-skip-btn:hover svg {
+  transform: translateX(4px);
+}
+
+/* Mobile responsive layout */
+@media (max-width: 600px) {
+  .splash-skip-btn {
+    bottom: 24px;
+    left: 24px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

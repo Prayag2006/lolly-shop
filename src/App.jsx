@@ -22,9 +22,18 @@ import { Profile } from './pages/Profile';
 import { ResetPassword } from './pages/ResetPassword';
 import { TrackOrder } from './pages/TrackOrder';
 
+import { VideoSplash } from './components/VideoSplash';
+
 function App() {
+  const [showSplash, setShowSplash] = useState(() => {
+    return !sessionStorage.getItem('lolly_shop_splash_shown');
+  });
   const [cartOpen, setCartOpen] = useState(false);
   const [activeModalProduct, setActiveModalProduct] = useState(null);
+
+  if (showSplash) {
+    return <VideoSplash onComplete={() => setShowSplash(false)} />;
+  }
 
   return (
     <StoreProvider>
