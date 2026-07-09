@@ -7,23 +7,39 @@
 /* Add Success Banner */
 .add-success-banner {
   position: fixed;
-  top: -80px;
+  bottom: -100px; /* Hide off-screen at bottom */
   left: 50%;
-  transform: translateX(-50%);
-  background: var(--color-primary);
+  transform: translateX(-50%) scale(0.9);
+  background: rgba(13, 9, 21, 0.96); /* Elegant dark glass background */
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(231, 44, 131, 0.3); /* Neon pink outline glow */
   color: white;
-  padding: 14px 28px;
-  border-radius: var(--radius-pill);
-  box-shadow: 0 10px 35px rgba(231, 44, 131, 0.3);
-  font-weight: 800;
-  font-size: 14px;
-  z-index: 9999;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  padding: 14px 24px;
+  border-radius: 16px; /* Smooth card rounded corners */
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+              0 0 20px rgba(231, 44, 131, 0.15);
+  font-weight: 700;
+  font-size: 13.5px;
+  z-index: 99999;
+  width: 90%;
+  max-width: 380px; /* Prevent balloon wrapping shape */
+  text-align: center;
+  transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   pointer-events: none;
+  opacity: 0;
+  line-height: 1.5;
+}
+
+[data-theme='dark'] .add-success-banner {
+  background: rgba(20, 16, 28, 0.96);
+  border-color: rgba(231, 44, 131, 0.45);
 }
 
 .add-success-banner.visible {
-  top: 100px;
+  bottom: 40px; /* Slide up into viewport */
+  transform: translateX(-50%) scale(1);
+  opacity: 1;
 }
 
 /* Breadcrumbs */
