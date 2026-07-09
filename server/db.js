@@ -1,7 +1,15 @@
 import fs from 'fs';
 import path from 'path';
-import Database from 'better-sqlite3';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+
+const require = createRequire(import.meta.url);
+let Database;
+try {
+  Database = require('better-sqlite3');
+} catch (e) {
+  // SQLite is optional, so we ignore loading errors here
+}
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,8 +22,28 @@ let db;
 let sqlEnabled = false;
 
 const createDataDir = () => {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    
+    // In serverless environments, copy committed data files from the read-only source directory to /tmp
+    if (process.env.VERCEL) {
+      const srcDir = path.resolve(__dirname, 'data');
+      if (fs.existsSync(srcDir)) {
+        const files = fs.readdirSync(srcDir);
+        for (const file of files) {
+          const srcPath = path.join(srcDir, file);
+          const destPath = path.join(DATA_DIR, file);
+          if (fs.statSync(srcPath).isFile() && !fs.existsSync(destPath)) {
+            fs.copyFileSync(srcPath, destPath);
+            console.log(`Copied seed file to serverless storage: ${file}`);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error initializing serverless data directory:', err.message);
   }
 };
 
@@ -91,6 +119,11 @@ export const ensureDatabase = () => {
   if (db) return;
   try {
     createDataDir();
+    if (!Database) {
+      db = null;
+      sqlEnabled = false;
+      return;
+    }
     db = new Database(DB_PATH);
     initTables();
     sqlEnabled = true;
