@@ -1,5 +1,96 @@
 [
   {
+    "id": "ORD-794677",
+    "date": "8 Jul 2026",
+    "items": [
+      {
+        "id": "p-2",
+        "name": "Pascall Jet Planes",
+        "category": "Soft Lollies",
+        "mainCategory": "NZ Lollies",
+        "price": 7.9,
+        "rating": 4.8,
+        "reviewsCount": 154,
+        "description": "Take off with New Zealand's favorite jet plane gummies! A delicious mix of fruit flavors (raspberry, lime, orange, pineapple) with that classic firm Kiwi chew.",
+        "ingredients": "Sugar, Glucose Syrup, Water, Gelatin, Food Acid (Citric Acid), Flavors, Colors (102, 110, 122, 133, 142), Glazing Agent.",
+        "nutrition": {
+          "calories": "135 kcal",
+          "sugar": "26g",
+          "fat": "0g",
+          "protein": "1.5g"
+        },
+        "gradient": "linear-gradient(135deg, #FF3366 0%, #FF9933 100%)",
+        "image": "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": true,
+        "isNew": false,
+        "collections": [
+          "Kiwi Classics",
+          "Gummies",
+          "NZ Favorites"
+        ],
+        "weightPrices": {
+          "100g": 7.9,
+          "250g": 17.38,
+          "500g": 31.6,
+          "1kg": 59.25
+        },
+        "selectedWeight": "100g",
+        "quantity": 1
+      },
+      {
+        "id": "p-7",
+        "name": "Pascall Minties",
+        "category": "Soft Lollies",
+        "mainCategory": "NZ Lollies",
+        "price": 7.2,
+        "rating": 4.6,
+        "reviewsCount": 88,
+        "description": "\"It's moments like these you need Minties!\" Super chewy, refreshing white mint squares that keep your jaws busy and your breath fresh.",
+        "ingredients": "Sugar, Glucose Syrup, Vegetable Oil, Gelatin, Natural Mint Oils, Wheat Starch, Emulsifiers.",
+        "nutrition": {
+          "calories": "115 kcal",
+          "sugar": "21g",
+          "fat": "0.9g",
+          "protein": "0.8g"
+        },
+        "gradient": "linear-gradient(135deg, #1ad6fd 0%, #1d62f0 100%)",
+        "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+        "inStock": true,
+        "isPopular": false,
+        "isNew": false,
+        "collections": [
+          "Kiwi Classics",
+          "Retro",
+          "NZ Favorites"
+        ],
+        "weightPrices": {
+          "100g": 7.2,
+          "250g": 15.84,
+          "500g": 28.8,
+          "1kg": 54
+        },
+        "selectedWeight": "100g",
+        "quantity": 1
+      }
+    ],
+    "total": 34.1,
+    "shipping": 19,
+    "customer": {
+      "name": "Prayag",
+      "email": "prayagkansara05@gmail.com",
+      "phone": "09427499372",
+      "address": "56/5,type-3",
+      "city": "Gandhinagar",
+      "zip": "3820",
+      "postalCode": "3820"
+    },
+    "userEmail": "prayagkansara05@gmail.com",
+    "status": "Pending",
+    "paymentStatus": "Unpaid",
+    "createdAt": "2026-07-08T11:23:14.701Z"
+  },
+  {
     "id": "ORD-196988",
     "date": "8 Jul 2026",
     "items": [
