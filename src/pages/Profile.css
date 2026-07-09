@@ -302,6 +302,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
   border-top: 1.5px solid var(--color-border);
   padding-top: 16px;
   margin-top: 16px;
@@ -376,7 +378,7 @@
 
 @media (max-width: 768px) {
   .profile-container {
-    padding: 90px 20px 60px;
+    padding: 110px 20px 60px;
   }
 
   .profile-page-header h1 {
@@ -390,7 +392,7 @@
 
 @media (max-width: 576px) {
   .profile-container {
-    padding: 80px 14px 50px;
+    padding: 100px 14px 50px;
   }
   
   .profile-page-header h1 {
@@ -404,6 +406,11 @@
   .profile-order-card-header {
     flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .profile-order-card-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .profile-details-card {
@@ -424,7 +431,7 @@
 
 @media (max-width: 380px) {
   .profile-container {
-    padding: 72px 12px 40px;
+    padding: 90px 12px 40px;
   }
 
   .profile-page-header h1 {

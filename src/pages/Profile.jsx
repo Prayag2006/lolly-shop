@@ -153,11 +153,11 @@ export const Profile = () => {
                     ))}
                   </div>
 
-                  <div className="profile-order-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--color-border)', paddingTop: '14px', marginTop: '14px' }}>
+                  <div className="profile-order-card-footer">
                     <div>
                       {ord.status !== 'Cancelled' && (
                         <Link 
-                          to={`/track-order/${ord.id}`} 
+                           to={`/track-order/${ord.id}`} 
                           style={{ fontSize: '13px', fontWeight: '800', color: 'var(--color-primary)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         >
                           🚚 Track Delivery Live
