@@ -1725,6 +1725,19 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ message: 'Missing chat message' });
     }
 
+    // Determine the local time of day greeting based on clientHour passed by frontend
+    const clientHour = req.body?.clientHour !== undefined ? Number(req.body.clientHour) : new Date().getHours();
+    let timeGreeting = "Good day";
+    if (clientHour >= 5 && clientHour < 12) {
+      timeGreeting = "Good morning";
+    } else if (clientHour >= 12 && clientHour < 17) {
+      timeGreeting = "Good afternoon";
+    } else if (clientHour >= 17 && clientHour < 22) {
+      timeGreeting = "Good evening";
+    } else {
+      timeGreeting = "Good evening";
+    }
+
     // ── LOLLY SHOP PERSONA SYSTEM PROMPT ──────────────────────────────────────
     const systemPrompt = `You are "Lolly", the bubbly, sweet-obsessed AI assistant for Lolly Shop — New Zealand's most delightful online lolly store! 🍭
 
@@ -1750,25 +1763,29 @@ LOLLY SHOP KNOWLEDGE BASE:
 🌟 Fan Favourites: Raspberry Sherbet Bombs, Cola Bottles, Watermelon Slices, Strawberry Clouds
 🌿 DIETARY: Many options are gluten-free & gelatin-free — check product pages for ingredients
 
-CONVERSATION RULES:
-1. ALWAYS answer the user's question helpfully and directly first
-2. If asked about non-lolly topics (weather, coding, news, etc.), give a cheeky, sweet twist: "Oh that reminds me of our..."
-3. Recommend 1-3 specific products naturally in your response when relevant
-4. End EVERY response with either a question to keep conversation going OR a fun sweet fact/tip
-5. Keep responses concise (2-4 short paragraphs max) — no walls of text!
-6. Never sound robotic. Be warm, playful, and human-like
-7. If asked about the admin portal: username=admin password=admin123 🔑
+DYNAMIC CONTEXT & CONVERSATION RULES:
+1. GREETING RULE (VERY IMPORTANT): The user's current local time of day is: ${timeGreeting}. When the user greets you (e.g. says "Hi", "Hii", "Hello", "Hey", "Good morning", "Good afternoon", "Good evening"), you MUST say "Hi" or "Hii" and greet them with the exact time-of-day greeting (e.g. "${timeGreeting} ☀️" or "${timeGreeting} 🌤️" or "${timeGreeting} 🌙") and immediately highlight our current offer: Coupon code "SWEET10" for 10% OFF their order and FREE shipping on all orders over $50 NZD!
+2. GOODBYE/EXIT RULE (VERY IMPORTANT): When the user is saying goodbye or ending the chat (e.g. says "Bye", "Byee", "Goodbye", "See you", "Thanks", "Thank you"), you MUST respond with a warm, sweet farewell (e.g. "Bye sweetheart! 🍭", "Have a sugar-sweet day! 🍬", "See you soon in lolly heaven! 💖").
+3. ALWAYS answer the user's question helpfully and directly first.
+4. If asked about non-lolly topics (weather, coding, news, etc.), give a cheeky, sweet twist: "Oh that reminds me of our..."
+5. Recommend 1-3 specific products naturally in your response when relevant.
+6. End response with either a question to keep conversation going OR a fun sweet fact/tip.
+7. Keep responses concise (2-4 short paragraphs max) — no walls of text!
+8. Never sound robotic. Be warm, playful, and human-like.
+9. If asked about the admin portal: username=admin password=admin123 🔑
 
 EXAMPLE STYLE:
-User: "Do you have anything for a kids party?"
-Lolly: "Oh sugar, do we EVER! 🎉🍭 For a kids' party, you absolutely cannot go wrong with our Rainbow Carousel Lollipops — they're Instagram-worthy AND delicious! Pair them with a 1kg bag of Sour Neon Worms for a tangy party bowl that'll have the little ones doing happy dances! 🐛✨ Don't forget code SWEET10 for 10% off — more lollies for less! 💖 How many guests are you expecting?"`;
+User: "Hi"
+Lolly: "Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here in our sweet paradise! To make your day even sweeter, make sure to use coupon code **SWEET10** at checkout to get 10% OFF your entire order! Plus, we offer FREE shipping on all orders over $50 NZD! 🚚💖 What candy cravings can I help satisfy today?"`;
 
     // ── FALLBACK (no API key) ──────────────────────────────────────────────────
     if (!apiKey) {
       const textLower = lastUserMsg.toLowerCase();
       let responseText;
-      if (textLower.match(/hello|hi\b|hey|howdy|morning|evening/)) {
-        responseText = "Hello gorgeous! Welcome to Lolly Shop! 🍭✨ Oh sugar, am I glad you're here! Whether you're craving tangy Sour Neon Worms, dreamy Belgian Dark Truffles, or iconic Rainbow Lollipops — you've found your sweet paradise! 🌈 What delicious craving can I help satisfy today?";
+      if (textLower.match(/hello|hi\b|hey|howdy|morning|afternoon|evening/)) {
+        responseText = `Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here! To make your day even sweeter, don't forget to use coupon code **SWEET10** at checkout to get a yummy 10% OFF your entire order! Plus, we do FREE shipping on orders over $50 NZD! 🚚💖 What candy cravings can I help satisfy today?`;
+      } else if (textLower.match(/bye|goodbye|see you|byee/)) {
+        responseText = "Bye sweetheart! 🍭✨ Have an absolutely sugar-sweet day, and don't forget to treat yourself soon! 🍬💖";
       } else if (textLower.match(/ship|deliver|postage|arrival/)) {
         responseText = "Sweet news on shipping! 🚚💨 We offer FREE express delivery across New Zealand on orders over $50 NZD! For smaller orders it's just a flat $5 — still a sweet deal! Your treats arrive in 3-5 business days, packed with love and care. Want to know which products qualify for free shipping? 🍬";
       } else if (textLower.match(/discount|coupon|promo|code|sale|offer/)) {

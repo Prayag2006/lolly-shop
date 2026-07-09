@@ -16,11 +16,27 @@ const renderBotText = (text) => {
 
 export const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
+  
+  const getInitialGreeting = () => {
+    const clientHour = new Date().getHours();
+    let timeGreeting = "Hello gorgeous";
+    if (clientHour >= 5 && clientHour < 12) {
+      timeGreeting = "Good morning gorgeous";
+    } else if (clientHour >= 12 && clientHour < 17) {
+      timeGreeting = "Good afternoon gorgeous";
+    } else if (clientHour >= 17 && clientHour < 22) {
+      timeGreeting = "Good evening gorgeous";
+    } else {
+      timeGreeting = "Good evening gorgeous";
+    }
+    return `${timeGreeting}! 🍭✨ I'm **Lolly**, your personal sweet assistant at Lolly Shop NZ! To make your day even sweeter, make sure to use coupon code **SWEET10** at checkout to get a yummy **10% OFF** your entire order! Plus, we offer **FREE shipping** on NZ orders over $50! 🚚💖 What candy cravings can I help satisfy today?`;
+  };
+
   const [messages, setMessages] = useState([
     {
       id: 1,
       sender: 'bot',
-      text: "Hello gorgeous! 🍭✨ I'm **Lolly**, your personal sweet assistant at Lolly Shop NZ! Whether you're after tangy Sour Neon Worms, dreamy Belgian Dark Truffles, or the perfect party pack — I've got you covered! What sweet craving can I help with today? 💖",
+      text: getInitialGreeting(),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -68,7 +84,10 @@ export const ChatBot = () => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: conversationHistory })
+        body: JSON.stringify({ 
+          messages: conversationHistory,
+          clientHour: new Date().getHours()
+        })
       });
 
       if (!res.ok) throw new Error(`Server error ${res.status}`);
@@ -84,9 +103,23 @@ export const ChatBot = () => {
       console.error('Chatbot error:', err);
       // Rich local fallback
       const lower = trimmed.toLowerCase();
+      const clientHour = new Date().getHours();
+      let timeGreeting = "Good day";
+      if (clientHour >= 5 && clientHour < 12) {
+        timeGreeting = "Good morning";
+      } else if (clientHour >= 12 && clientHour < 17) {
+        timeGreeting = "Good afternoon";
+      } else if (clientHour >= 17 && clientHour < 22) {
+        timeGreeting = "Good evening";
+      } else {
+        timeGreeting = "Good evening";
+      }
+
       let fallback;
-      if (lower.match(/hello|hi\b|hey/)) {
-        fallback = "Hello sweetheart! 🍭✨ So glad you're here! Ask me anything about our lollies, shipping, or current deals and I'll sweeten your day!";
+      if (lower.match(/hello|hi\b|hey|morning|afternoon|evening/)) {
+        fallback = `Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here in our sweet paradise! Don't forget to use coupon code **SWEET10** at checkout to get a yummy 10% OFF your entire order! Plus, we offer FREE shipping on all NZ orders over $50! 🚚💖 What candy cravings can I help satisfy today?`;
+      } else if (lower.match(/bye|goodbye|see you|byee/)) {
+        fallback = "Bye sweetheart! 🍭✨ Have an absolutely sugar-sweet day, and don't forget to treat yourself soon! 🍬💖";
       } else if (lower.match(/ship|deliver/)) {
         fallback = "Sweet news! 🚚 FREE express shipping on NZ orders over $50! Smaller orders ship for just $5 flat. Your treats arrive in 3-5 business days. Which products are you eyeing? 🍬";
       } else if (lower.match(/discount|code|promo/)) {
