@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Sun, Moon, Menu, X, User, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Menu, X, User, ChevronDown } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import './Navbar.css';
 
@@ -48,7 +48,7 @@ const megaMenuData = [
 ];
 
 export const Navbar = ({ onCartOpen }) => {
-  const { theme, toggleTheme, getCartCount, currentUser, logout, categories, settings } = useStore();
+  const { theme, getCartCount, currentUser, logout, categories, settings } = useStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [mobileCategoriesOpen, setMobileCategoriesOpen] = useState(false);
@@ -168,10 +168,6 @@ export const Navbar = ({ onCartOpen }) => {
 
         {/* Nav Actions */}
         <div className="nav-actions">
-          {/* Theme Toggle */}
-          <button className="icon-btn theme-toggle" onClick={toggleTheme} aria-label="Toggle Theme">
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          </button>
 
           {/* User Auth Action (Profile dropdown if logged in, login icon if guest) */}
           {currentUser ? (

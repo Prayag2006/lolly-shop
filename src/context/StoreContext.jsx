@@ -56,10 +56,7 @@ export const StoreProvider = ({ children }) => {
     return [];
   });
 
-  const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('hc_theme');
-    return saved ? saved : 'light';
-  });
+  const [theme] = useState('light');
 
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('hc_currentUser');
@@ -182,9 +179,9 @@ export const StoreProvider = ({ children }) => {
   }, [categories]);
 
   useEffect(() => {
-    localStorage.setItem('hc_theme', theme);
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
+    localStorage.setItem('hc_theme', 'light');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -193,10 +190,6 @@ export const StoreProvider = ({ children }) => {
       localStorage.removeItem('hc_currentUser');
     }
   }, [currentUser]);
-
-  const toggleTheme = () => {
-    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
-  };
 
   // Cart operations
   const getWeightPrice = (product, weight) => {
@@ -670,7 +663,6 @@ export const StoreProvider = ({ children }) => {
         cart,
         orders,
         theme,
-        toggleTheme,
         addToCart,
         updateCartQty,
         removeFromCart,
