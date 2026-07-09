@@ -407,6 +407,14 @@
     width: 38px;
     height: 38px;
   }
+
+  .mobile-nav-drawer {
+    top: 63px;
+  }
+
+  .mobile-nav-drawer.open {
+    max-height: calc(100vh - 63px);
+  }
 }
 
 @media (max-width: 380px) {
@@ -422,13 +430,21 @@
     width: 34px;
     height: 34px;
   }
+
+  .mobile-nav-drawer {
+    top: 59px;
+  }
+
+  .mobile-nav-drawer.open {
+    max-height: calc(100vh - 59px);
+  }
 }
 
 /* Mobile drawer improvements */
 @media (max-width: 768px) {
   .mobile-nav-links {
-    padding: 20px 16px;
-    gap: 4px;
+    padding: 32px 16px 24px 16px;
+    gap: 8px;
   }
 
   .mobile-nav-link {
