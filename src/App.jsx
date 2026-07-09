@@ -8,6 +8,7 @@ import { CartDrawer } from './components/CartDrawer';
 import { ProductModal } from './components/ProductModal';
 import { ChatBot } from './components/ChatBot';
 import { PromoModal } from './components/PromoModal';
+import { CookieConsent } from './components/CookieConsent';
 
 // Pages
 import { Home } from './pages/Home';
@@ -119,6 +120,7 @@ function App() {
 
           <ChatBot />
           <PromoModal />
+          <CookieConsent />
         </div>
       </Router>
     </StoreProvider>

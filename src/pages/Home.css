@@ -380,6 +380,7 @@
 .testimonial-dots {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: 8px;
   margin-top: 40px;
 }
@@ -387,6 +388,7 @@
 .t-dot {
   width: 10px;
   height: 10px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: rgba(255, 117, 140, 0.2);
   border: none;
@@ -397,6 +399,7 @@
 .t-dot.active {
   background: var(--color-primary);
   width: 24px;
+  height: 10px;
   border-radius: var(--radius-pill);
 }
 
