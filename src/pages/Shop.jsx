@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
+import { CustomDropdown } from '../components/CustomDropdown';
 import './Shop.css';
 
 const parentGroups = {
@@ -251,16 +252,17 @@ export const Shop = ({ onProductClick }) => {
             <SlidersHorizontal size={16} />
             <span>Filters</span>
           </button>
-          <select
-            className="mobile-sort-select"
+          <CustomDropdown
+            options={[
+              { value: 'popular', label: 'Popular' },
+              { value: 'price-low', label: 'Price: Low' },
+              { value: 'price-high', label: 'Price: High' },
+              { value: 'name', label: 'A–Z' },
+            ]}
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-          >
-            <option value="popular">Popular</option>
-            <option value="price-low">Price: Low</option>
-            <option value="price-high">Price: High</option>
-            <option value="name">A–Z</option>
-          </select>
+            onChange={setSortBy}
+            className="mobile-sort-select-custom"
+          />
           <div className="results-count">
             {filteredProducts.length} treats
           </div>
@@ -308,19 +310,17 @@ export const Shop = ({ onProductClick }) => {
             {/* Sort options */}
             <div className="filter-group">
               <h3>Sort By</h3>
-              <div className="sort-select-wrapper">
-                <ArrowUpDown size={16} />
-                <select 
-                  value={sortBy} 
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="sort-select"
-                >
-                  <option value="popular">Popularity (Rating)</option>
-                  <option value="price-low">Price: Low to High</option>
-                  <option value="price-high">Price: High to Low</option>
-                  <option value="name">Alphabetical (A-Z)</option>
-                </select>
-              </div>
+              <CustomDropdown
+                options={[
+                  { value: 'popular', label: 'Popularity (Rating)' },
+                  { value: 'price-low', label: 'Price: Low to High' },
+                  { value: 'price-high', label: 'Price: High to Low' },
+                  { value: 'name', label: 'Alphabetical (A-Z)' },
+                ]}
+                value={sortBy}
+                onChange={setSortBy}
+                icon={ArrowUpDown}
+              />
             </div>
 
             {/* Availability */}

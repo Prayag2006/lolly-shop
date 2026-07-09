@@ -258,20 +258,14 @@
   color: var(--color-primary);
 }
 
-.mobile-sort-select {
+.mobile-sort-select-custom {
   flex: 1;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-white);
-  color: var(--color-text);
-  padding: 10px 14px;
-  border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-family: var(--font-body);
-  font-weight: 600;
-  outline: none;
-  cursor: pointer;
-  appearance: none;
   max-width: 160px;
+}
+
+.mobile-sort-select-custom .lolly-dropdown-toggle {
+  padding: 10px 14px;
+  font-size: 13px;
 }
 
 .results-count {
@@ -414,33 +408,7 @@
 }
 
 /* ===== SORT DROPDOWN (Sidebar) ===== */
-.sort-select-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.sort-select-wrapper svg {
-  position: absolute;
-  left: 14px;
-  color: var(--color-text-light);
-  pointer-events: none;
-}
-
-.sort-select {
-  width: 100%;
-  border: 1.5px solid var(--color-border);
-  background: var(--color-white);
-  color: var(--color-text);
-  padding: 11px 16px 11px 42px;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
-  font-family: var(--font-body);
-  outline: none;
-  cursor: pointer;
-  appearance: none;
-  font-weight: 600;
-}
+/* Handled by .lolly-dropdown classes in CustomDropdown.css */
 
 /* ===== CHECKBOXES ===== */
 .filter-checkbox-label {
