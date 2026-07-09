@@ -21,6 +21,8 @@ import { About } from './pages/About';
 import { Profile } from './pages/Profile';
 import { ResetPassword } from './pages/ResetPassword';
 import { TrackOrder } from './pages/TrackOrder';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsOfService } from './pages/TermsOfService';
 
 import { VideoSplash } from './components/VideoSplash';
 
@@ -90,6 +92,14 @@ function App() {
             <Route 
               path="/admin" 
               element={<Admin />} 
+            />
+            <Route 
+              path="/privacy" 
+              element={<PrivacyPolicy />} 
+            />
+            <Route 
+              path="/terms" 
+              element={<TermsOfService />} 
             />
           </Routes>
 

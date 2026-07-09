@@ -392,15 +392,19 @@ app.post('/api/products/:id/reviews', async (req, res) => {
   try {
     const { userName, rating, comment } = req.body;
     const rate = Number(rating);
-    if (!userName || isNaN(rate) || rate < 1 || rate > 5 || !comment) {
+    if (!userName?.trim() || isNaN(rate) || rate < 1 || rate > 5 || !comment?.trim()) {
       return res.status(400).json({ message: 'Missing or invalid review fields' });
     }
+
+    // Limit lengths to prevent overflow/DoS exploits
+    const cleanUserName = String(userName).trim().slice(0, 100);
+    const cleanComment = String(comment).trim().slice(0, 1000);
 
     if (sqlAvailable()) {
       const product = await Product.findById(req.params.id);
       if (!product) return res.status(404).json({ message: 'Product not found' });
       
-      const newReview = { userName, rating: rate, comment };
+      const newReview = { userName: cleanUserName, rating: rate, comment: cleanComment };
       product.reviews = product.reviews || [];
       product.reviews.push(newReview);
       
@@ -420,9 +424,9 @@ app.post('/api/products/:id/reviews', async (req, res) => {
       product.reviews = product.reviews || [];
       const newReview = {
         id: `r-${Date.now()}`,
-        userName,
+        userName: cleanUserName,
         rating: rate,
-        comment,
+        comment: cleanComment,
         createdAt: new Date().toISOString()
       };
       product.reviews.push(newReview);
@@ -1862,15 +1866,31 @@ app.get('/api/contacts', async (req, res) => {
 
 app.post('/api/contacts', async (req, res) => {
   try {
+    const { name, email, phone, subject, message } = req.body;
+    
+    // Validate inputs
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
+      return res.status(400).json({ message: 'Name, email, and message are required fields' });
+    }
+
+    // Sanitize values and enforce length limits to prevent buffer overflow/DoS
+    const cleanSubmission = {
+      name: String(name).trim().slice(0, 100),
+      email: String(email).trim().toLowerCase().slice(0, 100),
+      phone: phone ? String(phone).trim().slice(0, 30) : '',
+      subject: subject ? String(subject).trim().slice(0, 150) : 'General Inquiry',
+      message: String(message).trim().slice(0, 2000)
+    };
+
     if (sqlAvailable()) {
-      const newSubmission = new Contact(req.body);
+      const newSubmission = new Contact(cleanSubmission);
       await newSubmission.save();
       res.status(201).json(newSubmission);
     } else {
       const submissions = readLocalData('contacts.json', []);
       const newSubmission = {
         id: `c-${Date.now()}`,
-        ...req.body,
+        ...cleanSubmission,
         createdAt: new Date().toISOString()
       };
       submissions.unshift(newSubmission);
