@@ -258,64 +258,86 @@
 .details-qty-wrapper {
   display: flex;
   align-items: center;
-  border: 2px solid var(--color-primary);
-  background: white;
-  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
   overflow: hidden;
   height: 48px;
+  padding: 4px;
+  width: 140px;
+  flex-shrink: 0;
+  border: 1.5px solid transparent;
+  transition: all var(--transition-normal);
+}
+
+[data-theme='dark'] .details-qty-wrapper {
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .qty-adjust-btn {
-  background: var(--color-primary);
-  color: white;
+  background: transparent;
+  color: var(--color-text);
   border: none;
   width: 40px;
-  height: 100%;
+  height: 40px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .qty-adjust-btn:hover {
-  opacity: 0.9;
+  background: var(--color-white);
+  color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme='dark'] .qty-adjust-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-primary);
 }
 
 .qty-value {
-  width: 44px;
+  flex-grow: 1;
   text-align: center;
   font-family: var(--font-heading);
   font-size: 16px;
   font-weight: 800;
   color: var(--color-text);
+  user-select: none;
 }
 
 .details-add-to-cart-btn {
   flex-grow: 1;
-  background: transparent;
-  color: var(--color-primary);
-  border: 2px solid var(--color-primary);
-  border-radius: 6px;
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  border-radius: 12px;
   height: 48px;
   font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.5px;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
 }
 
 .details-add-to-cart-btn:hover:not(.disabled) {
-  background: var(--color-primary);
-  color: white;
+  transform: translateY(-1.5px);
   box-shadow: var(--glow-primary);
+}
+
+.details-add-to-cart-btn:active:not(.disabled) {
+  transform: translateY(0);
 }
 
 .details-add-to-cart-btn.disabled {
   background: #cbd5e1;
   color: #94a3b8;
-  border-color: #cbd5e1;
+  border: none;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 /* Accordions */
