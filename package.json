@@ -29,6 +29,9 @@
   "optionalDependencies": {
     "better-sqlite3": "^8.4.0"
   },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
