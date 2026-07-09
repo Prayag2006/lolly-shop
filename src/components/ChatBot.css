@@ -486,12 +486,14 @@
 @media (max-width: 576px) {
   .chatbot-wrapper {
     bottom: 20px;
-    right: 16px;
+    left: 16px;
+    right: auto;
   }
 
   .chatbot-panel {
     width: calc(100vw - 32px);
-    right: -16px;
+    left: 0;
+    right: auto;
     max-width: 100%;
   }
 }
@@ -500,7 +502,8 @@
 @media (max-width: 480px) {
   .chatbot-wrapper {
     bottom: 16px;
-    right: 16px;
+    left: 16px;
+    right: auto;
   }
 
   .chatbot-toggle {
@@ -587,10 +590,16 @@
 
 /* Very small phones */
 @media (max-width: 380px) {
+  .chatbot-wrapper {
+    bottom: 14px;
+    left: 14px;
+    right: auto;
+  }
+
   .chatbot-toggle {
     width: 52px;
     height: 52px;
-    bottom: 14px;
-    right: 14px;
+    bottom: auto;
+    right: auto;
   }
 }
