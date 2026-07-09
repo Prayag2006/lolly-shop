@@ -1782,9 +1782,9 @@ Lolly: "Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here in our swee
     if (!apiKey) {
       const textLower = lastUserMsg.toLowerCase();
       let responseText;
-      if (textLower.match(/hello|hi\b|hey|howdy|morning|afternoon|evening/)) {
+      if (textLower.match(/hello|hi+|hey+|howdy|morning|afternoon|evening|yo+/)) {
         responseText = `Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here! To make your day even sweeter, don't forget to use coupon code **SWEET10** at checkout to get a yummy 10% OFF your entire order! Plus, we do FREE shipping on orders over $50 NZD! 🚚💖 What candy cravings can I help satisfy today?`;
-      } else if (textLower.match(/bye|goodbye|see you|byee/)) {
+      } else if (textLower.match(/bye+|goodbye|see you|thanks|thank/)) {
         responseText = "Bye sweetheart! 🍭✨ Have an absolutely sugar-sweet day, and don't forget to treat yourself soon! 🍬💖";
       } else if (textLower.match(/ship|deliver|postage|arrival/)) {
         responseText = "Sweet news on shipping! 🚚💨 We offer FREE express delivery across New Zealand on orders over $50 NZD! For smaller orders it's just a flat $5 — still a sweet deal! Your treats arrive in 3-5 business days, packed with love and care. Want to know which products qualify for free shipping? 🍬";

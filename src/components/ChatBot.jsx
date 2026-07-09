@@ -116,9 +116,9 @@ export const ChatBot = () => {
       }
 
       let fallback;
-      if (lower.match(/hello|hi\b|hey|morning|afternoon|evening/)) {
+      if (lower.match(/hello|hi+|hey+|howdy|morning|afternoon|evening|yo+/)) {
         fallback = `Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here in our sweet paradise! Don't forget to use coupon code **SWEET10** at checkout to get a yummy 10% OFF your entire order! Plus, we offer FREE shipping on all NZ orders over $50! 🚚💖 What candy cravings can I help satisfy today?`;
-      } else if (lower.match(/bye|goodbye|see you|byee/)) {
+      } else if (lower.match(/bye+|goodbye|see you|thanks|thank/)) {
         fallback = "Bye sweetheart! 🍭✨ Have an absolutely sugar-sweet day, and don't forget to treat yourself soon! 🍬💖";
       } else if (lower.match(/ship|deliver/)) {
         fallback = "Sweet news! 🚚 FREE express shipping on NZ orders over $50! Smaller orders ship for just $5 flat. Your treats arrive in 3-5 business days. Which products are you eyeing? 🍬";
