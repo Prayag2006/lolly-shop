@@ -348,9 +348,12 @@ export const Login = () => {
 
           {/* Dynamic Switch Actions under form */}
           {mode === 'login' && (
-            <div className="login-options-links" style={{ justifyContent: 'center' }}>
+            <div className="login-options-links">
               <button type="button" className="auth-toggle-link" onClick={() => setMode('register')}>
                 Create an account
+              </button>
+              <button type="button" className="auth-toggle-link" onClick={() => setMode('forgot')}>
+                Forgot password?
               </button>
             </div>
           )}
