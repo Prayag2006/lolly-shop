@@ -2120,7 +2120,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       }
     }
     if (!clientOrigin) {
-      clientOrigin = process.env.NODE_ENV === 'production' ? 'https://bestlollyshop.co.nz' : 'http://localhost:5173';
+      clientOrigin = process.env.NODE_ENV === 'production' ? 'https://www.bestlollyshop.co.nz' : 'http://localhost:5173';
     }
 
     const resetLink = `${clientOrigin}/reset-password?token=${token}`;
