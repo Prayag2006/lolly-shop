@@ -4,6 +4,15 @@ import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import dns from 'dns';
+
+dns.setDefaultResultOrder('ipv4first');
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+  console.log('Failed to set DNS servers in db.js:', e.message);
+}
+
 import { Product as MongoProduct } from './models/Product.js';
 import { Brand as MongoBrand } from './models/Brand.js';
 import { User as MongoUser } from './models/User.js';
