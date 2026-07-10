@@ -32,7 +32,6 @@ export const Checkout = () => {
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [verificationError, setVerificationError] = useState('');
   const [redirectingToStripe, setRedirectingToStripe] = useState(false);
-  const [selectedGateway, setSelectedGateway] = useState('stripe'); // 'stripe' or 'eway'
   const [redirectingToGateway, setRedirectingToGateway] = useState(false);
 
   // Form Validations
@@ -47,9 +46,63 @@ export const Checkout = () => {
     );
   };
 
+  // Shipping Method States
+  const [shippingFee, setShippingFee] = useState(19.00); // Default flat rate
+  const [shippingOptions, setShippingOptions] = useState([]);
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [loadingShipping, setLoadingShipping] = useState(false);
+  const [shippingError, setShippingError] = useState('');
+
+  // Fetch Shipping Rates from backend
+  const fetchShippingRates = async (address, city, zip) => {
+    setLoadingShipping(true);
+    setShippingError('');
+    try {
+      const response = await fetch('/api/calculate-shipping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ address, city, zip, items: cart })
+      });
+      if (!response.ok) {
+        throw new Error('Failed to fetch courier prices.');
+      }
+      const data = await response.json();
+      if (data.rates && data.rates.length > 0) {
+        setShippingOptions(data.rates);
+        // Default to the first option
+        const firstOption = data.rates[0];
+        setSelectedOption(firstOption);
+        setShippingFee(firstOption.price);
+      } else {
+        throw new Error('No shipping options returned.');
+      }
+    } catch (err) {
+      console.error('Error fetching shipping rates:', err);
+      setShippingError('Could not calculate shipping rates automatically. Using flat rate.');
+      setShippingOptions([]);
+      setSelectedOption(null);
+      setShippingFee(19.00);
+    } finally {
+      setLoadingShipping(false);
+    }
+  };
+
+  // Automatically recalculate shipping when form details are complete
+  useEffect(() => {
+    if (isShippingValid()) {
+      const delayDebounce = setTimeout(() => {
+        fetchShippingRates(shippingForm.address, shippingForm.city, shippingForm.zip);
+      }, 600);
+      return () => clearTimeout(delayDebounce);
+    } else {
+      setShippingOptions([]);
+      setSelectedOption(null);
+      setShippingFee(19.00);
+    }
+  }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
+
   // Pricing math
   const subtotal = getCartTotal();
-  const shippingFee = 19.00; // Flat $19 delivery charge on any order
   const discountAmt = (subtotal * discountPercent) / 100;
   const finalTotal = subtotal - discountAmt + shippingFee;
 
@@ -86,9 +139,7 @@ export const Checkout = () => {
     setRedirectingToGateway(true);
 
     try {
-      const endpoint = selectedGateway === 'eway' 
-        ? '/api/create-eway-access-code' 
-        : '/api/create-checkout-session';
+      const endpoint = '/api/create-checkout-session';
 
       const response = await fetch(endpoint, {
         method: 'POST',
@@ -97,18 +148,19 @@ export const Checkout = () => {
           customerDetails: shippingForm,
           items: cart,
           finalTotal: finalTotal,
-          shippingFee: shippingFee
+          shippingFee: shippingFee,
+          deliveryCompany: selectedOption ? selectedOption.name : 'NZ Post Courier'
         })
       });
       const data = await response.json();
       if (response.ok && data.url) {
         window.location.href = data.url;
       } else {
-        setSubmitError(data.message || `Failed to redirect to ${selectedGateway === 'eway' ? 'eWay' : 'Stripe'} Payment gateway. Please try again.`);
+        setSubmitError(data.message || 'Failed to redirect to Stripe Payment gateway. Please try again.');
         setRedirectingToGateway(false);
       }
     } catch (err) {
-      console.error(`Error redirecting to ${selectedGateway}:`, err);
+      console.error('Error redirecting to Stripe:', err);
       setSubmitError('A connection error occurred. Please verify your internet connection and try again.');
       setRedirectingToGateway(false);
     }
@@ -119,7 +171,6 @@ export const Checkout = () => {
     const status = params.get('status');
     const sessionId = params.get('session_id');
     const orderId = params.get('order_id');
-    const gateway = params.get('gateway');
 
     if (status === 'success' && sessionId && orderId) {
       setVerifyingPayment(true);
@@ -127,9 +178,7 @@ export const Checkout = () => {
       
       const verifyPayment = async () => {
         try {
-          const endpoint = gateway === 'eway' 
-            ? `/api/orders/${orderId}/confirm-eway-payment` 
-            : `/api/orders/${orderId}/confirm-payment`;
+          const endpoint = `/api/orders/${orderId}/confirm-payment`;
 
           const res = await fetch(endpoint, {
             method: 'PUT',
@@ -277,6 +326,75 @@ export const Checkout = () => {
                   </div>
                 </div>
 
+                {/* NZ Post Shipping Method Selector */}
+                {isShippingValid() && (
+                  <div className="shipping-methods-section" style={{ marginTop: '25px', marginBottom: '25px' }}>
+                    <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2d2645', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🚚 NZ Post Delivery Options
+                    </h3>
+                    
+                    {loadingShipping ? (
+                      <div className="shipping-loading-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '10px' }}>
+                        <div className="spinner-small" style={{
+                          width: '20px',
+                          height: '20px',
+                          border: '2px solid rgba(231, 44, 131, 0.1)',
+                          borderLeftColor: 'var(--color-primary)',
+                          borderRadius: '50%',
+                          animation: 'spin 1s linear infinite'
+                        }} />
+                        <span style={{ fontSize: '13px', color: '#615a75' }}>Calculating delivery prices with NZ Post...</span>
+                      </div>
+                    ) : shippingError ? (
+                      <div className="shipping-error-msg" style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: '#b91c1c', fontSize: '13px' }}>
+                        ⚠️ {shippingError}
+                      </div>
+                    ) : (
+                      <div className="shipping-options-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {shippingOptions.map((option) => (
+                          <label 
+                            key={option.id} 
+                            className={`shipping-option-card ${selectedOption?.id === option.id ? 'active' : ''}`}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '14px 18px',
+                              background: selectedOption?.id === option.id ? 'rgba(231, 44, 131, 0.06)' : 'rgba(255, 255, 255, 0.5)',
+                              border: selectedOption?.id === option.id ? '2px solid var(--color-primary)' : '1px solid rgba(0, 0, 0, 0.08)',
+                              borderRadius: '12px',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                            onClick={() => {
+                              setSelectedOption(option);
+                              setShippingFee(option.price);
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <input 
+                                type="radio" 
+                                name="shipping_option" 
+                                checked={selectedOption?.id === option.id}
+                                onChange={() => {}}
+                                style={{ accentColor: 'var(--color-primary)', cursor: 'pointer' }}
+                              />
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', textAlign: 'left' }}>
+                                <span style={{ fontWeight: '700', fontSize: '14px', color: '#2d2645' }}>{option.name}</span>
+                                <span style={{ fontSize: '11px', color: '#8d879e' }}>📅 Delivery: {option.eta}</span>
+                              </div>
+                            </div>
+                            <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--color-primary)' }}>
+                              ${option.price.toFixed(2)}
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="form-actions">
                   <button
                     type="submit"
@@ -325,18 +443,13 @@ export const Checkout = () => {
                   <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
                     Payment Method
                   </h3>
-                  <div className="payment-options-container">
+                  <div className="payment-options-container" style={{ cursor: 'default' }}>
                     {/* Option 1: Stripe */}
                     <div 
-                      className={`payment-row ${selectedGateway === 'stripe' ? 'active' : ''}`}
-                      onClick={() => setSelectedGateway('stripe')}
+                      className="payment-row active"
+                      style={{ cursor: 'default' }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div className="payment-radio-circle">
-                          {selectedGateway === 'stripe' && (
-                            <div className="payment-radio-dot" />
-                          )}
-                        </div>
                         <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
                           Credit / Debit Card (Stripe)
                         </span>
@@ -386,98 +499,21 @@ export const Checkout = () => {
                       </div>
                     </div>
 
-                    {selectedGateway === 'stripe' && (
-                      <div className="gateway-drawer stripe">
-                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                          <div className="drawer-icon-box stripe">
-                            <ShieldCheck size={20} style={{ flexShrink: 0 }} />
-                          </div>
-                          <div style={{ textAlign: 'left' }}>
-                            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
-                              Stripe Secure Checkout
-                            </h4>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                              You'll be redirected to a secure, 256-bit SSL encrypted Stripe portal to enter your card details. Lolly Shop never stores your private payment credentials.
-                            </p>
-                          </div>
+                    <div className="gateway-drawer stripe" style={{ display: 'block' }}>
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                        <div className="drawer-icon-box stripe">
+                          <ShieldCheck size={20} style={{ flexShrink: 0 }} />
                         </div>
-                      </div>
-                    )}
-
-                    {/* Option 2: eWay */}
-                    <div 
-                      className={`payment-row ${selectedGateway === 'eway' ? 'active' : ''}`}
-                      onClick={() => setSelectedGateway('eway')}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <div className="payment-radio-circle">
-                          {selectedGateway === 'eway' && (
-                            <div className="payment-radio-dot" />
-                          )}
-                        </div>
-                        <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
-                          Secure Web Portal (eWay)
-                        </span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: '800',
-                          color: '#007bc4',
-                          marginRight: '6px',
-                          letterSpacing: '-0.3px',
-                          fontStyle: 'italic'
-                        }}>eWay Rapid</span>
-                        {/* Visa badge */}
-                        <div style={{
-                          background: 'white',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(0,0,0,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          height: '18px'
-                        }}>
-                          <span style={{ color: '#1a1f71', fontWeight: '900', fontSize: '9px', fontStyle: 'italic', letterSpacing: '-0.3px', lineHeight: 1 }}>VISA</span>
-                        </div>
-                        {/* Mastercard badge */}
-                        <div style={{
-                          background: 'white',
-                          padding: '2px 5px',
-                          borderRadius: '4px',
-                          border: '1px solid rgba(0,0,0,0.1)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          height: '18px',
-                          width: '28px'
-                        }}>
-                          <div style={{ display: 'flex', width: '16px', height: '10px', position: 'relative' }}>
-                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eb001b', position: 'absolute', left: 0 }} />
-                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f00', position: 'absolute', right: 0, opacity: 0.85 }} />
-                          </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
+                            Stripe Secure Checkout
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                            You'll be redirected to a secure, 256-bit SSL encrypted Stripe portal to enter your card details. Lolly Shop never stores your private payment credentials.
+                          </p>
                         </div>
                       </div>
                     </div>
-
-                    {selectedGateway === 'eway' && (
-                      <div className="gateway-drawer">
-                        <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                          <div className="drawer-icon-box eway">
-                            <ShieldCheck size={20} style={{ flexShrink: 0 }} />
-                          </div>
-                          <div style={{ textAlign: 'left' }}>
-                            <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
-                              eWay Tier-1 PCI-DSS Secure Connection
-                            </h4>
-                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                              You'll be redirected to eWay's high-speed secure portal to finalize payment. Verified with industry-standard PCI DSS Tier 1 compliance.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -510,16 +546,7 @@ export const Checkout = () => {
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary place-btn"
-                      style={{
-                        background: selectedGateway === 'eway' 
-                          ? 'linear-gradient(135deg, #007bc4 0%, #00a4e4 100%)'
-                          : 'linear-gradient(135deg, #635bff 0%, #8f85ff 100%)',
-                        border: 'none',
-                        boxShadow: selectedGateway === 'eway'
-                          ? '0 6px 20px rgba(0, 123, 196, 0.3)'
-                          : '0 6px 20px rgba(99, 91, 255, 0.3)'
-                      }}
+                      className="btn btn-primary place-btn stripe-pay-btn"
                       disabled={redirectingToGateway}
                     >
                       {redirectingToGateway ? (
@@ -532,10 +559,13 @@ export const Checkout = () => {
                             borderRadius: '50%',
                             animation: 'spin 0.6s linear infinite'
                           }} />
-                          <span>Connecting to {selectedGateway === 'eway' ? 'eWay' : 'Stripe'}...</span>
+                          <span>Connecting to Stripe...</span>
                         </div>
                       ) : (
-                        <span>Pay Securely with {selectedGateway === 'eway' ? 'eWay' : 'Stripe'} (${finalTotal.toFixed(2)})</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                          <Lock size={16} style={{ flexShrink: 0, opacity: 0.9 }} />
+                          <span>Pay Securely with Stripe (${finalTotal.toFixed(2)})</span>
+                        </div>
                       )}
                     </button>
                   </div>

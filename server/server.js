@@ -807,9 +807,260 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
+// Calculate live shipping rates using NZ Post API (or simulated fallback)
+app.post('/api/calculate-shipping', async (req, res) => {
+  try {
+    const { address, city, zip, items } = req.body;
+
+    if (!address || !city || !zip) {
+      return res.status(400).json({ message: 'Address, city, and postcode are required to calculate shipping.' });
+    }
+
+    // 1. Calculate weight
+    let totalWeightKg = 0;
+    if (Array.isArray(items)) {
+      items.forEach(item => {
+        const qty = Number(item.quantity || 1);
+        const weightStr = (item.selectedWeight || '100g').toLowerCase();
+        
+        let itemWeightKg = 0.1; // Default
+        if (weightStr.includes('100g')) {
+          itemWeightKg = 0.1;
+        } else if (weightStr.includes('250g')) {
+          itemWeightKg = 0.25;
+        } else if (weightStr.includes('500g')) {
+          itemWeightKg = 0.5;
+        } else if (weightStr.includes('1kg')) {
+          itemWeightKg = 1.0;
+        } else {
+          // Parse numerical weight if available, e.g. "200g" -> 0.2
+          const numMatch = weightStr.match(/(\d+(?:\.\d+)?)\s*(g|kg)/);
+          if (numMatch) {
+            const val = parseFloat(numMatch[1]);
+            const unit = numMatch[2];
+            itemWeightKg = unit === 'g' ? val / 1000 : val;
+          }
+        }
+        totalWeightKg += itemWeightKg * qty;
+      });
+    }
+
+    // Round weight to 3 decimal places
+    totalWeightKg = Math.round(totalWeightKg * 1000) / 1000;
+    if (totalWeightKg <= 0) totalWeightKg = 0.1;
+
+    // 2. Estimate dimensions
+    let lengthCm = 15;
+    let widthCm = 15;
+    let heightCm = 5;
+
+    if (totalWeightKg > 0.5 && totalWeightKg <= 2.0) {
+      lengthCm = 20;
+      widthCm = 20;
+      heightCm = 10;
+    } else if (totalWeightKg > 2.0) {
+      lengthCm = 30;
+      widthCm = 30;
+      heightCm = 20;
+    }
+
+    // 3. Check environment credentials
+    const clientId = process.env.NZ_POST_CLIENT_ID;
+    const clientSecret = process.env.NZ_POST_CLIENT_SECRET;
+    const accountNumber = process.env.NZ_POST_ACCOUNT_NUMBER;
+    const siteCode = process.env.NZ_POST_SITE_CODE;
+    const env = (process.env.NZ_POST_ENVIRONMENT || 'sandbox').toLowerCase();
+
+    // If client ID or secret is missing, use mock fallback rates
+    if (!clientId || !clientSecret || !accountNumber) {
+      console.log('NZ Post API credentials missing. Running in Simulated (Fallback) Mode.');
+      return res.json({
+        mode: 'simulated',
+        rates: getSimulatedRates(zip, city, totalWeightKg)
+      });
+    }
+
+    // Determine correct endpoints
+    const oauthUrl = 'https://oauth.nzpost.co.nz/as/token.oauth2';
+    const baseShippingUrl = env === 'production' 
+      ? 'https://api.nzpost.co.nz/shippingoptions/2.0/domestic'
+      : 'https://api.uat.nzpost.co.nz/shippingoptions/2.0/domestic';
+
+    // 4. Authenticate with NZ Post
+    const authParams = new URLSearchParams();
+    authParams.append('grant_type', 'client_credentials');
+    authParams.append('client_id', clientId);
+    authParams.append('client_secret', clientSecret);
+
+    const tokenResponse = await fetch(oauthUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: authParams
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      throw new Error(`Failed to obtain access token from NZ Post OAuth service: ${errorText}`);
+    }
+
+    const tokenData = await tokenResponse.json();
+    const accessToken = tokenData.access_token;
+
+    // 5. Query NZ Post ShippingOptions API
+    // NZ Post requires standard fields: account_information, pickup, delivery, parcels.
+    // Pickup is the Lolly Shop location. Assume Grey Lynn, Auckland 1021, NZ as default pickup address.
+    const requestBody = {
+      account_information: {
+        account_number: accountNumber
+      },
+      pickup: {
+        suburb: 'Grey Lynn',
+        city: 'Auckland',
+        postcode: '1021',
+        country_code: 'NZ'
+      },
+      delivery: {
+        address_line_1: address,
+        city: city,
+        postcode: zip,
+        country_code: 'NZ'
+      },
+      parcels: [
+        {
+          weight: totalWeightKg,
+          length: lengthCm,
+          width: widthCm,
+          height: heightCm
+        }
+      ]
+    };
+
+    if (siteCode) {
+      requestBody.account_information.site_code = siteCode;
+    }
+
+    const shippingResponse = await fetch(baseShippingUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!shippingResponse.ok) {
+      const errorData = await shippingResponse.json().catch(() => ({}));
+      console.error('NZ Post API error details:', errorData);
+      throw new Error(errorData.message || `NZ Post ShippingOptions returned HTTP ${shippingResponse.status}`);
+    }
+
+    const shippingData = await shippingResponse.json();
+    
+    const rates = [];
+    if (shippingData && Array.isArray(shippingData.services)) {
+      shippingData.services.forEach(service => {
+        rates.push({
+          id: service.service_code || service.name,
+          name: service.name || 'NZ Post Courier',
+          price: Number(service.price || service.total_price || 0),
+          eta: service.estimated_delivery || '1-2 business days'
+        });
+      });
+    }
+
+    if (rates.length === 0) {
+      throw new Error('No valid shipping options returned from NZ Post API.');
+    }
+
+    return res.json({
+      mode: 'live',
+      rates
+    });
+
+  } catch (error) {
+    console.error('Error in calculate-shipping route, falling back to simulated rates:', error.message);
+    const { zip, city } = req.body;
+    
+    let totalWeightKg = 0.1;
+    try {
+      if (Array.isArray(req.body.items)) {
+        req.body.items.forEach(item => {
+          const qty = Number(item.quantity || 1);
+          const weightStr = (item.selectedWeight || '100g').toLowerCase();
+          let itemWeightKg = 0.1;
+          if (weightStr.includes('100g')) itemWeightKg = 0.1;
+          else if (weightStr.includes('250g')) itemWeightKg = 0.25;
+          else if (weightStr.includes('500g')) itemWeightKg = 0.5;
+          else if (weightStr.includes('1kg')) itemWeightKg = 1.0;
+          totalWeightKg += itemWeightKg * qty;
+        });
+      }
+    } catch (e) {}
+
+    return res.json({
+      mode: 'simulated_fallback',
+      rates: getSimulatedRates(zip || '1010', city || 'Auckland', totalWeightKg),
+      warning: error.message
+    });
+  }
+});
+
+// Helper for simulated NZ Post rates
+function getSimulatedRates(zip, city, weightKg) {
+  const lowercaseCity = (city || '').toLowerCase();
+  
+  const isAuckland = lowercaseCity.includes('auckland') || ['06','07','10','20','21','22'].some(p => (zip || '').startsWith(p));
+  const isRural = ['rural', 'rd', 'r.d.'].some(term => lowercaseCity.includes(term)) || (zip && ['0','3','4','7','9'].includes(zip[3]));
+
+  let basePrice = 8.50;
+  if (weightKg > 0.5 && weightKg <= 2.0) {
+    basePrice = 12.00;
+  } else if (weightKg > 2.0 && weightKg <= 5.0) {
+    basePrice = 16.50;
+  } else if (weightKg > 5.0) {
+    basePrice = 24.00;
+  }
+
+  let ruralSurcharge = isRural ? 5.50 : 0;
+  let regionalMultiplier = isAuckland ? 1.0 : 1.35;
+
+  const standardPrice = Math.round((basePrice * regionalMultiplier) * 100) / 100;
+  const signaturePrice = Math.round((standardPrice + 3.00) * 100) / 100;
+  const ruralPrice = Math.round((standardPrice + ruralSurcharge) * 100) / 100;
+
+  const rates = [
+    {
+      id: 'nzpost_courier',
+      name: 'NZ Post Standard Courier',
+      price: standardPrice,
+      eta: isAuckland ? 'Next business day' : '1-2 business days'
+    },
+    {
+      id: 'nzpost_courier_signature',
+      name: 'NZ Post Courier (Signature Required)',
+      price: signaturePrice,
+      eta: isAuckland ? 'Next business day' : '1-2 business days'
+    }
+  ];
+
+  if (isRural || ruralSurcharge > 0) {
+    rates.push({
+      id: 'nzpost_courier_rural',
+      name: 'NZ Post Courier (Rural Delivery)',
+      price: ruralPrice,
+      eta: '2-3 business days'
+    });
+  }
+
+  return rates;
+}
+
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const { customerDetails, items, finalTotal, shippingFee } = req.body;
+    const { customerDetails, items, finalTotal, shippingFee, deliveryCompany } = req.body;
     
     // Generate order ID
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
@@ -825,6 +1076,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       items: items || [],
       total: Number(finalTotal),
       shipping: Number(shippingFee || 19),
+      deliveryCompany: deliveryCompany || 'NZ Post Courier',
       customer: {
         ...customerDetails,
         postalCode: customerDetails.zip || customerDetails.postalCode || ''
@@ -963,232 +1215,6 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
     }
   } catch (error) {
     console.error('Error confirming payment:', error);
-    res.status(500).json({ message: 'Failed to verify payment', error: error.message });
-  }
-});
-
-app.post('/api/create-eway-access-code', async (req, res) => {
-  try {
-    const { customerDetails, items, finalTotal, shippingFee } = req.body;
-    
-    // Generate order ID
-    const orderId = `ORD-${Date.now().toString().slice(-6)}`;
-    
-    // 1. Create a Pending Order in the Database (Unpaid)
-    const newOrder = {
-      id: orderId,
-      date: new Date().toLocaleDateString('en-NZ', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      }),
-      items: items || [],
-      total: Number(finalTotal),
-      shipping: Number(shippingFee || 19),
-      customer: {
-        ...customerDetails,
-        postalCode: customerDetails.zip || customerDetails.postalCode || ''
-      },
-      userEmail: customerDetails.email || '',
-      status: 'Pending',
-      paymentStatus: 'Unpaid'
-    };
-
-    if (sqlAvailable()) {
-      const dbOrder = new Order(newOrder);
-      await dbOrder.save();
-    } else {
-      const orders = readLocalData('orders.json', []);
-      const dbOrder = {
-        ...newOrder,
-        createdAt: new Date().toISOString()
-      };
-      orders.unshift(dbOrder);
-      writeLocalData('orders.json', orders);
-    }
-
-    // 2. Call eWay Shared Access Code API
-    const apiKey = process.env.EWAY_API_KEY;
-    const apiPassword = process.env.EWAY_API_PASSWORD;
-
-    if (!apiKey || !apiPassword || apiKey.includes('placeholder')) {
-      throw new Error('Invalid eWay configuration API credentials.');
-    }
-
-    const origin = req.headers.origin || 'http://localhost:5173';
-    
-    const ewayBody = {
-      Payment: {
-        TotalAmount: Math.round(Number(finalTotal) * 100), // convert to cents
-        InvoiceNumber: orderId,
-        InvoiceDescription: `Lolly Shop Order - ${orderId}`,
-        CurrencyCode: 'NZD'
-      },
-      RedirectUrl: `${origin}/checkout?status=success&gateway=eway&session_id=ACCESS_CODE&order_id=${orderId}`,
-      CancelUrl: `${origin}/checkout?status=cancel&gateway=eway&order_id=${orderId}`,
-      Method: 'ProcessPayment',
-      TransactionType: 'Purchase',
-      Customer: {
-        FirstName: customerDetails.name.split(' ')[0] || 'Customer',
-        LastName: customerDetails.name.split(' ').slice(1).join(' ') || 'Name',
-        Email: customerDetails.email || '',
-        Phone: customerDetails.phone || '',
-        Address: {
-          Street1: customerDetails.address || '',
-          City: customerDetails.city || '',
-          PostalCode: customerDetails.zip || '',
-          Country: 'nz'
-        }
-      }
-    };
-
-    const authHeader = 'Basic ' + Buffer.from(apiKey + ':' + apiPassword).toString('base64');
-    
-    let ewayResponse = await fetch('https://api.sandbox.ewaypayments.com/AccessCodesShared', {
-      method: 'POST',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(ewayBody)
-    });
-
-    if (!ewayResponse.ok) {
-      const errText = await ewayResponse.text();
-      throw new Error(`eWay gateway response error: ${ewayResponse.status} - ${errText}`);
-    }
-
-    let ewayData = await ewayResponse.json();
-
-    // If eWay returns V6018 (Unknown Currency Code) for NZD, automatically retry with AUD for sandbox testing.
-    if (ewayData.Errors === 'V6018' && ewayBody.Payment.CurrencyCode === 'NZD') {
-      console.log('eWay sandbox returned error V6018 for NZD. Retrying automatically with AUD...');
-      ewayBody.Payment.CurrencyCode = 'AUD';
-      
-      ewayResponse = await fetch('https://api.sandbox.ewaypayments.com/AccessCodesShared', {
-        method: 'POST',
-        headers: {
-          'Authorization': authHeader,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(ewayBody)
-      });
-
-      if (!ewayResponse.ok) {
-        const errText = await ewayResponse.text();
-        throw new Error(`eWay gateway response error: ${ewayResponse.status} - ${errText}`);
-      }
-
-      ewayData = await ewayResponse.json();
-    }
-
-    if (!ewayData.SharedPaymentUrl) {
-      const errorMsg = ewayData.Errors ? `eWay Error code: ${ewayData.Errors}` : 'Failed to generate eWay Shared Payment URL.';
-      throw new Error(errorMsg);
-    }
-
-    res.json({ url: ewayData.SharedPaymentUrl, sessionId: ewayData.AccessCode, orderId });
-  } catch (error) {
-    console.error('Error creating eWay session:', error);
-    res.status(500).json({ message: 'Failed to initialize payment gateway', error: error.message });
-  }
-});
-
-app.put('/api/orders/:id/confirm-eway-payment', async (req, res) => {
-  try {
-    const { sessionId } = req.body;
-    const orderId = req.params.id;
-
-    if (!sessionId) {
-      return res.status(400).json({ message: 'Session ID (Access Code) is required' });
-    }
-
-    const apiKey = process.env.EWAY_API_KEY;
-    const apiPassword = process.env.EWAY_API_PASSWORD;
-    const authHeader = 'Basic ' + Buffer.from(apiKey + ':' + apiPassword).toString('base64');
-
-    const ewayResponse = await fetch(`https://api.sandbox.ewaypayments.com/AccessCode/${sessionId}`, {
-      method: 'GET',
-      headers: {
-        'Authorization': authHeader,
-        'Content-Type': 'application/json'
-      }
-    });
-
-    if (!ewayResponse.ok) {
-      const errText = await ewayResponse.text();
-      throw new Error(`eWay lookup error: ${ewayResponse.status} - ${errText}`);
-    }
-
-    const ewayData = await ewayResponse.json();
-    const isPaid = ewayData.Transactions && ewayData.Transactions[0] && ewayData.Transactions[0].TransactionStatus === true;
-
-    if (isPaid) {
-      let updatedOrder = null;
-
-      if (sqlAvailable()) {
-        const order = await Order.findById(orderId);
-        if (!order) {
-          return res.status(404).json({ message: 'Order not found' });
-        }
-        
-        if (order.paymentStatus === 'Paid') {
-          return res.json(order);
-        }
-
-        order.paymentStatus = 'Paid';
-        order.status = 'Processing';
-        await order.save();
-        updatedOrder = order;
-
-        // Deduct product stock quantities
-        for (const item of order.items || []) {
-          const prod = await Product.findById(item.id);
-          if (prod) {
-            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
-            prod.inStock = prod.quantity > 0;
-            await prod.save();
-          }
-        }
-      } else {
-        const orders = readLocalData('orders.json', []);
-        const index = orders.findIndex(o => o.id === orderId);
-        if (index === -1) {
-          return res.status(404).json({ message: 'Order not found' });
-        }
-
-        if (orders[index].paymentStatus === 'Paid') {
-          return res.json(orders[index]);
-        }
-
-        orders[index].paymentStatus = 'Paid';
-        orders[index].status = 'Processing';
-        orders[index].updatedAt = new Date().toISOString();
-        updatedOrder = orders[index];
-        writeLocalData('orders.json', orders);
-
-        // Deduct product stock quantities locally
-        const localProducts = readLocalData('products.json', seededProducts);
-        for (const item of updatedOrder.items || []) {
-          const pIndex = localProducts.findIndex(p => p.id === item.id);
-          if (pIndex !== -1) {
-            const currentQty = localProducts[pIndex].quantity !== undefined ? localProducts[pIndex].quantity : 50;
-            localProducts[pIndex].quantity = Math.max(0, currentQty - item.quantity);
-            localProducts[pIndex].inStock = localProducts[pIndex].quantity > 0;
-          }
-        }
-        writeLocalData('products.json', localProducts);
-      }
-
-      // Send confirmation email
-      sendOrderConfirmationEmail(updatedOrder);
-
-      res.json(updatedOrder);
-    } else {
-      res.status(400).json({ message: 'Payment verification failed: eWay transaction status is not approved.' });
-    }
-  } catch (error) {
-    console.error('Error confirming eWay payment:', error);
     res.status(500).json({ message: 'Failed to verify payment', error: error.message });
   }
 });
