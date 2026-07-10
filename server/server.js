@@ -53,6 +53,63 @@ ensureDatabase();
 
 const sqlAvailable = () => sqlReady();
 
+// ── CENTRALIZED SMTP TRANSPORTER HELPER ──
+const createMailTransporter = async () => {
+  const host = process.env.SMTP_HOST;
+  const port = process.env.SMTP_PORT || 587;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (smtpUser && smtpPass) {
+    if (host && host.includes('gmail.com')) {
+      return {
+        transporter: nodemailer.createTransport({
+          service: 'gmail',
+          auth: { user: smtpUser, pass: smtpPass }
+        }),
+        isFallback: false,
+        smtpUser
+      };
+    } else if (host) {
+      return {
+        transporter: nodemailer.createTransport({
+          host,
+          port: Number(port),
+          secure: Number(port) === 465,
+          auth: { user: smtpUser, pass: smtpPass },
+          tls: { rejectUnauthorized: false }
+        }),
+        isFallback: false,
+        smtpUser
+      };
+    }
+  }
+
+  if (isProduction) {
+    throw new Error('SMTP credentials are not configured or incomplete in the production environment.');
+  }
+
+  const etherealAccount = await nodemailer.createTestAccount();
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.ethereal.email',
+    port: 587,
+    secure: false,
+    auth: {
+      user: etherealAccount.user,
+      pass: etherealAccount.pass
+    }
+  });
+
+  return {
+    transporter,
+    isFallback: true,
+    etherealAccount,
+    smtpUser: etherealAccount.user
+  };
+};
+
 // ── LOCAL FILE DATABASE UTILITIES ──
 const DATA_DIR = process.env.VERCEL
   ? path.resolve('/tmp', 'lollyshop-data')
@@ -591,33 +648,15 @@ app.get('/api/orders', async (req, res) => {
 // helper to send order confirmation email with receipt, invoice, and tracking link
 const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
   try {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT || 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (!smtpUser || !smtpPass) {
-      console.log('Skipping order confirmation email: SMTP credentials not set.');
+    let mailConfig;
+    try {
+      mailConfig = await createMailTransporter();
+    } catch (mailErr) {
+      console.log('Skipping order confirmation email:', mailErr.message);
       return;
     }
 
-    let transporter;
-    if (host && host.includes('gmail.com')) {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else if (host) {
-      transporter = nodemailer.createTransport({
-        host,
-        port: Number(port),
-        secure: Number(port) === 465,
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else {
-      console.log('Skipping order confirmation email: SMTP host not set.');
-      return;
-    }
+    const { transporter, smtpUser } = mailConfig;
 
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
 
@@ -1222,33 +1261,15 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
 // helper to send order dispatched email with courier details
 const sendOrderDispatchedEmail = async (order) => {
   try {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT || 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (!smtpUser || !smtpPass) {
-      console.log('Skipping order dispatched email: SMTP credentials not set.');
+    let mailConfig;
+    try {
+      mailConfig = await createMailTransporter();
+    } catch (mailErr) {
+      console.log('Skipping order dispatched email:', mailErr.message);
       return;
     }
 
-    let transporter;
-    if (host && host.includes('gmail.com')) {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else if (host) {
-      transporter = nodemailer.createTransport({
-        host,
-        port: Number(port),
-        secure: Number(port) === 465,
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else {
-      console.log('Skipping order dispatched email: SMTP host not set.');
-      return;
-    }
+    const { transporter, smtpUser } = mailConfig;
 
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
 
@@ -1379,33 +1400,15 @@ const sendOrderDispatchedEmail = async (order) => {
 // helper to send delivery complete email with rating review options and final invoice details
 const sendDeliveryCompleteEmail = async (order) => {
   try {
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT || 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (!smtpUser || !smtpPass) {
-      console.log('Skipping delivery completed email: SMTP credentials not set.');
+    let mailConfig;
+    try {
+      mailConfig = await createMailTransporter();
+    } catch (mailErr) {
+      console.log('Skipping delivery completed email:', mailErr.message);
       return;
     }
 
-    let transporter;
-    if (host && host.includes('gmail.com')) {
-      transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else if (host) {
-      transporter = nodemailer.createTransport({
-        host,
-        port: Number(port),
-        secure: Number(port) === 465,
-        auth: { user: smtpUser, pass: smtpPass }
-      });
-    } else {
-      console.log('Skipping delivery completed email: SMTP host not set.');
-      return;
-    }
+    const { transporter, smtpUser } = mailConfig;
 
     const ratingLink = (stars) => `http://localhost:5173/track-order/${order.id}?rating=${stars}`;
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
@@ -2102,40 +2105,28 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       userDetails = users[index];
     }
 
-    const clientOrigin = process.env.CLIENT_URL || req.get('origin') || 'http://localhost:5173';
+    const origin = req.get('origin');
+    const referer = req.get('referer');
+    let clientOrigin = process.env.CLIENT_URL;
+    if (!clientOrigin) {
+      if (origin) {
+        clientOrigin = origin;
+      } else if (referer) {
+        try {
+          clientOrigin = new URL(referer).origin;
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+    if (!clientOrigin) {
+      clientOrigin = process.env.NODE_ENV === 'production' ? 'https://bestlollyshop.co.nz' : 'http://localhost:5173';
+    }
+
     const resetLink = `${clientOrigin}/reset-password?token=${token}`;
 
-    // Nodemailer Email Sending logic
-    let transporter;
-    const host = process.env.SMTP_HOST;
-    const port = process.env.SMTP_PORT || 587;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    let isFallback = false;
-    let etherealAccount = null;
-
-    if (host && smtpUser && smtpPass) {
-      transporter = nodemailer.createTransport({
-        host,
-        port: Number(port),
-        secure: Number(port) === 465,
-        auth: { user: smtpUser, pass: smtpPass },
-        tls: { rejectUnauthorized: false }
-      });
-    } else {
-      isFallback = true;
-      etherealAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: 'smtp.ethereal.email',
-        port: 587,
-        secure: false,
-        auth: {
-          user: etherealAccount.user,
-          pass: etherealAccount.pass
-        }
-      });
-    }
+    // Centralized mail transporter selection
+    const { transporter, isFallback, smtpUser } = await createMailTransporter();
 
     const info = await transporter.sendMail({
       from: `"Lolly Shop Support" <${smtpUser || 'support@lollyshop.co.nz'}>`,
@@ -2198,6 +2189,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     });
 
     let previewUrl = null;
+    const isProduction = process.env.NODE_ENV === 'production';
     if (isFallback) {
       previewUrl = nodemailer.getTestMessageUrl(info);
       console.log(`\n==================================================`);
@@ -2210,7 +2202,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     res.json({
       success: true,
       message: 'A password reset link has been sent to your email inbox.',
-      previewUrl: previewUrl
+      previewUrl: (isFallback && !isProduction) ? previewUrl : null
     });
   } catch (error) {
     console.error('Forgot password error:', error);
