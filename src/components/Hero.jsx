@@ -93,6 +93,9 @@ export const Hero = () => {
           <motion.h1 className="hero-title" variants={itemVariants}>
             SWEETEN YOUR <br />
             <span className="gradient-text">EVERYDAY LIFE!</span>
+            <span className="hero-seo-subtitle" style={{ display: 'block', fontSize: '1.25rem', marginTop: '12px', fontWeight: '500', opacity: 0.9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+              NZ's Favorite Online Lolly Shop & Candy Store
+            </span>
           </motion.h1>
 
           {/* Subheading description */}

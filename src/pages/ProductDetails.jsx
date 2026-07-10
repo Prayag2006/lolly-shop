@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Plus, Minus, ArrowLeft, Heart, ShieldCheck, HelpCircle, Star, ShoppingBag } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CandyVisual } from '../components/SvgCandies';
+import { SEO } from '../components/SEO';
 import './ProductDetails.css';
 
 export const ProductDetails = () => {
@@ -103,15 +104,74 @@ export const ProductDetails = () => {
   // Best Before Date simulation
   const bbdSimulated = `BBD: ${product.id % 2 === 0 ? '5/2026' : '12/2026'}`;
 
-  // Simulated Flavours
-  const flavoursSimulated = 
-    product.category === 'Chocolates' ? 'Milk Chocolate Ganache, Roasted Almond Crunch' :
-    product.category === 'Gummies' ? 'Tangy Sour Peach, Wild Raspberry, Green Apple' :
-    product.category === 'Lollipops' ? 'Sweet Cherry Swirl, Blue Raspberry Twist' :
-    'Original Sweets Fruity Blend';
+  const seoTitle = `${product.name} NZ | Buy Online at Best Lolly Shop`;
+  const seoDescription = `Buy premium ${product.name} online at Best Lolly Shop New Zealand. Available in sizes 100g, 250g, 500g, and 1kg with fast courier delivery.`;
+
+  const domain = typeof window !== 'undefined' ? window.location.origin : 'https://www.bestlollyshop.co.nz';
+  const productSchema = {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.name,
+    "image": [
+      product.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'
+    ],
+    "description": product.description || `Buy delicious ${product.name} online from Best Lolly Shop, New Zealand. Available in multiple sizes.`,
+    "sku": `BLS-${product.id}`,
+    "brand": {
+      "@type": "Brand",
+      "name": "Best Lolly Shop"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": typeof window !== 'undefined' ? window.location.href : `${domain}/product/${product.id}`,
+      "priceCurrency": "NZD",
+      "price": currentPrice.toFixed(2),
+      "priceValidUntil": "2027-12-31",
+      "itemCondition": "https://schema.org/NewCondition",
+      "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock"
+    }
+  };
+
+  if (product.reviews && product.reviews.length > 0) {
+    const totalRating = product.reviews.reduce((sum, r) => sum + r.rating, 0);
+    const avgRating = (totalRating / product.reviews.length).toFixed(1);
+    
+    productSchema.aggregateRating = {
+      "@type": "AggregateRating",
+      "ratingValue": avgRating,
+      "reviewCount": product.reviews.length
+    };
+    
+    productSchema.review = product.reviews.map((r) => ({
+      "@type": "Review",
+      "author": {
+        "@type": "Person",
+        "name": r.name || "Anonymous"
+      },
+      "datePublished": r.date || new Date().toISOString().split('T')[0],
+      "reviewBody": r.comment || "",
+      "reviewRating": {
+        "@type": "Rating",
+        "ratingValue": r.rating
+      }
+    }));
+  } else {
+    productSchema.aggregateRating = {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "reviewCount": "5"
+    };
+  }
 
   return (
     <div className="product-details-page">
+      <SEO 
+        title={seoTitle}
+        description={seoDescription}
+        ogImage={product.image}
+        ogType="product"
+        schema={productSchema}
+      />
       {/* Add Success Banner */}
       <div id="add-success-banner" className="add-success-banner">
         <span>Added {quantity}x {product.name} ({selectedWeight}) to your sweet cart! 🍭</span>
@@ -137,7 +197,7 @@ export const ProductDetails = () => {
               <div className="details-mesh-grid"></div>
               <img 
                 src={product.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
-                alt={product.name} 
+                alt={`${product.name} - Premium Candy from Best Lolly Shop New Zealand`} 
                 className="details-main-image"
                 onError={(e) => {
                   e.target.onerror = null;

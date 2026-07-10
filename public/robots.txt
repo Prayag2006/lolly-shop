@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Disallow checkout, admin, and user account routes to avoid indexation of private/dynamic pages
+Disallow: /checkout
+Disallow: /admin
+Disallow: /profile
+Disallow: /reset-password
+Disallow: /track-order/
+
+Sitemap: https://www.bestlollyshop.co.nz/sitemap.xml

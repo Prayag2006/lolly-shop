@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
 import { ProductCard } from '../components/ProductCard';
+import { SEO } from '../components/SEO';
 import {
   Star,
   Users,
@@ -206,8 +207,67 @@ export const Home = ({ onProductClick }) => {
     setActiveFaq(activeFaq === index ? null : index);
   };
 
+  const domain = typeof window !== 'undefined' ? window.location.origin : 'https://www.bestlollyshop.co.nz';
+
+  const schema = [
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "@id": `${domain}/#organization`,
+      "name": "Best Lolly Shop",
+      "url": domain,
+      "logo": `${domain}/logo.png`,
+      "sameAs": [
+        "https://www.facebook.com/bestlollyshop",
+        "https://www.instagram.com/bestlollyshop"
+      ],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91 123 456 7890",
+        "contactType": "customer service",
+        "email": "BestLollyShop@gmail.com"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "@id": `${domain}/#website`,
+      "url": domain,
+      "name": "Best Lolly Shop",
+      "description": "New Zealand's favourite online candy store and lolly shop.",
+      "publisher": {
+        "@id": `${domain}/#organization`
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": `${domain}/shop?search={search_term_string}`
+        },
+        "query-input": "required name=search_term_string"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.map(faq => ({
+        "@type": "Question",
+        "name": faq.q,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": faq.a
+        }
+      }))
+    }
+  ];
+
   return (
     <div className="home-page">
+      <SEO 
+        title="Online Lolly Shop NZ | Buy Bulk Lollies & Candy Online"
+        description="Order delicious sweets from New Zealand's favourite online lolly shop. Bulk lollies, sour gummies, imported chocolates & pick and mix. Fast NZ-wide delivery!"
+        schema={schema}
+      />
       {/* 1. Hero */}
       <Hero />
 
@@ -319,7 +379,7 @@ export const Home = ({ onProductClick }) => {
             </div>
             <h2 className="story-title">Our Sweet Journey</h2>
             <p className="story-desc">
-              What started as a tiny confectionery passion project in a home kitchen has grown into India's most beloved premium online candy shop. At Best Lolly Shop, we believe in spreading pure joy and nostalgic happiness, one sweet bite at a time.
+              What started as a tiny confectionery passion project in a home kitchen has grown into New Zealand's most beloved premium online candy shop. At Best Lolly Shop, we believe in spreading pure joy and nostalgic happiness, one sweet bite at a time.
             </p>
             <p className="story-desc">
               We carefully curate our catalog from the finest international master confectioners. From tangy, fuzzy gummies to rich, hand-crafted Belgian truffles, we bring the world of gourmet sweets straight to your doorstep.
@@ -610,6 +670,64 @@ export const Home = ({ onProductClick }) => {
                 </div>
               </a>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Homepage SEO Content */}
+      <section className="section-padding home-seo-text-section" style={{ background: 'var(--bg-accent)', borderTop: '1px solid var(--color-border)', borderBottom: '1px solid var(--color-border)' }}>
+        <div className="container">
+          <div className="seo-content-card glass-card" style={{ padding: '3.5rem 3rem', borderRadius: '24px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.05)', backdropFilter: 'blur(20px)' }}>
+            <div className="seo-text-block" style={{ maxWidth: '900px', margin: '0 auto' }}>
+              <span className="badge" style={{ marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Confectionery Guide</span>
+              <h2 style={{ fontSize: '2.4rem', fontWeight: '800', marginBottom: '1.5rem', lineHeight: '1.2', background: 'var(--primary-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                New Zealand's Ultimate Online Lolly Shop & Candy Store
+              </h2>
+              
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                Welcome to <strong>Best Lolly Shop</strong>, your premier destination for all things sweet, sour, and chocolatey in New Zealand! As the nation’s leading online lolly shop, we are dedicated to bringing the joy of high-quality, delicious confectionery directly to your doorstep. Whether you’re looking to satisfy a personal craving, planning a massive birthday celebration, organizing wedding candy buffets, or setting up corporate gifts, we have the perfect sweet treats for every single occasion.
+              </p>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
+                Satisfy Your Cravings with the Best Lollies Online in NZ
+              </h3>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                At Best Lolly Shop, we believe that life is better with a little sweetness. That’s why we’ve curated an extensive selection of the finest confections from New Zealand and around the globe. From classic Kiwi favorites like jet planes and milk bottles to imported American candy and traditional British sweets, our digital shelves are stocked to delight candy lovers of all ages.
+              </p>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                Buying lollies online in NZ has never been easier. Skip the supermarket queues and browse our clean, user-friendly online sweet shop from the comfort of your home. With just a few clicks, you can fill your cart with gourmet quality gummies, rich chocolates, spicy sour lollies, and everything in between. We pack each order with care in our food-grade facilities and provide fast, reliable shipping across the country—from Cape Reinga to the Bluff.
+              </p>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
+                Premium Pick and Mix Lollies Customized for You
+              </h3>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                Why settle for a pre-packaged bag of mixed sweets when you can create your own custom candy masterpiece? Our signature <strong>Pick and Mix Lollies</strong> experience puts you in the driver’s seat. Choose from over 100 varieties of loose candy, including fizzy sour straps, sweet marshmallow drops, gummy bears, chewable licorice, and classic hard candies.
+              </p>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                Our custom pick and mix builder is perfect for creating personalized gift bags, party favors, or simply treating yourself to your exact favorite combinations. Select your bag size, add your favorite treats, and let us do the rest! It’s the ultimate way to enjoy a candy store experience online.
+              </p>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
+                Save Big with Bulk Lollies NZ
+              </h3>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
+                Hosting a major event or just want to stock up and save? Our <strong>Bulk Lollies NZ</strong> section offers wholesale prices on large quantities of New Zealand's favorite sweets. We stock 1kg, 2kg, and larger bulk bags of gummies, chocolates, and party mixes, making us the go-to supplier for:
+              </p>
+              <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '1.8rem' }}>
+                <li style={{ marginBottom: '0.5rem' }}><strong>Birthday Parties</strong>: Colorful candy arrangements to match any theme.</li>
+                <li style={{ marginBottom: '0.5rem' }}><strong>Weddings</strong>: Create a stunning DIY candy buffet that your guests will talk about for years.</li>
+                <li style={{ marginBottom: '0.5rem' }}><strong>Corporate Events</strong>: Unique branding treats, office snack bowls, and client thank-you gifts.</li>
+                <li style={{ marginBottom: '0.5rem' }}><strong>Fundraisers</strong>: High-margin, popular sweets that make fundraising easy for schools and sports clubs.</li>
+              </ul>
+
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
+                Experience the Finest Confectionery and Chocolates
+              </h3>
+              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '0' }}>
+                We don't just stop at lollies. Our curated chocolate selection includes luxurious milk, dark, and white chocolates crafted by local NZ chocolatiers and premium global brands. Indulge in creamy caramels, chocolate-coated nuts, and gourmet truffles that melt in your mouth. For the adventurous taste buds, our imported candy ranges bring the world closer to you. Discover famous American candy bars, sour candies, British sherbets, and European chocolates that are hard to find on standard supermarket shelves.
+              </p>
+            </div>
           </div>
         </div>
       </section>
