@@ -2139,7 +2139,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       from: `"Lolly Shop Support" <${smtpUser || 'support@lollyshop.co.nz'}>`,
       to: emailNorm,
       subject: "Lolly Shop - Password Reset Link",
-      text: `Hello ${userDetails.name},\n\nYou requested to reset your password. Please use the following link to reset it:\n\n${resetLink}\n\nThis link is valid for 1 hour.`,
+      text: `Hello ${userDetails.name},\n\nYou requested to reset your password. Please use the following link to reset it:\n\n${resetLink}\n\nIf the link does not work, you can copy and paste the following token on the reset password page:\nReset Token: ${token}\n\nThis link/token is valid for 24 hours.`,
       html: `
         <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
           <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
@@ -2169,14 +2169,22 @@ app.post('/api/auth/forgot-password', async (req, res) => {
               </div>
               
               <p style="color: #8c859d; font-size: 13px; line-height: 1.5; margin-top: 30px; margin-bottom: 15px;">
-                ⚠️ <strong>Important Note:</strong> This security link is only active for <strong>1 hour</strong>. After that, you will need to request a new one.
+                ⚠️ <strong>Important Note:</strong> This security link and token are active for <strong>24 hours</strong>. After that, you will need to request a new one.
               </p>
               
               <!-- Direct URL Fallback -->
-              <div style="background-color: #f7f6f9; border-radius: 10px; padding: 15px; margin: 25px 0; border: 1px dashed #e1dde6;">
+              <div style="background-color: #f7f6f9; border-radius: 10px; padding: 15px; margin: 15px 0; border: 1px dashed #e1dde6;">
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #8c859d; font-weight: 600;">Button not working? Copy and paste this link in your browser:</p>
                 <p style="margin: 0; font-size: 12px; word-break: break-all;">
                   <a href="${resetLink}" style="color: #e72c83; text-decoration: none; font-weight: 600;">${resetLink}</a>
+                </p>
+              </div>
+
+              <!-- Manual Token Fallback -->
+              <div style="background-color: #f7f6f9; border-radius: 10px; padding: 15px; margin: 15px 0; border: 1px dashed #e1dde6; text-align: center;">
+                <p style="margin: 0 0 6px 0; font-size: 12px; color: #8c859d; font-weight: 600;">Or copy/paste this Reset Token on the verification page:</p>
+                <p style="margin: 0; font-size: 15px; font-weight: 700; color: #e72c83; letter-spacing: 0.5px; font-family: monospace; word-break: break-all;">
+                  ${token}
                 </p>
               </div>
             </div>

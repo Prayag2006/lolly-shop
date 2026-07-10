@@ -12,6 +12,9 @@ export const ResetPassword = () => {
   const token = searchParams.get('token');
 
   // Page States
+  const [activeToken, setActiveToken] = useState(token || '');
+  const [manualTokenInput, setManualTokenInput] = useState('');
+  const [isManualVerifying, setIsManualVerifying] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [tokenValid, setTokenValid] = useState(false);
   const [password, setPassword] = useState('');
@@ -32,6 +35,7 @@ export const ResetPassword = () => {
       const res = await verifyResetToken(token);
       if (res.success) {
         setTokenValid(true);
+        setActiveToken(token);
       } else {
         setTokenValid(false);
         setError(res.message || 'This password reset link is invalid or has expired.');
@@ -41,6 +45,25 @@ export const ResetPassword = () => {
 
     validateToken();
   }, [token, verifyResetToken]);
+
+  const handleVerifyManualToken = async () => {
+    const trimmedToken = manualTokenInput.trim();
+    if (!trimmedToken) return;
+
+    setIsManualVerifying(true);
+    setError('');
+    setSuccess('');
+
+    const res = await verifyResetToken(trimmedToken);
+    if (res.success) {
+      setTokenValid(true);
+      setActiveToken(trimmedToken);
+    } else {
+      setTokenValid(false);
+      setError(res.message || 'This password reset token is invalid or has expired.');
+    }
+    setIsManualVerifying(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,7 +85,7 @@ export const ResetPassword = () => {
       return;
     }
 
-    const res = await resetPassword(token, password);
+    const res = await resetPassword(activeToken, password);
     if (res.success) {
       setSuccess('Your password has been reset successfully! Redirecting to login...');
       setTimeout(() => {
@@ -162,10 +185,40 @@ export const ResetPassword = () => {
 
               {!tokenValid && !isValidating && (
                 <div className="reset-invalid-box">
-                  <p>Please make sure you copied the correct link, or request a new reset link from the login page.</p>
-                  <Link to="/login" className="btn btn-primary login-submit-btn" style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}>
-                    Request New Link
-                  </Link>
+                  <div className="form-group" style={{ marginBottom: '20px' }}>
+                    <label htmlFor="manual-token">Enter Reset Token</label>
+                    <div className="input-with-icon">
+                      <KeyRound size={18} className="input-icon" />
+                      <input
+                        type="text"
+                        id="manual-token"
+                        placeholder="Paste your reset token here"
+                        value={manualTokenInput}
+                        onChange={(e) => setManualTokenInput(e.target.value)}
+                        required
+                        style={{ paddingLeft: '40px' }}
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary login-submit-btn"
+                    onClick={handleVerifyManualToken}
+                    disabled={!manualTokenInput.trim() || isManualVerifying}
+                    style={{ width: '100%', marginBottom: '15px' }}
+                  >
+                    {isManualVerifying ? 'Verifying...' : 'Verify Token'}
+                  </button>
+
+                  <div style={{ textAlign: 'center', marginTop: '20px', borderTop: '1px solid rgba(0, 0, 0, 0.05)', paddingTop: '15px' }}>
+                    <p style={{ fontSize: '13px', color: '#8c859d', marginBottom: '12px' }}>
+                      Don't have a token or need a new one?
+                    </p>
+                    <Link to="/login" className="auth-toggle-link" style={{ textDecoration: 'none', fontWeight: '600', fontSize: '14px' }}>
+                      Request New Link
+                    </Link>
+                  </div>
                 </div>
               )}
             </>
