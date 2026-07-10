@@ -2,6 +2,19 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRequire } from 'module';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import { Product as MongoProduct } from './models/Product.js';
+import { Brand as MongoBrand } from './models/Brand.js';
+import { User as MongoUser } from './models/User.js';
+import { Contact as MongoContact } from './models/Contact.js';
+import { Order as MongoOrder } from './models/Order.js';
+import { Testimonial as MongoTestimonial } from './models/Testimonial.js';
+import { Settings as MongoSettings } from './models/Settings.js';
+
+// Synchronously load environment variables before checking database config
+const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env');
+dotenv.config({ path: envPath });
 
 const require = createRequire(import.meta.url);
 let Database;
@@ -20,6 +33,8 @@ const DB_PATH = path.join(DATA_DIR, 'lollyshop.db');
 
 let db;
 let sqlEnabled = false;
+
+let useMongo = !!process.env.MONGODB_URI;
 
 const createDataDir = () => {
   try {
@@ -171,6 +186,7 @@ const seedSqliteFromJSON = () => {
 };
 
 export const ensureDatabase = () => {
+  if (useMongo) return; // Skip SQLite database setup if using MongoDB
   if (db) return;
   try {
     createDataDir();
@@ -192,6 +208,19 @@ export const ensureDatabase = () => {
     sqlEnabled = false;
   }
 };
+
+if (useMongo) {
+  mongoose.connect(process.env.MONGODB_URI)
+    .then(() => console.log('Successfully connected to MongoDB Atlas database.'))
+    .catch((err) => {
+      console.error('Failed to connect to MongoDB Atlas database:', err.message);
+      console.log('Falling back to SQLite database...');
+      useMongo = false;
+      ensureDatabase();
+    });
+} else {
+  ensureDatabase();
+}
 
 const matchesQuery = (row, query) => {
   if (!query || typeof query !== 'object') return false;
@@ -398,28 +427,50 @@ const makeModelClass = (table, primaryKey = 'id') => {
   };
 };
 
-export const Product = makeModelClass('products');
-export const Brand = makeModelClass('brands');
-export const User = makeModelClass('users');
-export const Contact = makeModelClass('contacts');
-export const Order = makeModelClass('orders');
-export const Testimonial = makeModelClass('testimonials');
-export const Settings = makeModelClass('settings', 'key');
+const SqlProduct = makeModelClass('products');
+const SqlBrand = makeModelClass('brands');
+const SqlUser = makeModelClass('users');
+const SqlContact = makeModelClass('contacts');
+const SqlOrder = makeModelClass('orders');
+const SqlTestimonial = makeModelClass('testimonials');
+const SqlSettings = makeModelClass('settings', 'key');
 
-export const getUsersByEmail = (email) => {
+export const Product = useMongo ? MongoProduct : SqlProduct;
+export const Brand = useMongo ? MongoBrand : SqlBrand;
+export const User = useMongo ? MongoUser : SqlUser;
+export const Contact = useMongo ? MongoContact : SqlContact;
+export const Order = useMongo ? MongoOrder : SqlOrder;
+export const Testimonial = useMongo ? MongoTestimonial : SqlTestimonial;
+export const Settings = useMongo ? MongoSettings : SqlSettings;
+
+export const getUsersByEmail = async (email) => {
+  if (useMongo) {
+    const normalized = String(email || '').trim().toLowerCase();
+    return MongoUser.find({ email: { $regex: new RegExp(`^${normalized}$`, 'i') } });
+  }
   if (!db) return [];
   const normalized = String(email || '').trim().toLowerCase();
   return getAllRows('users').filter((user) => String(user.email || '').trim().toLowerCase() === normalized);
 };
 
-export const findUserByEmail = (email) => {
+export const findUserByEmail = async (email) => {
+  if (useMongo) {
+    const normalized = String(email || '').trim().toLowerCase();
+    return MongoUser.findOne({ email: { $regex: new RegExp(`^${normalized}$`, 'i') } });
+  }
   if (!db) return null;
   return getUsersByEmail(email)[0] || null;
 };
 
-export const findUserByResetToken = (token) => {
+export const findUserByResetToken = async (token) => {
+  if (useMongo) {
+    return MongoUser.findOne({ resetPasswordToken: token });
+  }
   if (!db) return null;
   return getAllRows('users').find((user) => user.resetPasswordToken === token) || null;
 };
 
-export const sqlReady = () => sqlEnabled;
+export const sqlReady = () => {
+  if (useMongo) return true;
+  return sqlEnabled;
+};
