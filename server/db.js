@@ -444,16 +444,37 @@ const SqlOrder = makeModelClass('orders');
 const SqlTestimonial = makeModelClass('testimonials');
 const SqlSettings = makeModelClass('settings', 'key');
 
-export const Product = useMongo ? MongoProduct : SqlProduct;
-export const Brand = useMongo ? MongoBrand : SqlBrand;
-export const User = useMongo ? MongoUser : SqlUser;
-export const Contact = useMongo ? MongoContact : SqlContact;
-export const Order = useMongo ? MongoOrder : SqlOrder;
-export const Testimonial = useMongo ? MongoTestimonial : SqlTestimonial;
-export const Settings = useMongo ? MongoSettings : SqlSettings;
+const getActiveModel = (mongoModel, sqlModel) => {
+  return (useMongo && mongoose.connection.readyState === 1) ? mongoModel : sqlModel;
+};
+
+const makeDynamicModel = (mongoModel, sqlModel) => {
+  return new Proxy(class {}, {
+    get(target, prop, receiver) {
+      const activeModel = getActiveModel(mongoModel, sqlModel);
+      const value = Reflect.get(activeModel, prop);
+      if (typeof value === 'function') {
+        return value.bind(activeModel);
+      }
+      return value;
+    },
+    construct(target, args, newTarget) {
+      const activeModel = getActiveModel(mongoModel, sqlModel);
+      return Reflect.construct(activeModel, args);
+    }
+  });
+};
+
+export const Product = makeDynamicModel(MongoProduct, SqlProduct);
+export const Brand = makeDynamicModel(MongoBrand, SqlBrand);
+export const User = makeDynamicModel(MongoUser, SqlUser);
+export const Contact = makeDynamicModel(MongoContact, SqlContact);
+export const Order = makeDynamicModel(MongoOrder, SqlOrder);
+export const Testimonial = makeDynamicModel(MongoTestimonial, SqlTestimonial);
+export const Settings = makeDynamicModel(MongoSettings, SqlSettings);
 
 export const getUsersByEmail = async (email) => {
-  if (useMongo) {
+  if (useMongo && mongoose.connection.readyState === 1) {
     const normalized = String(email || '').trim().toLowerCase();
     return MongoUser.find({ email: { $regex: new RegExp(`^${normalized}$`, 'i') } });
   }
@@ -463,7 +484,7 @@ export const getUsersByEmail = async (email) => {
 };
 
 export const findUserByEmail = async (email) => {
-  if (useMongo) {
+  if (useMongo && mongoose.connection.readyState === 1) {
     const normalized = String(email || '').trim().toLowerCase();
     return MongoUser.findOne({ email: { $regex: new RegExp(`^${normalized}$`, 'i') } });
   }
@@ -472,7 +493,7 @@ export const findUserByEmail = async (email) => {
 };
 
 export const findUserByResetToken = async (token) => {
-  if (useMongo) {
+  if (useMongo && mongoose.connection.readyState === 1) {
     return MongoUser.findOne({ resetPasswordToken: token });
   }
   if (!db) return null;
@@ -480,6 +501,8 @@ export const findUserByResetToken = async (token) => {
 };
 
 export const sqlReady = () => {
-  if (useMongo) return true;
+  if (useMongo) {
+    return mongoose.connection.readyState === 1;
+  }
   return sqlEnabled;
 };
