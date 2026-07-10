@@ -1,0 +1,62 @@
+[
+  {
+    "_id": "6a49f49d89f6826f8639b16a",
+    "name": "Bazooka",
+    "color": "#00aeef",
+    "svgType": "bazooka",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.048Z",
+    "updatedAt": "2026-07-05T06:07:25.048Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b16b",
+    "name": "Chupa Chups",
+    "color": "#e20613",
+    "svgType": "chupachups",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.048Z",
+    "updatedAt": "2026-07-05T06:07:25.048Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b16c",
+    "name": "Hershey's",
+    "color": "#2a120e",
+    "svgType": "hersheys",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.049Z",
+    "updatedAt": "2026-07-05T06:07:25.049Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b16d",
+    "name": "Reeses",
+    "color": "#f05a28",
+    "svgType": "reeses",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.049Z",
+    "updatedAt": "2026-07-05T06:07:25.049Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b16e",
+    "name": "Walkers",
+    "color": "#ffffff",
+    "svgType": "walkers",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.049Z",
+    "updatedAt": "2026-07-05T06:07:25.049Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b16f",
+    "name": "Warheads",
+    "color": "#4a2c81",
+    "svgType": "warheads",
+    "image": "",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.049Z",
+    "updatedAt": "2026-07-05T06:07:25.049Z"
+  }
+]

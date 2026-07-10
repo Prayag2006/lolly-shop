@@ -20,6 +20,7 @@ import { Contact as MongoContact } from './models/Contact.js';
 import { Order as MongoOrder } from './models/Order.js';
 import { Testimonial as MongoTestimonial } from './models/Testimonial.js';
 import { Settings as MongoSettings } from './models/Settings.js';
+import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
 // Synchronously load environment variables before checking database config
 const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env');
@@ -218,9 +219,52 @@ export const ensureDatabase = () => {
   }
 };
 
+const autoSeedMongo = async () => {
+  try {
+    const productCount = await MongoProduct.countDocuments();
+    if (productCount === 0) {
+      console.log('MongoDB Atlas products collection is empty. Auto-seeding default products...');
+      const productsToSeed = initialProducts.map(p => ({
+        ...p,
+        weightPrices: p.weightPrices || {
+          '100g': p.price,
+          '250g': Number((p.price * 2.2).toFixed(2)),
+          '500g': Number((p.price * 4.0).toFixed(2)),
+          '1kg': Number((p.price * 7.5).toFixed(2))
+        }
+      }));
+      await MongoProduct.insertMany(productsToSeed);
+      console.log(`Auto-seeded ${productsToSeed.length} products to MongoDB.`);
+    }
+
+    const brandCount = await MongoBrand.countDocuments();
+    if (brandCount === 0) {
+      await MongoBrand.insertMany(initialBrands);
+      console.log(`Auto-seeded ${initialBrands.length} brands to MongoDB.`);
+    }
+
+    const userCount = await MongoUser.countDocuments();
+    if (userCount === 0) {
+      await MongoUser.insertMany(defaultUsers);
+      console.log(`Auto-seeded ${defaultUsers.length} users to MongoDB.`);
+    }
+
+    const testimonialCount = await MongoTestimonial.countDocuments();
+    if (testimonialCount === 0) {
+      await MongoTestimonial.insertMany(defaultTestimonials);
+      console.log(`Auto-seeded ${defaultTestimonials.length} testimonials to MongoDB.`);
+    }
+  } catch (err) {
+    console.error('Error auto-seeding MongoDB database:', err.message);
+  }
+};
+
 if (useMongo) {
   mongoose.connect(process.env.MONGODB_URI)
-    .then(() => console.log('Successfully connected to MongoDB Atlas database.'))
+    .then(() => {
+      console.log('Successfully connected to MongoDB Atlas database.');
+      autoSeedMongo();
+    })
     .catch((err) => {
       console.error('Failed to connect to MongoDB Atlas database:', err.message);
       console.log('Falling back to SQLite database...');

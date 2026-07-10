@@ -1,0 +1,46 @@
+[
+  {
+    "_id": "6a49f46d828f528c96a1eeca",
+    "name": "Priya Sharma",
+    "role": "Sweet Enthusiast",
+    "quote": "Best Lolly Shop has the most amazing collection! The quality is unmatched and delivery is always on time. My kids absolutely love their gummies!",
+    "rating": 5,
+    "avatar": "P",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:06:37.964Z",
+    "updatedAt": "2026-07-05T06:06:37.964Z"
+  },
+  {
+    "_id": "6a49f46d828f528c96a1eecb",
+    "name": "Rajesh Kumar",
+    "role": "Regular Customer",
+    "quote": "I've ordered from many candy stores, but none compare to Best Lolly Shop. Fresh, delicious, and beautifully packaged. Perfect for gifting!",
+    "rating": 5,
+    "avatar": "R",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:06:37.965Z",
+    "updatedAt": "2026-07-05T06:06:37.965Z"
+  },
+  {
+    "_id": "6a49f46d828f528c96a1eecc",
+    "name": "Anita Patel",
+    "role": "Party Planner",
+    "quote": "Their bulk orders for parties are fantastic! Great variety, competitive prices, and the customer service is exceptional. Highly recommended!",
+    "rating": 5,
+    "avatar": "A",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:06:37.965Z",
+    "updatedAt": "2026-07-05T06:06:37.965Z"
+  },
+  {
+    "_id": "6a49f46d828f528c96a1eecd",
+    "name": "Vikram Singh",
+    "role": "Chocolate Lover",
+    "quote": "The chocolates are divine! Premium quality at reasonable prices. Best Lolly Shop is now my go-to for all sweet cravings.",
+    "rating": 5,
+    "avatar": "V",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:06:37.965Z",
+    "updatedAt": "2026-07-05T06:06:37.965Z"
+  }
+]

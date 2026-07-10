@@ -1,0 +1,523 @@
+[
+  {
+    "_id": "6a514a8ae5877eecdb464290",
+    "name": "Pascall Pineapple Lumps",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 8.5,
+    "rating": 4.9,
+    "reviewsCount": 198,
+    "description": "The ultimate Kiwi classic! Deliciously chewy pineapple-flavored center covered in a smooth milk chocolate coating. Best enjoyed straight from the freezer!",
+    "ingredients": "Sugar, Glucose Syrup, Milk Solids, Cocoa Butter, Cocoa Mass, Vegetable Fat, Gelatin, Pineapple Juice, Food Acids, Emulsifiers, Flavors.",
+    "nutrition": {
+      "calories": "150 kcal",
+      "sugar": "25g",
+      "fat": "4.5g",
+      "protein": "1.2g"
+    },
+    "gradient": "linear-gradient(135deg, #FFE259 0%, #FFA751 100%)",
+    "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Chocolates",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 8.5,
+      "250g": 18.7,
+      "500g": 34,
+      "1kg": 63.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.938Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464291",
+    "name": "Pascall Jet Planes",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.9,
+    "rating": 4.8,
+    "reviewsCount": 154,
+    "description": "Take off with New Zealand's favorite jet plane gummies! A delicious mix of fruit flavors (raspberry, lime, orange, pineapple) with that classic firm Kiwi chew.",
+    "ingredients": "Sugar, Glucose Syrup, Water, Gelatin, Food Acid (Citric Acid), Flavors, Colors (102, 110, 122, 133, 142), Glazing Agent.",
+    "nutrition": {
+      "calories": "135 kcal",
+      "sugar": "26g",
+      "fat": "0g",
+      "protein": "1.5g"
+    },
+    "gradient": "linear-gradient(135deg, #FF3366 0%, #FF9933 100%)",
+    "image": "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Gummies",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.9,
+      "250g": 17.38,
+      "500g": 31.6,
+      "1kg": 59.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.939Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464292",
+    "name": "Pascall Milk Bottles",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.5,
+    "rating": 4.7,
+    "reviewsCount": 112,
+    "description": "Creamy, milky, and wonderfully chewy. These retro milk bottle shapes are a nostalgic Kiwi favorite that have sweet-talked generations of New Zealanders.",
+    "ingredients": "Sugar, Glucose Syrup, Sweetened Condensed Milk, Gelatin, Wheat Starch, Vegetable Oil, Glazing Agent, Flavors.",
+    "nutrition": {
+      "calories": "120 kcal",
+      "sugar": "22g",
+      "fat": "0.8g",
+      "protein": "1.6g"
+    },
+    "gradient": "linear-gradient(135deg, #ECE9E6 0%, #FFFFFF 100%)",
+    "image": "https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": true,
+    "collections": [
+      "Kiwi Classics",
+      "Retro",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.5,
+      "250g": 16.5,
+      "500g": 30,
+      "1kg": 56.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "createdAt": "2026-07-10T19:39:54.939Z",
+    "updatedAt": "2026-07-10T19:39:54.939Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464293",
+    "name": "Mayceys Sour Peaches",
+    "category": "Sour Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 8.9,
+    "rating": 4.9,
+    "reviewsCount": 205,
+    "description": "Mayceys Sour Peaches are the absolute gold standard of sour candy in New Zealand. Firm, chewy, and coated in a lip-puckering sugar dust. Proudly made in NZ!",
+    "ingredients": "Sugar, Glucose Syrup, Water, Gelatin, Modified Maize Starch, Acids (Citric, Malic), Flavors, Colors (102, 110, 124).",
+    "nutrition": {
+      "calories": "140 kcal",
+      "sugar": "27g",
+      "fat": "0g",
+      "protein": "1.1g"
+    },
+    "gradient": "linear-gradient(135deg, #FF9966 0%, #FF5E62 100%)",
+    "image": "https://images.unsplash.com/photo-1600431521340-491eca880813?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Sour",
+      "Gummies",
+      "Mayceys"
+    ],
+    "weightPrices": {
+      "100g": 8.9,
+      "250g": 19.58,
+      "500g": 35.6,
+      "1kg": 66.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.939Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464294",
+    "name": "Pascall Jaffas",
+    "category": "Hard Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.9,
+    "rating": 4.8,
+    "reviewsCount": 142,
+    "description": "Roll them down the cinema aisle! These iconic orange-flavored balls are coated in a crisp red candy shell with a rich chocolate center. An NZ cinematic legend!",
+    "ingredients": "Sugar, Vegetable Fat, Milk Solids, Cocoa Powder, Glucose Syrup, Glazing Agents, Food Acid (Citric), Flavors, Colors (124).",
+    "nutrition": {
+      "calories": "160 kcal",
+      "sugar": "24g",
+      "fat": "6.2g",
+      "protein": "1.0g"
+    },
+    "gradient": "linear-gradient(135deg, #F00000 0%, #BE93C5 100%)",
+    "image": "https://images.unsplash.com/photo-1534080391025-a77af30d1a9e?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Chocolates",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.9,
+      "250g": 17.38,
+      "500g": 31.6,
+      "1kg": 59.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.939Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464295",
+    "name": "Chocolate Fish (Pascall)",
+    "category": "Chocolates",
+    "mainCategory": "NZ Lollies",
+    "price": 5.5,
+    "rating": 4.7,
+    "reviewsCount": 94,
+    "description": "The classic kiwi reward! A fluffy pink marshmallow fish covered in a thin, rippled layer of premium milk chocolate. A legendary Kiwi treat.",
+    "ingredients": "Sugar, Glucose Syrup, Milk Solids, Cocoa Butter, Cocoa Mass, Gelatin, Food Acid, Emulsifiers, Colors, Flavors.",
+    "nutrition": {
+      "calories": "110 kcal",
+      "sugar": "19g",
+      "fat": "3.1g",
+      "protein": "1.2g"
+    },
+    "gradient": "linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%)",
+    "image": "https://images.unsplash.com/photo-1549007994-cb92ca818bc6?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": true,
+    "collections": [
+      "Kiwi Classics",
+      "Chocolates",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 5.5,
+      "250g": 12.1,
+      "500g": 22,
+      "1kg": 41.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "createdAt": "2026-07-10T19:39:54.940Z",
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464296",
+    "name": "Pascall Minties",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.2,
+    "rating": 4.6,
+    "reviewsCount": 88,
+    "description": "\"It's moments like these you need Minties!\" Super chewy, refreshing white mint squares that keep your jaws busy and your breath fresh.",
+    "ingredients": "Sugar, Glucose Syrup, Vegetable Oil, Gelatin, Natural Mint Oils, Wheat Starch, Emulsifiers.",
+    "nutrition": {
+      "calories": "115 kcal",
+      "sugar": "21g",
+      "fat": "0.9g",
+      "protein": "0.8g"
+    },
+    "gradient": "linear-gradient(135deg, #1ad6fd 0%, #1d62f0 100%)",
+    "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Retro",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.2,
+      "250g": 15.84,
+      "500g": 28.8,
+      "1kg": 54
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464297",
+    "name": "Mayceys Sour Apples",
+    "category": "Sour Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 8.9,
+    "rating": 4.8,
+    "reviewsCount": 76,
+    "description": "Tongue-tingling sour green apple gummies with a firm texture and a heavy coating of sour sugar. A Kiwi pick-and-mix essential!",
+    "ingredients": "Sugar, Glucose Syrup, Water, Gelatin, Modified Starch, Citric Acid, Apple Juice, Natural Green Colors.",
+    "nutrition": {
+      "calories": "135 kcal",
+      "sugar": "26g",
+      "fat": "0g",
+      "protein": "1.1g"
+    },
+    "gradient": "linear-gradient(135deg, #0575E6 0%, #00F260 100%)",
+    "image": "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": true,
+    "collections": [
+      "Sour",
+      "Gummies",
+      "Mayceys"
+    ],
+    "weightPrices": {
+      "100g": 8.9,
+      "250g": 19.58,
+      "500g": 35.6,
+      "1kg": 66.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "createdAt": "2026-07-10T19:39:54.940Z",
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464298",
+    "name": "Spaceman Candy Sticks",
+    "category": "Other",
+    "mainCategory": "NZ Lollies",
+    "price": 4.9,
+    "rating": 4.5,
+    "reviewsCount": 64,
+    "description": "Retro Kiwiana! These legendary white candy sticks have a chalky, sweet vanilla taste and are a beloved schoolyard memory across New Zealand.",
+    "ingredients": "Sugar, Corn Starch, Glucose, Gelatin, Natural Vanilla Flavor, Stearic Acid.",
+    "nutrition": {
+      "calories": "90 kcal",
+      "sugar": "22g",
+      "fat": "0g",
+      "protein": "0g"
+    },
+    "gradient": "linear-gradient(135deg, #ECE9E6 0%, #FFFFFF 100%)",
+    "image": "https://images.unsplash.com/photo-1534080391025-a77af30d1a9e?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": false,
+    "collections": [
+      "Retro",
+      "Kids",
+      "Kiwi Classics"
+    ],
+    "weightPrices": {
+      "100g": 4.9,
+      "250g": 10.78,
+      "500g": 19.6,
+      "1kg": 36.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb464299",
+    "name": "Cadbury Caramilk Bar",
+    "category": "Cadbury",
+    "mainCategory": "Chocolates",
+    "price": 11.5,
+    "rating": 4.9,
+    "reviewsCount": 231,
+    "description": "The caramelized white chocolate bar sensation that took New Zealand by storm! Silky smooth, sweet, and incredibly rich. Crafted in NZ.",
+    "ingredients": "Sugar, Cocoa Butter, Caramelized Milk Powder, Whole Milk Powder, Emulsifiers, Cocoa Mass, Vanilla.",
+    "nutrition": {
+      "calories": "210 kcal",
+      "sugar": "18g",
+      "fat": "13g",
+      "protein": "3.0g"
+    },
+    "gradient": "linear-gradient(135deg, #FFE259 0%, #FFA751 100%)",
+    "image": "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Cadbury",
+      "Chocolates",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 11.5,
+      "250g": 25.3,
+      "500g": 46,
+      "1kg": 86.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb46429a",
+    "name": "Pascall Wine Gums",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.9,
+    "rating": 4.7,
+    "reviewsCount": 149,
+    "description": "Traditional chewy fruit gums with classic fruit flavors labeled with wine varieties. A staple of Kiwi road trips and family gatherings!",
+    "ingredients": "Sugar, Glucose Syrup, Modified Wheat Starch, Gelatin, Citric Acid, Flavors, Natural Colors.",
+    "nutrition": {
+      "calories": "130 kcal",
+      "sugar": "25g",
+      "fat": "0g",
+      "protein": "1.2g"
+    },
+    "gradient": "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)",
+    "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Gummies",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.9,
+      "250g": 17.38,
+      "500g": 31.6,
+      "1kg": 59.25
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb46429b",
+    "name": "Buzz Bar (Cadbury)",
+    "category": "Bars",
+    "mainCategory": "Chocolates",
+    "price": 6.5,
+    "rating": 4.8,
+    "reviewsCount": 65,
+    "description": "A delicious bar of chewy caramel marshmallow covered in Cadbury milk chocolate. A classic Kiwiana convenience store staple.",
+    "ingredients": "Sugar, Glucose Syrup, Milk Solids, Cocoa Butter, Cocoa Mass, Marshmallow Gelatin, Soy Lecithin.",
+    "nutrition": {
+      "calories": "180 kcal",
+      "sugar": "16g",
+      "fat": "6g",
+      "protein": "1.5g"
+    },
+    "gradient": "linear-gradient(135deg, #1f4037 0%, #99f2c8 100%)",
+    "image": "https://images.unsplash.com/photo-1549007994-cb92ca818bc6?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": false,
+    "collections": [
+      "Bars",
+      "Chocolates",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 6.5,
+      "250g": 14.3,
+      "500g": 26,
+      "1kg": 48.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb46429c",
+    "name": "Raspberry Sherbet Bombs",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 7.2,
+    "rating": 4.6,
+    "reviewsCount": 110,
+    "description": "Classic hard boiled raspberry drops filled with a fizzy sherbet center. A vintage Kiwi favorite that explodes with flavor!",
+    "ingredients": "Sugar, Glucose Syrup, Food Acid (Citric), Sodium Bicarbonate, Sherbet Flavourings, Natural Red Color.",
+    "nutrition": {
+      "calories": "95 kcal",
+      "sugar": "23g",
+      "fat": "0g",
+      "protein": "0g"
+    },
+    "gradient": "linear-gradient(135deg, #f857a6 0%, #ff5858 100%)",
+    "image": "https://images.unsplash.com/photo-1534080391025-a77af30d1a9e?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": true,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Retro",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 7.2,
+      "250g": 15.84,
+      "500g": 28.8,
+      "1kg": 54
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  },
+  {
+    "_id": "6a514a8ae5877eecdb46429d",
+    "name": "Toffee Milks",
+    "category": "Soft Lollies",
+    "mainCategory": "NZ Lollies",
+    "price": 6.9,
+    "rating": 4.7,
+    "reviewsCount": 92,
+    "description": "Super chewy milk toffee drops with a rich, buttery dairy flavor. Keeps your jaws busy and your sweet tooth happy!",
+    "ingredients": "Sugar, Condensed Milk, Butter, Glucose, Salt, Vanilla, Vegetable Fats.",
+    "nutrition": {
+      "calories": "120 kcal",
+      "sugar": "19g",
+      "fat": "3.5g",
+      "protein": "0.8g"
+    },
+    "gradient": "linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)",
+    "image": "https://images.unsplash.com/photo-1582293041079-7814c2f12063?auto=format&fit=crop&q=80&w=600",
+    "inStock": true,
+    "quantity": 50,
+    "isPopular": false,
+    "isNew": false,
+    "collections": [
+      "Kiwi Classics",
+      "Retro",
+      "NZ Favorites"
+    ],
+    "weightPrices": {
+      "100g": 6.9,
+      "250g": 15.18,
+      "500g": 27.6,
+      "1kg": 51.75
+    },
+    "reviews": [],
+    "__v": 0,
+    "updatedAt": "2026-07-10T19:39:54.940Z"
+  }
+]

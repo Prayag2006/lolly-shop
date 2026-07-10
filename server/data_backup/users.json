@@ -1,0 +1,72 @@
+[
+  {
+    "_id": "6a49f49d89f6826f8639b172",
+    "name": "Sarah Jenkins",
+    "email": "sarah.j@gmail.com",
+    "password": "password123",
+    "role": "user",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b173",
+    "name": "Matthew Taylor",
+    "email": "matthew.t@hotmail.co.nz",
+    "password": "password123",
+    "role": "user",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b174",
+    "name": "Chloe Smith",
+    "email": "chloe.s@gmail.com",
+    "password": "password123",
+    "role": "user",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b175",
+    "name": "Liam Wilson",
+    "email": "liam.wilson@yahoo.com",
+    "password": "password123",
+    "role": "user",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b176",
+    "name": "Store Administrator",
+    "email": "admin@lollyshop.co.nz",
+    "password": "admin123",
+    "role": "admin",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f49d89f6826f8639b177",
+    "name": "John Doe",
+    "email": "john@gmail.com",
+    "password": "user123",
+    "role": "user",
+    "__v": 0,
+    "createdAt": "2026-07-05T06:07:25.096Z",
+    "updatedAt": "2026-07-05T06:07:25.096Z"
+  },
+  {
+    "_id": "6a49f5a970aa1ddd9ce0ee80",
+    "name": "Prayag Kansara",
+    "email": "prayagkansara05@gmail.com",
+    "password": "Prayag05@",
+    "role": "user",
+    "createdAt": "2026-07-05T06:11:53.271Z",
+    "updatedAt": "2026-07-05T06:11:53.271Z",
+    "__v": 0
+  }
+]
