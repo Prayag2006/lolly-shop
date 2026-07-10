@@ -127,6 +127,9 @@ const getLocalFile = (filename) => path.join(DATA_DIR, filename);
 const localCache = {};
 
 const readLocalData = (filename, defaultVal = []) => {
+  if (localCache[filename]) {
+    return localCache[filename];
+  }
   const file = getLocalFile(filename);
   try {
     if (!fs.existsSync(file)) {
@@ -135,9 +138,12 @@ const readLocalData = (filename, defaultVal = []) => {
       } catch (writeErr) {
         // Safe to ignore on serverless environments
       }
+      localCache[filename] = defaultVal;
       return defaultVal;
     }
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    localCache[filename] = data;
+    return data;
   } catch (err) {
     if (!localCache[filename]) {
       localCache[filename] = defaultVal;
@@ -147,10 +153,11 @@ const readLocalData = (filename, defaultVal = []) => {
 };
 
 const writeLocalData = (filename, data) => {
+  localCache[filename] = data;
   try {
     fs.writeFileSync(getLocalFile(filename), JSON.stringify(data, null, 2));
   } catch (err) {
-    localCache[filename] = data;
+    // Keep localCache updated even on write failure
   }
 };
 
@@ -2082,7 +2089,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     // Generate secure random hex token
     const token = crypto.randomBytes(20).toString('hex');
-    const expires = new Date(Date.now() + 3600000); // 1 hour expiration
+    const expires = new Date(Date.now() + 24 * 3600000); // 24 hours expiration
 
     if (sqlAvailable()) {
       const user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });

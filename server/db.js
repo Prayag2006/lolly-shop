@@ -115,6 +115,61 @@ const generateId = (prefix) => {
   return `${safePrefix}-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
 };
 
+const seedSqliteFromJSON = () => {
+  try {
+    const tables = ['products', 'brands', 'users', 'contacts', 'orders', 'testimonials', 'settings'];
+    for (const table of tables) {
+      // Check if table is empty
+      const count = db.prepare(`SELECT COUNT(*) as count FROM ${table}`).get().count;
+      if (count === 0) {
+        console.log(`SQLite table ${table} is empty. Migrating from JSON file...`);
+        const jsonFile = path.join(DATA_DIR, `${table}.json`);
+        if (fs.existsSync(jsonFile)) {
+          const content = fs.readFileSync(jsonFile, 'utf-8');
+          const data = JSON.parse(content);
+          if (Array.isArray(data)) {
+            const stmt = db.prepare(`INSERT INTO ${table} (id, data, createdAt, updatedAt) VALUES (?, ?, ?, ?)`);
+            const now = new Date().toISOString();
+            db.transaction(() => {
+              for (const item of data) {
+                const id = item.id || (table === 'settings' ? item.key : null);
+                if (id) {
+                  stmt.run(
+                    id,
+                    JSON.stringify(item),
+                    item.createdAt || now,
+                    item.updatedAt || now
+                  );
+                }
+              }
+            })();
+            console.log(`Successfully migrated ${data.length} records to SQLite table ${table}.`);
+          } else if (data && typeof data === 'object') {
+            // For settings, it might be an object instead of array
+            if (table === 'settings') {
+              const now = new Date().toISOString();
+              const stmt = db.prepare(`INSERT INTO settings (key, data, updatedAt) VALUES (?, ?, ?)`);
+              db.transaction(() => {
+                if (data.key || data.marqueeText) {
+                  const key = data.key || 'main_settings';
+                  stmt.run(key, JSON.stringify({ key, ...data }), now);
+                } else {
+                  for (const [key, val] of Object.entries(data)) {
+                    stmt.run(key, JSON.stringify(val), now);
+                  }
+                }
+              })();
+              console.log(`Successfully migrated settings to SQLite settings table.`);
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Error seeding SQLite from JSON files:', err.message);
+  }
+};
+
 export const ensureDatabase = () => {
   if (db) return;
   try {
@@ -128,6 +183,9 @@ export const ensureDatabase = () => {
     initTables();
     sqlEnabled = true;
     console.log('SQLite database initialized at', DB_PATH);
+    
+    // Seed SQLite tables from JSON files if they are empty
+    seedSqliteFromJSON();
   } catch (err) {
     console.error('Failed to initialize SQLite database:', err.message);
     db = null;
