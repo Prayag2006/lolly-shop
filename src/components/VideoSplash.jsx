@@ -6,6 +6,18 @@ export function VideoSplash({ onComplete }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const videoRef = useRef(null);
 
+  useEffect(() => {
+    // Safety fallback: if video data hasn't loaded within 2.5s (due to slow connection), skip to homepage
+    const timer = setTimeout(() => {
+      if (!isLoaded) {
+        console.warn("Video load timed out. Bypassing video splash for performance.");
+        handleEnter();
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [isLoaded]);
+
   const handleEnter = () => {
     setIsExiting(true);
     // Persist in sessionStorage so it doesn't show again in this session
