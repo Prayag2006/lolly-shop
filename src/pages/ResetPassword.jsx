@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { Lock, AlertCircle, CheckCircle, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
 import './ResetPassword.css';
+import './Login.css';
 
 export const ResetPassword = () => {
   const { verifyResetToken, resetPassword } = useStore();

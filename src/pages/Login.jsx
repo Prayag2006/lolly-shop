@@ -110,7 +110,7 @@ export const Login = () => {
 
     const result = await forgotPassword(email);
     if (result.success) {
-      setSuccess(result.message || 'A temporary password has been sent to your email.');
+      setSuccess(result.message || 'A password reset link has been sent to your email.');
       if (result.previewUrl) {
         setEtherealUrl(result.previewUrl);
       }
@@ -173,7 +173,7 @@ export const Login = () => {
             <p>
               {mode === 'login' && "Access your Lolly Shop account or administrator panel"}
               {mode === 'register' && "Join us and enjoy NZ's finest selection of candy and treats!"}
-              {mode === 'forgot' && "Enter your email to receive a temporary login password"}
+              {mode === 'forgot' && "Enter your email to receive a password reset link"}
             </p>
           </div>
           

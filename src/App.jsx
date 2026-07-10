@@ -63,6 +63,10 @@ const PageLoadingFallback = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
+    // Bypass splash screen entirely on password reset path
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reset-password')) {
+      return false;
+    }
     // Bypass splash screen entirely on slow connections (2G, 3G, or saveData active)
     const conn = typeof navigator !== 'undefined' && (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
     if (conn) {

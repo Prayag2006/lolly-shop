@@ -2102,7 +2102,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       userDetails = users[index];
     }
 
-    const resetLink = `http://localhost:5173/reset-password?token=${token}`;
+    const clientOrigin = process.env.CLIENT_URL || req.get('origin') || 'http://localhost:5173';
+    const resetLink = `${clientOrigin}/reset-password?token=${token}`;
 
     // Nodemailer Email Sending logic
     let transporter;
@@ -2119,7 +2120,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         host,
         port: Number(port),
         secure: Number(port) === 465,
-        auth: { user: smtpUser, pass: smtpPass }
+        auth: { user: smtpUser, pass: smtpPass },
+        tls: { rejectUnauthorized: false }
       });
     } else {
       isFallback = true;
@@ -2225,11 +2227,8 @@ app.get('/api/auth/verify-reset-token', async (req, res) => {
     }
 
     if (sqlAvailable()) {
-      const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: new Date() }
-      });
-      if (!user) {
+      const user = await User.findOne({ resetPasswordToken: token });
+      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
         return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
       }
       res.json({ success: true, message: 'Token is valid' });
@@ -2263,11 +2262,8 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
 
     if (sqlAvailable()) {
-      const user = await User.findOne({
-        resetPasswordToken: token,
-        resetPasswordExpires: { $gt: new Date() }
-      });
-      if (!user) {
+      const user = await User.findOne({ resetPasswordToken: token });
+      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
         return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
       }
 
