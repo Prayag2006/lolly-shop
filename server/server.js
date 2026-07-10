@@ -806,6 +806,128 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
   }
 };
 
+const sendAdminOrderNotificationEmail = async (order) => {
+  try {
+    let mailConfig;
+    try {
+      mailConfig = await createMailTransporter();
+    } catch (mailErr) {
+      console.log('Skipping admin order notification email:', mailErr.message);
+      return;
+    }
+
+    const { transporter, smtpUser } = mailConfig;
+    const adminRecipient = smtpUser || 'bestlollyshopnz@gmail.com';
+    const adminPanelLink = `http://localhost:5173/admin`;
+
+    // Format items for the summary
+    const itemsHtml = order.items.map(item => `
+      <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
+        <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
+          ${item.name} <br/>
+          <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Weight: ${item.selectedWeight}</span>
+        </td>
+        <td style="padding: 12px 5px; color: #615a75; text-align: center;">${item.quantity}</td>
+        <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(item.price).toFixed(2)}</td>
+        <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(item.price * item.quantity).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const info = await transporter.sendMail({
+      from: `"Lolly Shop Alert" <${smtpUser}>`,
+      to: adminRecipient,
+      subject: `🚨 [NEW ORDER RECEIVED] Order #${order.id} - ${order.customer.name}`,
+      text: `A new order has been received!\n\nOrder ID: ${order.id}\nCustomer: ${order.customer.name}\nTotal: $${Number(order.total).toFixed(2)}\n\nManage it here: ${adminPanelLink}`,
+      html: `
+        <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
+            <!-- Brand Banner Header -->
+            <div style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); padding: 35px 20px; text-align: center;">
+              <span style="font-size: 40px; display: block; margin-bottom: 10px;">🚨</span>
+              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">New Order Received</h1>
+              <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
+                Order ID: ${order.id}
+              </p>
+            </div>
+            
+            <!-- Email Body Content -->
+            <div style="padding: 45px 35px;">
+              <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
+                Order Details Summary
+              </h2>
+              
+              <!-- Order Info Metadata Grid -->
+              <div style="background-color: #faf9fc; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #f1eff5;">
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order ID:</span><span style="color: #2d2645; font-weight: 700; font-family: monospace;">${order.id}</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order Date:</span><span style="color: #2d2645; font-weight: 600;">${order.date || new Date().toLocaleDateString('en-NZ')}</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order Status:</span><span style="color: #2d2645; font-weight: 600;">${order.status || 'Pending'}</span></div>
+                <div style="display: flex; justify-content: space-between; font-size: 14px;"><span style="color: #8c859d; font-weight: 600;">Payment Status:</span><span style="color: #e72c83; font-weight: 700; text-transform: uppercase; font-size: 12px;">${order.paymentStatus || 'Pending'}</span></div>
+              </div>
+              
+              <!-- Customer & Shipping Info -->
+              <div style="background-color: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 35px; border: 1px solid #f1eff5; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+                <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #faf9fc; padding-bottom: 8px;">👤 Customer & Shipping Details</h3>
+                <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
+                  <strong>Name:</strong> ${order.customer.name}<br/>
+                  <strong>Email:</strong> ${order.customer.email}<br/>
+                  <strong>Phone:</strong> ${order.customer.phone}<br/>
+                  <strong>Address:</strong> ${order.customer.address}, ${order.customer.city}, ${order.customer.postalCode}
+                </p>
+              </div>
+
+              <!-- Invoice Items Table -->
+              <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Ordered Items</h3>
+              <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
+                <thead>
+                  <tr style="border-bottom: 2px solid #f1eff5;">
+                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
+                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
+                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
+                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsHtml}
+                  <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
+                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
+                      Shipping Fee <br/>
+                    </td>
+                    <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
+                    <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+                  </tr>
+                  <tr style="border-top: 2px solid #f1eff5;">
+                    <td colspan="2"></td>
+                    <td style="padding: 15px 5px; font-size: 15px; color: #2d2645; font-weight: 700; text-align: right;">Grand Total:</td>
+                    <td style="padding: 15px 5px; font-size: 18px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total).toFixed(2)}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <!-- Admin Action Button -->
+              <div style="background-color: #f7f6f9; border-radius: 16px; padding: 25px 20px; text-align: center; border: 1.5px dashed #e1dde6; margin-bottom: 30px;">
+                <a href="${adminPanelLink}" style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 6px 18px rgba(231, 44, 131, 0.35); text-transform: uppercase; letter-spacing: 0.8px;">
+                  Open Admin Panel ➔
+                </a>
+              </div>
+            </div>
+            
+            <!-- Email Footer -->
+            <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
+              <p style="font-size: 11px; color: #b4afc4; margin: 0;">
+                © 2026 Lolly Shop New Zealand. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </div>
+      `
+    });
+    console.log(`[Admin Notification] New order email successfully sent to ${adminRecipient}. MessageID: ${info.messageId}`);
+  } catch (err) {
+    console.error('Error sending admin order notification email:', err);
+  }
+};
+
 app.post('/api/orders', async (req, res) => {
   try {
     if (sqlAvailable()) {
@@ -823,6 +945,7 @@ app.post('/api/orders', async (req, res) => {
       }
 
       sendOrderConfirmationEmail(newOrder);
+      sendAdminOrderNotificationEmail(newOrder);
       res.status(201).json(newOrder);
     } else {
       const orders = readLocalData('orders.json', []);
@@ -846,6 +969,7 @@ app.post('/api/orders', async (req, res) => {
       writeLocalData('products.json', localProducts);
 
       sendOrderConfirmationEmail(newOrder);
+      sendAdminOrderNotificationEmail(newOrder);
       res.status(201).json(newOrder);
     }
   } catch (error) {
@@ -1254,6 +1378,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
 
       // Send confirmation email
       sendOrderConfirmationEmail(updatedOrder);
+      sendAdminOrderNotificationEmail(updatedOrder);
 
       res.json(updatedOrder);
     } else {
