@@ -19,17 +19,17 @@ export const ChatBot = () => {
   
   const getInitialGreeting = () => {
     const clientHour = new Date().getHours();
-    let timeGreeting = "Hello gorgeous";
+    let timeGreeting = "Hello";
     if (clientHour >= 5 && clientHour < 12) {
-      timeGreeting = "Good morning gorgeous";
+      timeGreeting = "Good morning";
     } else if (clientHour >= 12 && clientHour < 17) {
-      timeGreeting = "Good afternoon gorgeous";
+      timeGreeting = "Good afternoon";
     } else if (clientHour >= 17 && clientHour < 22) {
-      timeGreeting = "Good evening gorgeous";
+      timeGreeting = "Good evening";
     } else {
-      timeGreeting = "Good evening gorgeous";
+      timeGreeting = "Good evening";
     }
-    return `${timeGreeting}! 🍭✨ I'm **Lolly**, your personal sweet assistant at Lolly Shop NZ! To make your day even sweeter, make sure to use coupon code **SWEET10** at checkout to get a yummy **10% OFF** your entire order! Plus, we offer **FREE shipping** on NZ orders over $50! 🚚💖 What candy cravings can I help satisfy today?`;
+    return `${timeGreeting}! 🍭 Welcome to Best Lolly Shop New Zealand! I am your **Best Lolly Shop AI Assistant**. To make your shopping experience even sweeter, make sure to use coupon code **SWEET10** at checkout to get a yummy **10% OFF** your entire order! Plus, we offer **FREE shipping** on NZ orders over $50! 🚚 How can I help satisfy your candy cravings today?`;
   };
 
   const [messages, setMessages] = useState([
@@ -96,7 +96,7 @@ export const ChatBot = () => {
       setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: data.reply || "Oh sugar! 🍭 Let me try that again — what sweet question can I help with?",
+        text: data.reply || "I don't want to give you incorrect information. Please contact our support team, and they'll be happy to assist you.",
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     } catch (err) {
@@ -117,19 +117,25 @@ export const ChatBot = () => {
 
       let fallback;
       if (lower.match(/hello|hi+|hey+|howdy|morning|afternoon|evening|yo+/)) {
-        fallback = `Hii sweetheart! ${timeGreeting}! 🍭✨ So glad you're here in our sweet paradise! Don't forget to use coupon code **SWEET10** at checkout to get a yummy 10% OFF your entire order! Plus, we offer FREE shipping on all NZ orders over $50! 🚚💖 What candy cravings can I help satisfy today?`;
+        fallback = `Hello! ${timeGreeting}! 🍭 Welcome to Best Lolly Shop New Zealand! I am your Best Lolly Shop AI Assistant. To make your shopping experience even sweeter, make sure to use coupon code **SWEET10** at checkout for **10% OFF** your entire order! Plus, we offer **FREE shipping** on all NZ orders over $50! 🚚 How can I help satisfies your candy cravings today?`;
       } else if (lower.match(/bye+|goodbye|see you|thanks|thank/)) {
-        fallback = "Bye sweetheart! 🍭✨ Have an absolutely sugar-sweet day, and don't forget to treat yourself soon! 🍬💖";
+        fallback = "Thank you for visiting! Have a wonderful, sweet day! If you need anything else, feel free to ask. 🍭";
       } else if (lower.match(/ship|deliver/)) {
-        fallback = "Sweet news! 🚚 FREE express shipping on NZ orders over $50! Smaller orders ship for just $5 flat. Your treats arrive in 3-5 business days. Which products are you eyeing? 🍬";
+        fallback = "We offer FREE express delivery across New Zealand on orders over $50 NZD! For orders under $50, shipping is a flat rate of $5 NZD. Standard delivery time is 3-5 business days. Can I help you find some sweets to qualify for free shipping? 🚚";
       } else if (lower.match(/discount|code|promo/)) {
-        fallback = "Oh you clever one! 🎟️ Use code **SWEET10** at checkout for 10% OFF your whole order! Ready to treat yourself? 💖";
-      } else if (lower.match(/gumm|worm|peach|sour/)) {
-        fallback = "Gummy heaven alert! 🍬🎉 Our Sour Neon Worms are tangy-coated pure bliss, and our Fuzzy Peach Rings are soft, juicy perfection! Available in 100g up to 1kg bags — the 1kg is the best value! Which size calls your name? 😋";
-      } else if (lower.match(/choc|truffle|caramel/)) {
-        fallback = "Chocolate lover, I see you! 🍫💖 Our Premium Dark Truffles have real Belgian ganache centres — absolutely divine! Or try the Sea Salt Caramel Bar for sweet-salty perfection. Want to try both in a gift pack? 🎁";
+        fallback = "You can use the coupon code **SWEET10** at checkout to get 10% OFF your entire order! Plus, we offer free shipping on New Zealand orders over $50. Ready to grab some treats? 🎟️";
+      } else if (lower.match(/vegan|vegetarian|halal|gelatin|gluten|allerg|dietary/)) {
+        fallback = "We have delicious options for everyone! 🌿 Many of our lollies are gluten-free or gelatin-free (like our Mayceys Sour Peaches and Spaceman Candy Sticks). You can find clear dietary badges and full ingredient lists on each product page. Are you looking for something gluten-free, gelatin-free, or vegan? 🍬";
+      } else if (lower.match(/gumm|worm|peach|sour|ring|chew/)) {
+        fallback = "We have an amazing selection of gummies! 🍬 Our Sour Neon Worms are tangy-coated bliss, and our Mayceys Sour Peaches are the gold standard of sour candy. They are available in 100g, 250g, 500g, and 1kg bags. Would you like me to recommend some specific gummies? 😋";
+      } else if (lower.match(/choc|truffle|caramel|button|fish|bar/)) {
+        fallback = "Chocolate lovers, you're in the right place! 🍫 We highly recommend our Premium Dark Truffles with Belgian ganache centres, the silkily rich Cadbury Caramilk Bar, or the iconic Pascall Chocolate Fish. Which chocolate treat would you like to add to your order? 💖";
+      } else if (lower.match(/party|kid|pick|idea|gift|wedding|birthday|baby|shower|christmas|easter|halloween|valent/)) {
+        fallback = "We love helping with parties and events! 🎉 For kid's parties, our custom pick-and-mix bulk bags are a huge hit. We also offer beautiful gift wrapping, corporate gifts, wedding favours, baby shower sweets, and seasonal collections. How many guests are you hosting, and what's your budget? 🎁";
+      } else if (lower.match(/best|popular|top|recommend|favourite|favorite/)) {
+        fallback = "I'd love to make some recommendations! Before I do, could you let me know what occasion you are shopping for, how many people it is for, and if you have a preferred flavour or budget? 🍭";
       } else {
-        fallback = "Oh that's a great question! 🍭 While I get my answer together — have you checked out our Raspberry Sherbet Bombs? They're currently our #1 most-loved treat! Use code **SWEET10** for 10% off! What flavour are you in the mood for? 🍓";
+        fallback = "I don't want to give you incorrect information. Please contact our support team, and they'll be happy to assist you.";
       }
       setMessages((prev) => [...prev, {
         id: Date.now() + 1,
@@ -157,7 +163,7 @@ export const ChatBot = () => {
       <button
         className={`chatbot-toggle ${isOpen ? 'active' : ''} animate-float`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle Lolly Chat Assistant"
+        aria-label="Toggle Best Lolly Shop AI Assistant"
         id="chatbot-toggle-btn"
       >
         {isOpen ? <X size={24} /> : (
@@ -170,7 +176,7 @@ export const ChatBot = () => {
 
       {/* Chat Window Panel */}
       {isOpen && (
-        <div className="chatbot-panel glass-card" role="dialog" aria-label="Lolly Sweet Assistant">
+        <div className="chatbot-panel glass-card" role="dialog" aria-label="Best Lolly Shop AI Assistant">
           {/* Header */}
           <div className="chatbot-header">
             <div className="chatbot-title">
@@ -179,7 +185,7 @@ export const ChatBot = () => {
                 <span className="bot-avatar-pulse"></span>
               </div>
               <div>
-                <h3>Lolly — Sweet Assistant</h3>
+                <h3>Best Lolly Shop AI Assistant</h3>
                 <span className="bot-status">
                   <span className="status-dot"></span>
                   Powered by Gemini AI ✨
@@ -246,7 +252,7 @@ export const ChatBot = () => {
               <input
                 ref={inputRef}
                 type="text"
-                placeholder="Ask Lolly anything sweet..."
+                placeholder="Ask Best Lolly Shop AI Assistant..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 disabled={isTyping}
