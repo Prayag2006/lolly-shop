@@ -35,11 +35,18 @@ export const Checkout = () => {
   const [redirectingToGateway, setRedirectingToGateway] = useState(false);
 
   // Form Validations
+  const isValidNZPhoneNumber = (phone) => {
+    if (!phone) return false;
+    const cleaned = phone.replace(/[\s\-\(\)\+]/g, '');
+    const nzPhonePattern = /^(?:\+?64|0)(?:2\d{7,9}|[34679]\d{7}|800\d{6,8}|508\d{6,8})$/;
+    return nzPhonePattern.test(cleaned);
+  };
+
   const isShippingValid = () => {
     return (
       shippingForm.name.trim() &&
       shippingForm.email.includes('@') &&
-      shippingForm.phone.trim().length >= 8 &&
+      isValidNZPhoneNumber(shippingForm.phone) &&
       shippingForm.address.trim() &&
       shippingForm.city.trim() &&
       shippingForm.zip.trim().length === 4
@@ -297,6 +304,11 @@ export const Checkout = () => {
                       onChange={(e) => setShippingForm({ ...shippingForm, phone: e.target.value })}
                       required
                     />
+                    {shippingForm.phone && !isValidNZPhoneNumber(shippingForm.phone) && (
+                      <span className="validation-error" style={{ color: '#dc2626', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                        ⚠️ Only New Zealand phone numbers are valid (e.g. 021 123 4567 or 09 427 4993).
+                      </span>
+                    )}
                   </div>
                 </div>
 

@@ -846,6 +846,10 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
+    if (!req.body.customer || !isValidNZPhoneNumber(req.body.customer.phone)) {
+      return res.status(400).json({ message: 'Invalid phone number. Only New Zealand phone numbers are valid.' });
+    }
+
     const isHamilton = isHamiltonAddress(req.body.customer?.city, req.body.customer?.postalCode || req.body.customer?.zip);
     const cappedShipping = isHamilton ? 0.00 : (Number(req.body.shipping) === 0 ? 0 : Math.min(Number(req.body.shipping || 19), 19.00));
     
@@ -1407,9 +1411,21 @@ function isHamiltonAddress(city, zip) {
   return isHamiltonCityName && isHamiltonPostcode;
 }
 
+// Phone number validation helper (accepts only New Zealand numbers)
+function isValidNZPhoneNumber(phone) {
+  if (!phone) return false;
+  const cleaned = phone.replace(/[\s\-\(\)\+]/g, '');
+  const nzPhonePattern = /^(?:\+?64|0)(?:2\d{7,9}|[34679]\d{7}|800\d{6,8}|508\d{6,8})$/;
+  return nzPhonePattern.test(cleaned);
+}
+
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const { customerDetails, items, finalTotal, shippingFee, deliveryCompany } = req.body;
+
+    if (!customerDetails || !isValidNZPhoneNumber(customerDetails.phone)) {
+      return res.status(400).json({ message: 'Invalid phone number. Only New Zealand phone numbers are valid.' });
+    }
     
     // Generate order ID
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
