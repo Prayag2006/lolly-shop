@@ -1358,83 +1358,87 @@ export const Admin = () => {
                     </div>
                   </div>
 
-                  <h3 className="form-section-title">Weight-based Pricing Options</h3>
-                  <div className="weight-options-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                  <h3 className="form-section-title">Weight-Based Pricing Options</h3>
+                  <div className="weight-options-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     {weightOptions.map((opt, index) => (
-                      <div key={index} className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '16px', alignItems: 'end', marginBottom: '8px' }}>
+                      <div key={index} className="weight-option-card glass-card" style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label>Weight Label (e.g. 250g)</label>
+                          <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>Weight (e.g. 250g)</label>
                           <input
                             type="text"
-                            placeholder="Weight e.g. 250g"
+                            placeholder="e.g. 250g"
                             value={opt.weight}
                             onChange={(e) => {
                               const newOpts = [...weightOptions];
                               newOpts[index].weight = e.target.value;
                               setWeightOptions(newOpts);
                             }}
+                            style={{ padding: '8px 12px', fontSize: '14px', marginTop: '4px' }}
                             required
                           />
                         </div>
                         <div className="form-group" style={{ marginBottom: 0 }}>
-                          <label>Price (NZD)</label>
+                          <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>Price (NZD)</label>
                           <input
                             type="number"
                             step="0.01"
                             min="0"
-                            placeholder="Price"
+                            placeholder={index === 0 ? "Same as base" : "Price"}
                             value={opt.price}
                             onChange={(e) => {
                               const newOpts = [...weightOptions];
                               newOpts[index].price = e.target.value;
                               setWeightOptions(newOpts);
                             }}
+                            style={{ padding: '8px 12px', fontSize: '14px', marginTop: '4px' }}
                           />
                         </div>
                         <button
                           type="button"
-                          className="btn"
                           style={{
-                            background: 'rgba(239, 68, 68, 0.1)',
+                            background: 'transparent',
                             color: '#ef4444',
-                            border: '1px solid rgba(239, 68, 68, 0.2)',
-                            padding: '10px 16px',
-                            borderRadius: '8px',
+                            border: 'none',
+                            fontSize: '12px',
                             cursor: 'pointer',
-                            height: '42px',
+                            padding: 0,
+                            marginTop: '4px',
                             display: 'flex',
                             alignItems: 'center',
-                            justifyContent: 'center'
+                            gap: '4px',
+                            alignSelf: 'start',
+                            fontWeight: '600'
                           }}
                           onClick={() => {
                             setWeightOptions(weightOptions.filter((_, i) => i !== index));
                           }}
                         >
-                          Remove
+                          ✕ Remove Option
                         </button>
                       </div>
                     ))}
-                    <button
-                      type="button"
-                      className="btn"
-                      style={{
-                        background: 'rgba(231, 44, 131, 0.1)',
-                        color: 'var(--color-primary)',
-                        border: '1px solid rgba(231, 44, 131, 0.2)',
-                        padding: '10px 20px',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: '600',
-                        alignSelf: 'start',
-                        marginTop: '8px'
-                      }}
-                      onClick={() => {
-                        setWeightOptions([...weightOptions, { weight: '', price: '' }]);
-                      }}
-                    >
-                      + Add Weight Option
-                    </button>
                   </div>
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{
+                      background: 'rgba(231, 44, 131, 0.08)',
+                      color: 'var(--color-primary)',
+                      border: '1px solid rgba(231, 44, 131, 0.15)',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      marginBottom: '20px',
+                      display: 'inline-block'
+                    }}
+                    onClick={() => {
+                      setWeightOptions([...weightOptions, { weight: '', price: '' }]);
+                    }}
+                  >
+                    + Add Weight Option
+                  </button>
 
                   <div className="form-row">
                     <div className="form-group">
