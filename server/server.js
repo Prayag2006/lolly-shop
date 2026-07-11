@@ -673,13 +673,18 @@ app.delete('/api/brands/:id', async (req, res) => {
 // ── ORDERS API ──
 app.get('/api/orders', async (req, res) => {
   try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    let orders;
     if (sqlAvailable()) {
-      const orders = await Order.find().sort({ createdAt: -1 });
-      res.json(orders);
+      orders = await Order.find().sort({ createdAt: -1 });
     } else {
-      const orders = readLocalData('orders.json', []);
-      res.json(orders);
+      orders = readLocalData('orders.json', []);
     }
+
+    if (!isAdmin) {
+      orders = orders.map(ord => sanitizeOrder(ord));
+    }
+    res.json(orders);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching orders', error: error.message });
   }
@@ -841,29 +846,73 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
 
 app.post('/api/orders', async (req, res) => {
   try {
+    const isHamilton = isHamiltonAddress(req.body.customer?.city, req.body.customer?.postalCode || req.body.customer?.zip);
+    const cappedShipping = isHamilton ? 0.00 : (Number(req.body.shipping) === 0 ? 0 : Math.min(Number(req.body.shipping || 19), 19.00));
+    
+    const matchingServiceForActual = isHamilton ? 'NZ Post Standard Courier' : req.body.deliveryCompany;
+    const actualShipping = await calculateActualShippingCost(
+      req.body.customer?.address || '',
+      isHamilton ? 'Hamilton' : (req.body.customer?.city || ''),
+      req.body.customer?.postalCode || req.body.customer?.zip || '',
+      req.body.items,
+      matchingServiceForActual
+    );
+
+    const originalShipping = Number(req.body.shipping || 0);
+    const adjustedTotal = Number(req.body.total || 0) - originalShipping + cappedShipping;
+
+    const orderData = {
+      id: req.body.id || `ORD-${Date.now().toString().slice(-6)}`,
+      date: req.body.date || new Date().toLocaleDateString('en-NZ', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }),
+      ...req.body,
+      shipping: cappedShipping,
+      actualShipping,
+      total: adjustedTotal,
+      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (req.body.deliveryCompany || 'NZ Post Courier'),
+      freeShippingApplied: isHamilton,
+      freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : ''
+    };
+
+    if (req.body.customer) {
+      orderData.customer = {
+        ...req.body.customer,
+        city: isHamilton ? 'Hamilton' : req.body.customer.city,
+        postalCode: req.body.customer.postalCode || req.body.customer.zip || ''
+      };
+    }
+
     if (sqlAvailable()) {
-      const newOrder = new Order(req.body);
-      await newOrder.save();
+      const dbOrder = new Order(orderData);
+      await dbOrder.save();
 
       // Deduct product stock quantities in MongoDB
       for (const item of req.body.items || []) {
-        const prod = await Product.findById(item.id);
-        if (prod) {
-          prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
-          prod.inStock = prod.quantity > 0;
-          await prod.save();
+        if (typeof item.id === 'string' && item.id.match(/^[0-9a-fA-F]{24}$/)) {
+          const prod = await Product.findById(item.id).catch(() => null);
+          if (prod) {
+            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
+            prod.inStock = prod.quantity > 0;
+            await prod.save().catch(() => null);
+          }
         }
       }
 
-      sendOrderConfirmationEmail(newOrder);
-      res.status(201).json(newOrder);
+      sendOrderConfirmationEmail(dbOrder);
+      
+      const responseObj = dbOrder.toObject();
+      delete responseObj.actualShipping;
+      res.status(201).json(responseObj);
     } else {
       const orders = readLocalData('orders.json', []);
-      const newOrder = {
-        ...req.body,
+      const dbOrder = {
+        ...orderData,
         createdAt: new Date().toISOString()
       };
-      orders.unshift(newOrder);
+      orders.unshift(dbOrder);
       writeLocalData('orders.json', orders);
 
       // Deduct product stock quantities locally
@@ -878,8 +927,11 @@ app.post('/api/orders', async (req, res) => {
       }
       writeLocalData('products.json', localProducts);
 
-      sendOrderConfirmationEmail(newOrder);
-      res.status(201).json(newOrder);
+      sendOrderConfirmationEmail(dbOrder);
+      
+      const responseObj = { ...dbOrder };
+      delete responseObj.actualShipping;
+      res.status(201).json(responseObj);
     }
   } catch (error) {
     res.status(400).json({ message: 'Error creating order', error: error.message });
@@ -893,6 +945,24 @@ app.post('/api/calculate-shipping', async (req, res) => {
 
     if (!address || !city || !zip) {
       return res.status(400).json({ message: 'Address, city, and postcode are required to calculate shipping.' });
+    }
+
+    if (isHamiltonAddress(city, zip)) {
+      return res.json({
+        mode: 'hamilton_free',
+        rates: [
+          {
+            id: 'hamilton_free_delivery',
+            name: 'Free Delivery - Hamilton',
+            price: 0.00,
+            eta: '1-2 business days'
+          }
+        ],
+        isHamilton: true,
+        freeShippingApplied: true,
+        freeShippingReason: 'Hamilton Free Delivery',
+        validatedCity: 'Hamilton'
+      });
     }
 
     // 1. Calculate weight
@@ -953,9 +1023,14 @@ app.post('/api/calculate-shipping', async (req, res) => {
     // If client ID or secret is missing, use mock fallback rates
     if (!clientId || !clientSecret || !accountNumber) {
       console.log('NZ Post API credentials missing. Running in Simulated (Fallback) Mode.');
+      const rawRates = getSimulatedRates(zip, city, totalWeightKg);
+      const cappedRates = rawRates.map(r => ({
+        ...r,
+        price: Math.min(Number(r.price), 19.00)
+      }));
       return res.json({
         mode: 'simulated',
-        rates: getSimulatedRates(zip, city, totalWeightKg)
+        rates: cappedRates
       });
     }
 
@@ -1041,10 +1116,11 @@ app.post('/api/calculate-shipping', async (req, res) => {
     const rates = [];
     if (shippingData && Array.isArray(shippingData.services)) {
       shippingData.services.forEach(service => {
+        const actualPrice = Number(service.price || service.total_price || 0);
         rates.push({
           id: service.service_code || service.name,
           name: service.name || 'NZ Post Courier',
-          price: Number(service.price || service.total_price || 0),
+          price: Math.min(actualPrice, 19.00),
           eta: service.estimated_delivery || '1-2 business days'
         });
       });
@@ -1079,9 +1155,15 @@ app.post('/api/calculate-shipping', async (req, res) => {
       }
     } catch (e) {}
 
+    const fallbackRates = getSimulatedRates(zip || '1010', city || 'Auckland', totalWeightKg);
+    const cappedFallback = fallbackRates.map(r => ({
+      ...r,
+      price: Math.min(Number(r.price), 19.00)
+    }));
+
     return res.json({
       mode: 'simulated_fallback',
-      rates: getSimulatedRates(zip || '1010', city || 'Auckland', totalWeightKg),
+      rates: cappedFallback,
       warning: error.message
     });
   }
@@ -1137,12 +1219,214 @@ function getSimulatedRates(zip, city, weightKg) {
   return rates;
 }
 
+// Helper to calculate actual uncapped shipping cost from NZ Post API or fallback simulation
+async function calculateActualShippingCost(address, city, zip, items, deliveryCompany) {
+  try {
+    if (!address || !city || !zip) {
+      return 19.00;
+    }
+
+    // 1. Calculate weight
+    let totalWeightKg = 0;
+    if (Array.isArray(items)) {
+      items.forEach(item => {
+        const qty = Number(item.quantity || 1);
+        const weightStr = (item.selectedWeight || '100g').toLowerCase();
+        
+        let itemWeightKg = 0.1; // Default
+        if (weightStr.includes('100g')) {
+          itemWeightKg = 0.1;
+        } else if (weightStr.includes('250g')) {
+          itemWeightKg = 0.25;
+        } else if (weightStr.includes('500g')) {
+          itemWeightKg = 0.5;
+        } else if (weightStr.includes('1kg')) {
+          itemWeightKg = 1.0;
+        } else {
+          const numMatch = weightStr.match(/(\d+(?:\.\d+)?)\s*(g|kg)/);
+          if (numMatch) {
+            const val = parseFloat(numMatch[1]);
+            const unit = numMatch[2];
+            itemWeightKg = unit === 'g' ? val / 1000 : val;
+          }
+        }
+        totalWeightKg += itemWeightKg * qty;
+      });
+    }
+
+    totalWeightKg = Math.round(totalWeightKg * 1000) / 1000;
+    if (totalWeightKg <= 0) totalWeightKg = 0.1;
+
+    // 2. Estimate dimensions
+    let lengthCm = 15;
+    let widthCm = 15;
+    let heightCm = 5;
+
+    if (totalWeightKg > 0.5 && totalWeightKg <= 2.0) {
+      lengthCm = 20;
+      widthCm = 20;
+      heightCm = 10;
+    } else if (totalWeightKg > 2.0) {
+      lengthCm = 30;
+      widthCm = 30;
+      heightCm = 20;
+    }
+
+    // 3. Check credentials
+    const clientId = process.env.NZ_POST_CLIENT_ID;
+    const clientSecret = process.env.NZ_POST_CLIENT_SECRET;
+    const accountNumber = process.env.NZ_POST_ACCOUNT_NUMBER;
+    const siteCode = process.env.NZ_POST_SITE_CODE;
+    const env = (process.env.NZ_POST_ENVIRONMENT || 'sandbox').toLowerCase();
+
+    let actualCost = null;
+
+    if (clientId && clientSecret && accountNumber) {
+      const oauthUrl = 'https://oauth.nzpost.co.nz/as/token.oauth2';
+      const baseShippingUrl = env === 'production' 
+        ? 'https://api.nzpost.co.nz/shippingoptions/2.0/domestic'
+        : 'https://api.uat.nzpost.co.nz/shippingoptions/2.0/domestic';
+
+      const authParams = new URLSearchParams();
+      authParams.append('grant_type', 'client_credentials');
+      authParams.append('client_id', clientId);
+      authParams.append('client_secret', clientSecret);
+
+      const tokenResponse = await fetch(oauthUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: authParams
+      });
+
+      if (tokenResponse.ok) {
+        const tokenData = await tokenResponse.json();
+        const accessToken = tokenData.access_token;
+
+        const requestBody = {
+          account_information: { account_number: accountNumber },
+          pickup: { suburb: 'Grey Lynn', city: 'Auckland', postcode: '1021', country_code: 'NZ' },
+          delivery: { address_line_1: address, city: city, postcode: zip, country_code: 'NZ' },
+          parcels: [{ weight: totalWeightKg, length: lengthCm, width: widthCm, height: heightCm }]
+        };
+
+        if (siteCode) {
+          requestBody.account_information.site_code = siteCode;
+        }
+
+        const shippingResponse = await fetch(baseShippingUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (shippingResponse.ok) {
+          const shippingData = await shippingResponse.json();
+          if (shippingData && Array.isArray(shippingData.services)) {
+            // Find a service matching the delivery company name or service code
+            const matchedService = shippingData.services.find(service => 
+              (service.name || '').toLowerCase() === (deliveryCompany || '').toLowerCase() ||
+              (service.service_code || '').toLowerCase() === (deliveryCompany || '').toLowerCase()
+            );
+            if (matchedService) {
+              actualCost = Number(matchedService.price || matchedService.total_price || 0);
+            } else if (shippingData.services.length > 0) {
+              actualCost = Number(shippingData.services[0].price || shippingData.services[0].total_price || 0);
+            }
+          }
+        }
+      }
+    }
+
+    // If actualCost was not resolved via NZ Post API, use simulated rates
+    if (actualCost === null) {
+      const simulated = getSimulatedRates(zip, city, totalWeightKg);
+      const matched = simulated.find(r => 
+        (r.name || '').toLowerCase() === (deliveryCompany || '').toLowerCase() ||
+        (r.id || '').toLowerCase() === (deliveryCompany || '').toLowerCase()
+      );
+      if (matched) {
+        actualCost = matched.price;
+      } else if (simulated.length > 0) {
+        actualCost = simulated[0].price;
+      } else {
+        actualCost = 19.00;
+      }
+    }
+
+    return actualCost;
+  } catch (error) {
+    console.error('Error calculating actual shipping cost helper, using fallback:', error);
+    return 19.00;
+  }
+}
+
+// Helper to sanitize order data to prevent exposing actual shipping charges above NZ$19 to customers
+function sanitizeOrder(order) {
+  if (!order) return order;
+  let obj = (typeof order.toObject === 'function') ? order.toObject() : { ...order };
+  delete obj.actualShipping;
+  if (obj.freeShippingApplied === undefined) {
+    const isHamilton = isHamiltonAddress(obj.customer?.city, obj.customer?.postalCode || obj.customer?.zip);
+    obj.freeShippingApplied = isHamilton;
+    obj.freeShippingReason = isHamilton ? 'Hamilton Free Delivery' : '';
+  }
+  if (obj.freeShippingApplied) {
+    obj.shipping = 0.00;
+  } else if (obj.shipping > 19) {
+    obj.shipping = 19;
+  }
+  return obj;
+}
+
+// Hamilton address validation helper
+function isHamiltonAddress(city, zip) {
+  const normCity = (city || '').trim().toLowerCase();
+  const normZip = (zip || '').trim().replace(/\s+/g, '');
+
+  // Hamilton postcodes start with 32 (range 3200-3299)
+  const isHamiltonPostcode = /^32\d{2}$/.test(normZip);
+
+  // Popular suburbs of Hamilton City
+  const hamiltonSuburbs = [
+    'hillcrest', 'rototuna', 'chartwell', 'te rapa', 'claudelands', 'frankton',
+    'dinsdale', 'melville', 'flagstaff', 'huntington', 'queenwood', 'nawton',
+    'enderley', 'fairfield', 'hamilton east', 'hamilton west', 'saint andrews',
+    'pukete', 'beerescourt', 'forest lake', 'maeroa', 'temple view', 'fitzroy',
+    'glenview', 'bader', 'peacocke', 'silverdale', 'ruakura', 'rukuriri',
+    'harrowfield', 'riverlea', 'stonehaven', 'strathmore'
+  ];
+
+  const isHamiltonCityName = normCity === 'hamilton' || 
+                             normCity === 'hamilton city' || 
+                             hamiltonSuburbs.includes(normCity);
+
+  return isHamiltonCityName && isHamiltonPostcode;
+}
+
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
     const { customerDetails, items, finalTotal, shippingFee, deliveryCompany } = req.body;
     
     // Generate order ID
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+
+    // Recalculate actual and capped shipping costs on server for security
+    const isHamilton = isHamiltonAddress(customerDetails.city, customerDetails.zip);
+    const cappedShipping = isHamilton ? 0.00 : (Number(shippingFee) === 0 ? 0 : Math.min(Number(shippingFee || 19), 19.00));
+    
+    // For actual shipping, calculate what NZ Post would charge normally (non-free)
+    const matchingServiceForActual = isHamilton ? 'NZ Post Standard Courier' : deliveryCompany;
+    const actualShipping = await calculateActualShippingCost(
+      customerDetails.address,
+      isHamilton ? 'Hamilton' : customerDetails.city,
+      customerDetails.zip,
+      items,
+      matchingServiceForActual
+    );
     
     // 1. Create a Pending Order in the Database (Unpaid)
     const newOrder = {
@@ -1154,10 +1438,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }),
       items: items || [],
       total: Number(finalTotal),
-      shipping: Number(shippingFee || 19),
-      deliveryCompany: deliveryCompany || 'NZ Post Courier',
+      shipping: cappedShipping,
+      actualShipping: actualShipping,
+      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (deliveryCompany || 'NZ Post Courier'),
+      freeShippingApplied: isHamilton,
+      freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : '',
       customer: {
         ...customerDetails,
+        city: isHamilton ? 'Hamilton' : customerDetails.city,
         postalCode: customerDetails.zip || customerDetails.postalCode || ''
       },
       userEmail: customerDetails.email || '',
@@ -1237,7 +1525,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
         
         // If already paid, return early (idempotent)
         if (order.paymentStatus === 'Paid') {
-          return res.json(order);
+          return res.json(sanitizeOrder(order));
         }
 
         order.paymentStatus = 'Paid';
@@ -1247,11 +1535,13 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
 
         // Deduct product stock quantities
         for (const item of order.items || []) {
-          const prod = await Product.findById(item.id);
-          if (prod) {
-            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
-            prod.inStock = prod.quantity > 0;
-            await prod.save();
+          if (typeof item.id === 'string' && item.id.match(/^[0-9a-fA-F]{24}$/)) {
+            const prod = await Product.findById(item.id).catch(() => null);
+            if (prod) {
+              prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
+              prod.inStock = prod.quantity > 0;
+              await prod.save().catch(() => null);
+            }
           }
         }
       } else {
@@ -1263,7 +1553,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
 
         // If already paid, return early (idempotent)
         if (orders[index].paymentStatus === 'Paid') {
-          return res.json(orders[index]);
+          return res.json(sanitizeOrder(orders[index]));
         }
 
         orders[index].paymentStatus = 'Paid';
@@ -1288,7 +1578,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
       // Send confirmation email
       sendOrderConfirmationEmail(updatedOrder);
 
-      res.json(updatedOrder);
+      res.json(sanitizeOrder(updatedOrder));
     } else {
       res.status(400).json({ message: 'Payment verification failed: session not paid' });
     }
@@ -1575,13 +1865,14 @@ const sendDeliveryCompleteEmail = async (order) => {
 app.put('/api/orders/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
+    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const updated = await Order.findOneAndUpdate({ id: req.params.id }, { status }, { new: true });
       if (!updated) return res.status(404).json({ message: 'Order not found' });
       if (status === 'Completed') {
         sendDeliveryCompleteEmail(updated);
       }
-      res.json(updated);
+      res.json(isAdmin ? updated : sanitizeOrder(updated));
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
@@ -1592,7 +1883,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
       if (status === 'Completed') {
         sendDeliveryCompleteEmail(orders[index]);
       }
-      res.json(orders[index]);
+      res.json(isAdmin ? orders[index] : sanitizeOrder(orders[index]));
     }
   } catch (error) {
     res.status(400).json({ message: 'Error updating order status', error: error.message });
@@ -1602,6 +1893,7 @@ app.put('/api/orders/:id/status', async (req, res) => {
 app.put('/api/orders/:id/delivery', async (req, res) => {
   try {
     const { deliveryCompany, deliveryReference } = req.body;
+    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const oldOrder = await Order.findOne({ id: req.params.id });
       
@@ -1621,7 +1913,7 @@ app.put('/api/orders/:id/delivery', async (req, res) => {
         await updated.save();
         sendOrderDispatchedEmail(updated);
       }
-      res.json(updated);
+      res.json(isAdmin ? updated : sanitizeOrder(updated));
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
@@ -1640,7 +1932,7 @@ app.put('/api/orders/:id/delivery', async (req, res) => {
         sendOrderDispatchedEmail(orders[index]);
       }
       writeLocalData('orders.json', orders);
-      res.json(orders[index]);
+      res.json(isAdmin ? orders[index] : sanitizeOrder(orders[index]));
     }
   } catch (error) {
     res.status(400).json({ message: 'Error updating order tracking details', error: error.message });
@@ -1650,6 +1942,7 @@ app.put('/api/orders/:id/delivery', async (req, res) => {
 app.put('/api/orders/:id/remove-item', async (req, res) => {
   try {
     const { itemId, selectedWeight } = req.body;
+    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const order = await Order.findOne({ id: req.params.id });
       if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -1662,7 +1955,7 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
         await order.save();
         sendOrderConfirmationEmail(order, true);
       }
-      res.json(order);
+      res.json(isAdmin ? order : sanitizeOrder(order));
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
@@ -1677,7 +1970,7 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
         writeLocalData('orders.json', orders);
         sendOrderConfirmationEmail(order, true);
       }
-      res.json(order);
+      res.json(isAdmin ? order : sanitizeOrder(order));
     }
   } catch (error) {
     res.status(400).json({ message: 'Error removing item from order', error: error.message });
@@ -1694,7 +1987,7 @@ app.put('/api/orders/:id/feedback', async (req, res) => {
         { new: true }
       );
       if (!updated) return res.status(404).json({ message: 'Order not found' });
-      res.json(updated);
+      res.json(sanitizeOrder(updated));
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
@@ -1702,7 +1995,7 @@ app.put('/api/orders/:id/feedback', async (req, res) => {
       
       orders[index].feedback = { rating: Number(rating), comment };
       writeLocalData('orders.json', orders);
-      res.json(orders[index]);
+      res.json(sanitizeOrder(orders[index]));
     }
   } catch (error) {
     res.status(400).json({ message: 'Error saving feedback', error: error.message });

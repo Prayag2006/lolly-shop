@@ -864,6 +864,25 @@ export const Admin = () => {
                                 <small>{ord.customer?.phone || 'No Phone'}</small>
                                 <small style={{ marginTop: '4px', color: 'var(--color-text)' }}>{ord.customer?.address || ''}{ord.customer?.city ? `, ${ord.customer.city}` : ''}</small>
                                 
+                                <div style={{ marginTop: '6px', fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px', background: 'rgba(2, 132, 199, 0.05)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(2, 132, 199, 0.1)' }}>
+                                  <span style={{ fontWeight: '600', color: '#0369a1' }}>🚚 Delivery: {ord.deliveryCompany || 'NZ Post Courier'}</span>
+                                  <span style={{ color: '#0e7490' }}>Charged Shipping: <strong>${Number(ord.shipping !== undefined ? ord.shipping : 19).toFixed(2)}</strong></span>
+                                  <span style={{ color: '#0f766e' }}>Actual NZ Post Cost: <strong>${Number(ord.actualShipping !== undefined ? ord.actualShipping : (ord.shipping !== undefined ? ord.shipping : 19)).toFixed(2)}</strong></span>
+                                  {ord.freeShippingApplied ? (
+                                    <>
+                                      <span style={{ color: '#16a34a', fontWeight: '700' }}>🎁 Free Shipping Applied: Yes</span>
+                                      <span style={{ color: '#15803d', fontStyle: 'italic' }}>Rule: {ord.freeShippingReason || 'Hamilton Free Delivery'}</span>
+                                    </>
+                                  ) : (
+                                    <span style={{ color: '#4b5563' }}>🎁 Free Shipping Applied: No</span>
+                                  )}
+                                  {ord.actualShipping !== undefined && ord.actualShipping > ord.shipping && (
+                                    <span style={{ color: '#dc2626', fontWeight: '700', fontSize: '10px', marginTop: '2px' }}>
+                                      💸 Business Absorbed: ${(ord.actualShipping - ord.shipping).toFixed(2)} NZD
+                                    </span>
+                                  )}
+                                </div>
+                                
                                 {ord.feedback && ord.feedback.rating > 0 && (
                                   <div style={{ marginTop: '8px', padding: '6px 10px', borderRadius: '8px', background: '#fffbeb', border: '1px solid #fef3c7', fontSize: '11px' }}>
                                     <div style={{ fontWeight: '800', display: 'flex', alignItems: 'center', gap: '3px' }}>

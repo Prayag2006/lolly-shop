@@ -16,6 +16,9 @@ const orderSchema = new mongoose.Schema({
   items: [orderItemSchema],
   total: { type: Number, required: true },
   shipping: { type: Number, default: 19 },
+  actualShipping: { type: Number, default: 19 },
+  freeShippingApplied: { type: Boolean, default: false },
+  freeShippingReason: { type: String, default: '' },
   customer: {
     name: { type: String, required: true },
     email: { type: String, required: true },

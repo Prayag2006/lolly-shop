@@ -621,11 +621,13 @@ export const TrackOrder = () => {
                 {/* Flat Delivery Fee Item Line */}
                 <div className="invoice-item-row" style={{ borderTop: '1px dashed var(--color-border)', paddingTop: '10px', marginTop: '10px' }}>
                   <div className="item-details">
-                    <span className="item-name" style={{ fontWeight: '700' }}>Courier Delivery Fee</span>
-                    <span className="item-weight" style={{ color: 'var(--color-primary)', fontWeight: '800' }}>Flat Shipping Charge</span>
+                    <span className="item-name" style={{ fontWeight: '700' }}>{order.freeShippingApplied ? 'Free Delivery - Hamilton' : 'Courier Delivery Fee'}</span>
+                    <span className="item-weight" style={{ color: 'var(--color-primary)', fontWeight: '800' }}>
+                      {order.freeShippingApplied ? 'Hamilton Free Delivery' : (order.deliveryCompany || 'Standard Shipping')}
+                    </span>
                   </div>
                   <span className="item-qty">Qty 1</span>
-                  <span className="item-total-price">${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</span>
+                  <span className="item-total-price">${Number(order.shipping !== undefined ? order.shipping : (order.freeShippingApplied ? 0 : 19)).toFixed(2)}</span>
                 </div>
               </div>
 

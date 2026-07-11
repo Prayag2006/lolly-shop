@@ -135,7 +135,11 @@ export const StoreProvider = ({ children }) => {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('/api/orders');
+      const headers = {};
+      if (currentUser?.role === 'admin') {
+        headers['X-User-Role'] = 'admin';
+      }
+      const res = await fetch('/api/orders', { headers });
       const data = await res.json();
       if (Array.isArray(data)) {
         setOrders(data);
@@ -469,9 +473,13 @@ export const StoreProvider = ({ children }) => {
 
   const updateOrderStatus = async (orderId, status) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentUser?.role === 'admin') {
+        headers['X-User-Role'] = 'admin';
+      }
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status })
       });
       const data = await res.json();
@@ -485,9 +493,13 @@ export const StoreProvider = ({ children }) => {
 
   const updateOrderDelivery = async (orderId, deliveryCompany, deliveryReference) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentUser?.role === 'admin') {
+        headers['X-User-Role'] = 'admin';
+      }
       const res = await fetch(`/api/orders/${orderId}/delivery`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ deliveryCompany, deliveryReference })
       });
       const data = await res.json();
@@ -502,9 +514,13 @@ export const StoreProvider = ({ children }) => {
 
   const removeOrderItem = async (orderId, itemId, selectedWeight) => {
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (currentUser?.role === 'admin') {
+        headers['X-User-Role'] = 'admin';
+      }
       const res = await fetch(`/api/orders/${orderId}/remove-item`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ itemId, selectedWeight })
       });
       const data = await res.json();

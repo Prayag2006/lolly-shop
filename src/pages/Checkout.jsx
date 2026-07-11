@@ -52,6 +52,7 @@ export const Checkout = () => {
   const [selectedOption, setSelectedOption] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [shippingError, setShippingError] = useState('');
+  const [isHamilton, setIsHamilton] = useState(false);
 
   // Fetch Shipping Rates from backend
   const fetchShippingRates = async (address, city, zip) => {
@@ -67,6 +68,14 @@ export const Checkout = () => {
         throw new Error('Failed to fetch courier prices.');
       }
       const data = await response.json();
+      if (data.isHamilton) {
+        setIsHamilton(true);
+        if (data.validatedCity && shippingForm.city !== data.validatedCity) {
+          setShippingForm(prev => ({ ...prev, city: data.validatedCity }));
+        }
+      } else {
+        setIsHamilton(false);
+      }
       if (data.rates && data.rates.length > 0) {
         setShippingOptions(data.rates);
         // Default to the first option
@@ -79,6 +88,7 @@ export const Checkout = () => {
     } catch (err) {
       console.error('Error fetching shipping rates:', err);
       setShippingError('Could not calculate shipping rates automatically. Using flat rate.');
+      setIsHamilton(false);
       setShippingOptions([]);
       setSelectedOption(null);
       setShippingFee(19.00);
@@ -98,6 +108,7 @@ export const Checkout = () => {
       setShippingOptions([]);
       setSelectedOption(null);
       setShippingFee(19.00);
+      setIsHamilton(false);
     }
   }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
 
@@ -351,6 +362,26 @@ export const Checkout = () => {
                       </div>
                     ) : (
                       <div className="shipping-options-grid" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {isHamilton && (
+                          <div 
+                            className="hamilton-free-shipping-banner" 
+                            style={{
+                              padding: '14px 18px',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              color: '#ffffff',
+                              borderRadius: '12px',
+                              fontSize: '14px',
+                              fontWeight: '700',
+                              textAlign: 'left',
+                              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
+                          >
+                            <span>🎉 Great news! Your delivery address is in Hamilton, so you qualify for FREE delivery.</span>
+                          </div>
+                        )}
                         {shippingOptions.map((option) => (
                           <label 
                             key={option.id} 
@@ -687,7 +718,7 @@ export const Checkout = () => {
                 )}
                 <div className="b-row">
                   <span>Shipping</span>
-                  <span>{shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)}`}</span>
+                  <span>{isHamilton ? 'Free Delivery - Hamilton' : (shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)}`)}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="b-row final-row">
