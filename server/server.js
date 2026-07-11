@@ -286,7 +286,23 @@ readLocalData('orders.json', []);
 readLocalData('contacts.json', []);
 readLocalData('settings.json', defaultSettings);
 
+// ── HEALTH CHECK ──
+app.get('/api/health', (req, res) => {
+  const products = readLocalData('products.json', seededProducts);
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    database: sqlAvailable() ? 'connected' : 'fallback-json',
+    mongoUri: process.env.MONGODB_URI ? 'configured' : 'not-configured',
+    serverless: isServerless,
+    productsCount: products.length,
+    version: 'fec326e'
+  });
+});
+
 // ── PRODUCTS API ──
+
 app.get('/api/products', async (req, res) => {
   try {
     if (sqlAvailable()) {
