@@ -28,12 +28,7 @@ const productSchema = new mongoose.Schema({
   isPopular: { type: Boolean, default: false },
   isNew: { type: Boolean, default: true },
   collections: { type: [String], default: [] },
-  weightPrices: {
-    '100g': { type: Number },
-    '250g': { type: Number },
-    '500g': { type: Number },
-    '1kg': { type: Number }
-  },
+  weightPrices: { type: mongoose.Schema.Types.Mixed, default: {} },
   reviews: { type: [reviewSchema], default: [] }
 }, { timestamps: true, suppressReservedKeysWarning: true });
 

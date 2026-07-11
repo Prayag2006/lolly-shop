@@ -134,6 +134,12 @@ export const Admin = () => {
   });
 
   const [editingProductId, setEditingProductId] = useState(null);
+  const [weightOptions, setWeightOptions] = useState([
+    { weight: '100g', price: '' },
+    { weight: '250g', price: '' },
+    { weight: '500g', price: '' },
+    { weight: '1kg', price: '' }
+  ]);
   const [productImageSource, setProductImageSource] = useState('url'); // 'url' | 'upload'
   const [formSuccess, setFormSuccess] = useState('');
   const [newCategoryInput, setNewCategoryInput] = useState('');
@@ -271,6 +277,12 @@ export const Admin = () => {
 
   const resetProductForm = () => {
     setEditingProductId(null);
+    setWeightOptions([
+      { weight: '100g', price: '' },
+      { weight: '250g', price: '' },
+      { weight: '500g', price: '' },
+      { weight: '1kg', price: '' }
+    ]);
     setNewProduct({
       name: '',
       category: '',
@@ -369,6 +381,15 @@ export const Admin = () => {
   const handleEditProduct = (product) => {
     setEditingProductId(product.id);
     setActiveTab('add-product');
+    const options = product.weightPrices && Object.keys(product.weightPrices).length > 0
+      ? Object.entries(product.weightPrices).map(([weight, price]) => ({ weight, price: price.toString() }))
+      : [
+          { weight: '100g', price: product.price.toString() },
+          { weight: '250g', price: '' },
+          { weight: '500g', price: '' },
+          { weight: '1kg', price: '' }
+        ];
+    setWeightOptions(options);
     setNewProduct({
       name: product.name,
       category: product.category,
@@ -396,17 +417,28 @@ export const Admin = () => {
     e.preventDefault();
     if (!newProduct.name || !newProduct.price) return;
 
+    const weightPricesMap = {};
+    weightOptions.forEach(opt => {
+      if (opt.weight.trim()) {
+        let priceVal = Number(opt.price);
+        if (!opt.price) {
+          const base = Number(newProduct.price);
+          if (opt.weight === '100g') priceVal = base;
+          else if (opt.weight === '250g') priceVal = base * 2.2;
+          else if (opt.weight === '500g') priceVal = base * 4.0;
+          else if (opt.weight === '1kg') priceVal = base * 7.5;
+          else priceVal = base;
+        }
+        weightPricesMap[opt.weight.trim()] = Number(priceVal.toFixed(2));
+      }
+    });
+
     const payload = {
       name: newProduct.name,
       category: newProduct.category,
       mainCategory: newProduct.mainCategory || '',
       price: Number(newProduct.price),
-      weightPrices: {
-        '100g': Number(newProduct.price100g || newProduct.price),
-        '250g': Number(newProduct.price250g || Number(newProduct.price) * 2.2),
-        '500g': Number(newProduct.price500g || Number(newProduct.price) * 4.0),
-        '1kg': Number(newProduct.price1kg || Number(newProduct.price) * 7.5)
-      },
+      weightPrices: weightPricesMap,
       gradient: newProduct.gradient,
       image: newProduct.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
       description: newProduct.description || 'Delicious gourmet treats for sweet lovers.',
@@ -1326,56 +1358,82 @@ export const Admin = () => {
                     </div>
                   </div>
 
-                  <h3 className="form-section-title">Weight-based Pricing</h3>
-                  <div className="form-row four-cols">
-                    <div className="form-group">
-                      <label htmlFor="p100g">100g Price</label>
-                      <input
-                        type="number"
-                        id="p100g"
-                        step="0.01"
-                        min="0"
-                        placeholder="Same as base price"
-                        value={newProduct.price100g}
-                        onChange={(e) => setNewProduct({ ...newProduct, price100g: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="p250g">250g Price</label>
-                      <input
-                        type="number"
-                        id="p250g"
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g. 19.58"
-                        value={newProduct.price250g}
-                        onChange={(e) => setNewProduct({ ...newProduct, price250g: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="p500g">500g Price</label>
-                      <input
-                        type="number"
-                        id="p500g"
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g. 35.60"
-                        value={newProduct.price500g}
-                        onChange={(e) => setNewProduct({ ...newProduct, price500g: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="p1kg">1kg Price</label>
-                      <input
-                        type="number"
-                        id="p1kg"
-                        step="0.01"
-                        min="0"
-                        placeholder="e.g. 67.50"
-                        value={newProduct.price1kg}
-                        onChange={(e) => setNewProduct({ ...newProduct, price1kg: e.target.value })}
-                      />
-                    </div>
+                  <h3 className="form-section-title">Weight-based Pricing Options</h3>
+                  <div className="weight-options-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+                    {weightOptions.map((opt, index) => (
+                      <div key={index} className="form-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '16px', alignItems: 'end', marginBottom: '8px' }}>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label>Weight Label (e.g. 250g)</label>
+                          <input
+                            type="text"
+                            placeholder="Weight e.g. 250g"
+                            value={opt.weight}
+                            onChange={(e) => {
+                              const newOpts = [...weightOptions];
+                              newOpts[index].weight = e.target.value;
+                              setWeightOptions(newOpts);
+                            }}
+                            required
+                          />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label>Price (NZD)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            placeholder="Price"
+                            value={opt.price}
+                            onChange={(e) => {
+                              const newOpts = [...weightOptions];
+                              newOpts[index].price = e.target.value;
+                              setWeightOptions(newOpts);
+                            }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.1)',
+                            color: '#ef4444',
+                            border: '1px solid rgba(239, 68, 68, 0.2)',
+                            padding: '10px 16px',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            height: '42px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                          onClick={() => {
+                            setWeightOptions(weightOptions.filter((_, i) => i !== index));
+                          }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn"
+                      style={{
+                        background: 'rgba(231, 44, 131, 0.1)',
+                        color: 'var(--color-primary)',
+                        border: '1px solid rgba(231, 44, 131, 0.2)',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        alignSelf: 'start',
+                        marginTop: '8px'
+                      }}
+                      onClick={() => {
+                        setWeightOptions([...weightOptions, { weight: '', price: '' }]);
+                      }}
+                    >
+                      + Add Weight Option
+                    </button>
                   </div>
 
                   <div className="form-row">

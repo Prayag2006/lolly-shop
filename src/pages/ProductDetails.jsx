@@ -10,9 +10,17 @@ export const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { products, addToCart, addProductReview, currentUser } = useStore();
-  
+
+  // Find product by id
+  const product = products.find(p => String(p.id) === String(id));
+
   const [quantity, setQuantity] = useState(1);
-  const [selectedWeight, setSelectedWeight] = useState('100g');
+  const [selectedWeight, setSelectedWeight] = useState(() => {
+    if (product && product.weightPrices && Object.keys(product.weightPrices).length > 0) {
+      return Object.keys(product.weightPrices)[0];
+    }
+    return '100g';
+  });
   const [activeAccordion, setActiveAccordion] = useState(null);
 
   const [reviewName, setReviewName] = useState('');
@@ -20,9 +28,6 @@ export const ProductDetails = () => {
   const [reviewComment, setReviewComment] = useState('');
   const [reviewError, setReviewError] = useState('');
   const [reviewSuccess, setReviewSuccess] = useState('');
-
-  // Find product by id
-  const product = products.find(p => String(p.id) === String(id));
 
   // Sync review name if user is logged in
   useEffect(() => {
@@ -36,14 +41,17 @@ export const ProductDetails = () => {
   // Reset details state on product change
   useEffect(() => {
     setQuantity(1);
-    setSelectedWeight('100g');
+    setSelectedWeight(product && product.weightPrices && Object.keys(product.weightPrices).length > 0 
+      ? Object.keys(product.weightPrices)[0] 
+      : '100g'
+    );
     setActiveAccordion(null);
     setReviewComment('');
     setReviewRating(5);
     setReviewError('');
     setReviewSuccess('');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [id]);
+  }, [id, product]);
 
   if (!product) {
     return (
@@ -236,16 +244,29 @@ export const ProductDetails = () => {
             <div className="details-size-selector-section">
               <span className="details-section-label">Size</span>
               <div className="details-size-chips">
-                {['100g', '250g', '500g', '1kg'].map(w => (
-                  <button
-                    key={w}
-                    type="button"
-                    className={`size-chip-btn ${selectedWeight === w ? 'active' : ''}`}
-                    onClick={() => setSelectedWeight(w)}
-                  >
-                    {w.toUpperCase()}
-                  </button>
-                ))}
+                {product.weightPrices && Object.keys(product.weightPrices).length > 0 ? (
+                  Object.keys(product.weightPrices).map(w => (
+                    <button
+                      key={w}
+                      type="button"
+                      className={`size-chip-btn ${selectedWeight === w ? 'active' : ''}`}
+                      onClick={() => setSelectedWeight(w)}
+                    >
+                      {w.toUpperCase()}
+                    </button>
+                  ))
+                ) : (
+                  ['100g', '250g', '500g', '1kg'].map(w => (
+                    <button
+                      key={w}
+                      type="button"
+                      className={`size-chip-btn ${selectedWeight === w ? 'active' : ''}`}
+                      onClick={() => setSelectedWeight(w)}
+                    >
+                      {w.toUpperCase()}
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 

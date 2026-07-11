@@ -7,7 +7,12 @@ import './ProductModal.css';
 export const ProductModal = ({ product, onClose }) => {
   const { addToCart } = useStore();
   const [quantity, setQuantity] = useState(1);
-  const [selectedWeight, setSelectedWeight] = useState('100g');
+  const [selectedWeight, setSelectedWeight] = useState(() => {
+    if (product && product.weightPrices && Object.keys(product.weightPrices).length > 0) {
+      return Object.keys(product.weightPrices)[0];
+    }
+    return '100g';
+  });
 
   if (!product) return null;
 
@@ -105,22 +110,42 @@ export const ProductModal = ({ product, onClose }) => {
             <div className="modal-weight-section">
               <h4>Select Weight</h4>
               <div className="modal-weight-selector">
-                {['100g', '250g', '500g', '1kg'].map((w) => (
-                  <button
-                    key={w}
-                    type="button"
-                    className={`modal-weight-btn ${selectedWeight === w ? 'active' : ''}`}
-                    onClick={() => setSelectedWeight(w)}
-                  >
-                    <span className="w-text">{w}</span>
-                    <span className="w-desc">
-                      {w === '100g' && 'Standard Pack'}
-                      {w === '250g' && 'Value Size'}
-                      {w === '500g' && 'Sharing Scoop'}
-                      {w === '1kg' && 'Super Saver'}
-                    </span>
-                  </button>
-                ))}
+                {product.weightPrices && Object.keys(product.weightPrices).length > 0 ? (
+                  Object.keys(product.weightPrices).map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      className={`modal-weight-btn ${selectedWeight === w ? 'active' : ''}`}
+                      onClick={() => setSelectedWeight(w)}
+                    >
+                      <span className="w-text">{w}</span>
+                      <span className="w-desc">
+                        {w === '100g' && 'Standard Pack'}
+                        {w === '250g' && 'Value Size'}
+                        {w === '500g' && 'Sharing Scoop'}
+                        {w === '1kg' && 'Super Saver'}
+                        {!(w === '100g' || w === '250g' || w === '500g' || w === '1kg') && 'Custom Size'}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  ['100g', '250g', '500g', '1kg'].map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      className={`modal-weight-btn ${selectedWeight === w ? 'active' : ''}`}
+                      onClick={() => setSelectedWeight(w)}
+                    >
+                      <span className="w-text">{w}</span>
+                      <span className="w-desc">
+                        {w === '100g' && 'Standard Pack'}
+                        {w === '250g' && 'Value Size'}
+                        {w === '500g' && 'Sharing Scoop'}
+                        {w === '1kg' && 'Super Saver'}
+                      </span>
+                    </button>
+                  ))
+                )}
               </div>
             </div>
 
