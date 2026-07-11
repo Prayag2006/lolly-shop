@@ -308,6 +308,12 @@ export const Admin = () => {
   };
 
   // Settings/Promotions State
+  const [activeCmsTab, setActiveCmsTab] = useState('cms-hero');
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [mediaPickerCallback, setMediaPickerCallback] = useState(null);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [newMegaMenuItemInputs, setNewMegaMenuItemInputs] = useState({});
+  const [newMegaCatInput, setNewMegaCatInput] = useState('');
   const [tempSettings, setTempSettings] = useState({
     marqueeText: '',
     popupOffer: { enabled: true, delay: 3000, title: '', description: '', code: '', image: '' },
@@ -315,6 +321,21 @@ export const Admin = () => {
     megaMenu: []
   });
   const [settingsSuccess, setSettingsSuccess] = useState('');
+
+  // Open media picker and capture the callback to set value
+  const openMediaPicker = (callback) => {
+    setMediaPickerCallback(() => callback);
+    setMediaPickerOpen(true);
+  };
+
+  // CMS-aware settings updater that tracks unsaved changes
+  const handleCmsFieldChange = (updater) => {
+    setTempSettings(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : { ...prev, ...updater };
+      return next;
+    });
+    setHasUnsavedChanges(true);
+  };
 
   const handleAddOfferRow = () => {
     setTempSettings(prev => ({
@@ -359,13 +380,16 @@ export const Admin = () => {
   }
 
   const handleSettingsSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     try {
       await updateSettings(tempSettings);
-      setSettingsSuccess('Settings and promotions updated successfully!');
+      setSettingsSuccess('✅ Settings saved and published successfully!');
+      setHasUnsavedChanges(false);
       setTimeout(() => setSettingsSuccess(''), 4000);
     } catch (err) {
       console.error('Error saving settings:', err);
+      setSettingsSuccess('❌ Error saving settings. Please try again.');
+      setTimeout(() => setSettingsSuccess(''), 5000);
     }
   };
 
@@ -377,6 +401,7 @@ export const Admin = () => {
         [field]: value
       }
     }));
+    setHasUnsavedChanges(true);
   };
 
   const handleImageUpload = (e, callback) => {
@@ -530,96 +555,66 @@ export const Admin = () => {
           </div>
 
           <nav className="admin-nav">
-            <button
-              className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              <BarChart3 size={18} />
-              <span>Dashboard</span>
+            {/* Store Operations */}
+            <div className="admin-nav-section-label">📊 Store</div>
+            <button className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
+              <BarChart3 size={18} /><span>Dashboard</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'products' ? 'active' : ''}`}
-              onClick={() => setActiveTab('products')}
-            >
-              <Grid size={18} />
-              <span>Products ({catalogCount})</span>
+            <button className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')}>
+              <FileText size={18} /><span>Orders ({orders.length})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              <FileText size={18} />
-              <span>Orders ({orders.length})</span>
+            <button className={`admin-nav-item ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')}>
+              <Grid size={18} /><span>Products ({catalogCount})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'users' ? 'active' : ''}`}
-              onClick={() => setActiveTab('users')}
-            >
-              <Users size={18} />
-              <span>Users ({consolidatedUsers.length})</span>
+            <button className={`admin-nav-item ${activeTab === 'add-product' ? 'active' : ''}`} onClick={() => setActiveTab('add-product')}>
+              <PlusCircle size={18} /><span>Add Product</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'contacts' ? 'active' : ''}`}
-              onClick={() => setActiveTab('contacts')}
-            >
-              <FileText size={18} />
-              <span>Contact Requests ({contactSubmissions.length})</span>
+            <button className={`admin-nav-item ${activeTab === 'brands' ? 'active' : ''}`} onClick={() => setActiveTab('brands')}>
+              <Tag size={18} /><span>Brands ({brands.length})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'add-product' ? 'active' : ''}`}
-              onClick={() => setActiveTab('add-product')}
-            >
-              <PlusCircle size={18} />
-              <span>Add Sweet</span>
+
+            <div className="admin-nav-divider" />
+
+            {/* Customers */}
+            <div className="admin-nav-section-label">👥 Customers</div>
+            <button className={`admin-nav-item ${activeTab === 'users' ? 'active' : ''}`} onClick={() => setActiveTab('users')}>
+              <Users size={18} /><span>Users ({consolidatedUsers.length})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'brands' ? 'active' : ''}`}
-              onClick={() => setActiveTab('brands')}
-            >
-              <Tag size={18} />
-              <span>Brands ({brands.length})</span>
+            <button className={`admin-nav-item ${activeTab === 'contacts' ? 'active' : ''}`} onClick={() => setActiveTab('contacts')}>
+              <FileText size={18} /><span>Contact Requests ({contactSubmissions.length})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'reviews' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reviews')}
-            >
-              <MessageSquare size={18} />
-              <span>Reviews ({products.reduce((acc, p) => acc + (p.reviews?.length || 0), 0) + testimonials.length})</span>
+            <button className={`admin-nav-item ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')}>
+              <MessageSquare size={18} /><span>Reviews ({products.reduce((acc, p) => acc + (p.reviews?.length || 0), 0) + testimonials.length})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <Activity size={18} />
-              <span>Promotions / Settings</span>
+
+            <div className="admin-nav-divider" />
+
+            {/* CMS Editor */}
+            <div className="admin-nav-section-label">🎨 CMS Editor</div>
+            <button className={`admin-nav-item ${activeTab === 'cms-pages' ? 'active' : ''}`} onClick={() => { setActiveTab('cms-pages'); setActiveCmsTab('cms-hero'); }}>
+              <Edit3 size={18} /><span>Page Content Editor {hasUnsavedChanges ? '●' : ''}</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'cms-pages' ? 'active' : ''}`}
-              onClick={() => setActiveTab('cms-pages')}
-            >
-              <FileText size={18} />
-              <span>CMS Pages</span>
+            <button className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`} onClick={() => setActiveTab('settings')}>
+              <Activity size={18} /><span>Promotions</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'cms-theme' ? 'active' : ''}`}
-              onClick={() => setActiveTab('cms-theme')}
-            >
-              <Grid size={18} />
-              <span>CMS Theme & Branding</span>
+
+            <div className="admin-nav-divider" />
+
+            {/* Media & Assets */}
+            <div className="admin-nav-section-label">🖼️ Media & Assets</div>
+            <button className={`admin-nav-item ${activeTab === 'media-library' ? 'active' : ''}`} onClick={() => setActiveTab('media-library')}>
+              <ShoppingBag size={18} /><span>Media Library ({mediaList ? mediaList.length : 0})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'media-library' ? 'active' : ''}`}
-              onClick={() => setActiveTab('media-library')}
-            >
-              <ShoppingBag size={18} />
-              <span>Media Library ({mediaList ? mediaList.length : 0})</span>
+
+            <div className="admin-nav-divider" />
+
+            {/* Settings */}
+            <div className="admin-nav-section-label">⚙️ Settings</div>
+            <button className={`admin-nav-item ${activeTab === 'cms-theme' ? 'active' : ''}`} onClick={() => setActiveTab('cms-theme')}>
+              <Grid size={18} /><span>Theme & Branding</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'categories' ? 'active' : ''}`}
-              onClick={() => setActiveTab('categories')}
-            >
-              <Tag size={18} />
-              <span>Categories ({categories ? categories.length : 0})</span>
+            <button className={`admin-nav-item ${activeTab === 'categories' ? 'active' : ''}`} onClick={() => setActiveTab('categories')}>
+              <Tag size={18} /><span>Categories ({categories ? categories.length : 0})</span>
             </button>
           </nav>
         </aside>
@@ -2316,388 +2311,911 @@ export const Admin = () => {
             </div>
           )}
 
-          {activeTab === 'cms-pages' && (
-            <div className="admin-tab-content">
-              <h2>CMS Content Pages Editor</h2>
-              <p className="tab-subtitle">Edit the content of your Hero banner, About Us story, and Contact Details</p>
-
-              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                
-                {/* Hero section */}
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>✨ Homepage Hero Section</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Heading (Use | for gradient highlight)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.heading || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'heading', e.target.value)}
-                        placeholder="e.g. SWEETEN YOUR | EVERYDAY LIFE!"
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading (SEO Line)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.subheading || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'subheading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px' }}>
-                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Description Text</label>
-                    <textarea 
-                      rows="3"
-                      value={tempSettings.hero?.description || ''}
-                      onChange={(e) => handleNestedFieldChange('hero', 'description', e.target.value)}
-                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                    />
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Text</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.buttonText || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'buttonText', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Link</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.buttonLink || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'buttonLink', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Hero Image (Base64 or URL)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.heroImage || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'heroImage', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                      <input 
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, (base64) => handleNestedFieldChange('hero', 'heroImage', base64))}
-                        style={{ marginTop: '8px' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Text</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.badgeText || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'badgeText', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
+          {/* ===================== COMPLETE CMS EDITOR ===================== */}
+          {activeTab === 'cms-pages' && (() => {
+            const CmsImageField = ({ label, value, onChange }) => (
+              <div className="cms-field">
+                <label className="cms-label">{label}</label>
+                {value && <img src={value} alt="preview" className="cms-image-preview" onError={e => e.target.style.display='none'} />}
+                <div className="cms-image-actions">
+                  <input type="file" accept="image/*" id={`img-${label.replace(/\s/g,'-')}`} style={{display:'none'}}
+                    onChange={e => { const f=e.target.files[0]; if(!f) return; if(f.size>5*1024*1024){alert('Max 5MB');return;} const r=new FileReader(); r.onloadend=()=>onChange(r.result); r.readAsDataURL(f); }} />
+                  <button type="button" className="cms-image-btn" onClick={() => document.getElementById(`img-${label.replace(/\s/g,'-')}`).click()}>📁 Upload</button>
+                  {mediaList?.length > 0 && <button type="button" className="cms-image-btn" onClick={() => openMediaPicker(onChange)}>🖼️ Media Library</button>}
+                  {value && <button type="button" className="cms-image-btn danger" onClick={() => onChange('')}>✕ Remove</button>}
                 </div>
+                <input className="cms-input" type="text" placeholder="or paste image URL / base64…" value={value || ''} onChange={e => onChange(e.target.value)} />
+              </div>
+            );
 
-                {/* About Us section */}
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📖 About Us Page Settings</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Page Heading</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.aboutUs?.heading || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'heading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading description</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.aboutUs?.subheading || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'subheading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Story Text</label>
-                      <textarea 
-                        rows="4"
-                        value={tempSettings.aboutUs?.description || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'description', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Extended Story Text</label>
-                      <textarea 
-                        rows="4"
-                        value={tempSettings.aboutUs?.story || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'story', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Our Mission</label>
-                      <textarea 
-                        rows="3"
-                        value={tempSettings.aboutUs?.mission || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'mission', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Our Vision</label>
-                      <textarea 
-                        rows="3"
-                        value={tempSettings.aboutUs?.vision || ''}
-                        onChange={(e) => handleNestedFieldChange('aboutUs', 'vision', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Contact Us section */}
+            const CmsToggle = ({ label, sub, checked, onChange }) => (
+              <div className="cms-toggle-row">
                 <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📞 Contact Page Settings</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Office Address</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.contactUs?.address || ''}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'address', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+                  <div className="cms-toggle-label">{label}</div>
+                  {sub && <div className="cms-toggle-sub">{sub}</div>}
+                </div>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={!!checked} onChange={e => onChange(e.target.checked)} />
+                  <span className="toggle-slider" />
+                </label>
+              </div>
+            );
+
+            const CmsColorPicker = ({ label, value, onChange }) => (
+              <div className="cms-field">
+                <label className="cms-label">{label}</label>
+                <div className="cms-color-field">
+                  <input type="color" value={value || '#e72c83'} onChange={e => onChange(e.target.value)} />
+                  <input type="text" value={value || ''} onChange={e => onChange(e.target.value)} placeholder="#e72c83" />
+                  <div style={{width:24,height:24,borderRadius:6,background:value||'#e72c83',border:'1px solid var(--color-border)',flexShrink:0}} />
+                </div>
+              </div>
+            );
+
+            const SaveBar = () => (
+              <div className="cms-save-bar">
+                {settingsSuccess && <span className={settingsSuccess.startsWith('✅') ? 'cms-success-notice' : 'cms-error-notice'}>{settingsSuccess}</span>}
+                <button type="button" className="btn btn-primary" style={{padding:'10px 28px',fontWeight:'700'}} onClick={handleSettingsSubmit}>
+                  💾 Save & Publish
+                </button>
+              </div>
+            );
+
+            return (
+              <div className="admin-tab-content">
+                <h2>🎨 CMS Content Editor</h2>
+                <p className="tab-subtitle">Edit every section of your website. Changes publish instantly after saving.</p>
+
+                {/* Unsaved changes banner */}
+                {hasUnsavedChanges && (
+                  <div className="cms-unsaved-banner">
+                    <span>⚠️ You have unsaved changes — click Save &amp; Publish to go live</span>
+                    <button onClick={handleSettingsSubmit}>Save &amp; Publish Now</button>
+                  </div>
+                )}
+
+                {/* Sub-tab pill navigation */}
+                <div className="cms-sub-tabs">
+                  {[
+                    { id:'cms-hero', label:'✨ Hero Banner' },
+                    { id:'cms-about', label:'📖 About Us' },
+                    { id:'cms-contact', label:'📍 Contact Page' },
+                    { id:'cms-footer', label:'🦶 Footer' },
+                    { id:'cms-header', label:'🔝 Header' },
+                    { id:'cms-marquee', label:'📢 Announcements' },
+                    { id:'cms-popups', label:'🎁 Popups' },
+                    { id:'cms-seo', label:'🔍 SEO' },
+                    { id:'cms-general', label:'⚙️ General Settings' },
+                    { id:'cms-nav', label:'🧭 Navigation Menu' },
+                  ].map(t => (
+                    <button key={t.id} className={`cms-sub-tab-btn ${activeCmsTab===t.id?'active':''}`} onClick={() => setActiveCmsTab(t.id)}>{t.label}</button>
+                  ))}
+                </div>
+
+                {/* ===== HERO SECTION ===== */}
+                {activeCmsTab === 'cms-hero' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">✨</div>
+                        <div><div className="cms-section-title">Hero Banner Text</div><div className="cms-section-subtitle">Main headline, subheading, description and badge</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Main Heading (use | to split gradient highlight)</label>
+                          <input className="cms-input" value={tempSettings.hero?.heading||''} onChange={e=>handleNestedFieldChange('hero','heading',e.target.value)} placeholder="SWEETEN YOUR | EVERYDAY LIFE!" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Badge Text (above heading)</label>
+                          <input className="cms-input" value={tempSettings.hero?.subheading||''} onChange={e=>handleNestedFieldChange('hero','subheading',e.target.value)} placeholder="PREMIUM NEW ZEALAND CONFECTIONS" />
+                        </div>
+                      </div>
+                      <div className="cms-field" style={{marginTop:16}}>
+                        <label className="cms-label">Description Paragraph</label>
+                        <textarea className="cms-textarea" rows={3} value={tempSettings.hero?.description||''} onChange={e=>handleNestedFieldChange('hero','description',e.target.value)} />
+                      </div>
+                      <div className="cms-field" style={{marginTop:16}}>
+                        <label className="cms-label">Badge Pill Text (small tag above heading)</label>
+                        <input className="cms-input" value={tempSettings.hero?.badgeText||''} onChange={e=>handleNestedFieldChange('hero','badgeText',e.target.value)} placeholder="New NZ Confections" />
+                      </div>
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Contact Email</label>
-                      <input 
-                        type="email"
-                        value={tempSettings.contactUs?.email || ''}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'email', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🔗</div>
+                        <div><div className="cms-section-title">Call-to-Action Buttons</div><div className="cms-section-subtitle">Primary and secondary hero buttons</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Primary Button Label</label>
+                          <input className="cms-input" value={tempSettings.hero?.buttonText||''} onChange={e=>handleNestedFieldChange('hero','buttonText',e.target.value)} placeholder="Explore Sweet Shop" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Primary Button Link</label>
+                          <input className="cms-input" value={tempSettings.hero?.buttonLink||''} onChange={e=>handleNestedFieldChange('hero','buttonLink',e.target.value)} placeholder="/shop" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Secondary Button Label</label>
+                          <input className="cms-input" value={tempSettings.hero?.secondaryButtonText||''} onChange={e=>handleNestedFieldChange('hero','secondaryButtonText',e.target.value)} placeholder="Best Sellers" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Secondary Button Link</label>
+                          <input className="cms-input" value={tempSettings.hero?.secondaryButtonLink||''} onChange={e=>handleNestedFieldChange('hero','secondaryButtonLink',e.target.value)} placeholder="#favourites" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🖼️</div>
+                        <div><div className="cms-section-title">Hero Images</div><div className="cms-section-subtitle">Main product showcase image and optional background</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <CmsImageField label="Hero Product Image" value={tempSettings.hero?.heroImage||''} onChange={v=>handleNestedFieldChange('hero','heroImage',v)} />
+                        <CmsImageField label="Background Image (optional)" value={tempSettings.hero?.backgroundImage||''} onChange={v=>handleNestedFieldChange('hero','backgroundImage',v)} />
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🍬</div>
+                        <div><div className="cms-section-title">Floating Candy Icons</div><div className="cms-section-subtitle">Emoji icons floating around the hero (comma-separated)</div></div>
+                      </div>
+                      <div className="cms-field">
+                        <label className="cms-label">Floating Icons (comma-separated emojis)</label>
+                        <input className="cms-input" value={(tempSettings.hero?.floatingIcons||[]).join(',')} onChange={e=>handleNestedFieldChange('hero','floatingIcons',e.target.value.split(',').map(s=>s.trim()).filter(Boolean))} placeholder="🍬,🍭,🍫,🍑,🍒" />
+                        <div style={{display:'flex',gap:8,marginTop:8,flexWrap:'wrap'}}>
+                          {(tempSettings.hero?.floatingIcons||[]).map((ic,i)=>(
+                            <span key={i} style={{fontSize:28,lineHeight:1}}>{ic}</span>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== ABOUT US ===== */}
+                {activeCmsTab === 'cms-about' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📖</div>
+                        <div><div className="cms-section-title">About Us Page Content</div><div className="cms-section-subtitle">Headings, story text, mission and vision</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Page Heading</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.heading||''} onChange={e=>handleNestedFieldChange('aboutUs','heading',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Subheading</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.subheading||''} onChange={e=>handleNestedFieldChange('aboutUs','subheading',e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="cms-field" style={{marginTop:16}}>
+                        <label className="cms-label">Main Description</label>
+                        <textarea className="cms-textarea" rows={4} value={tempSettings.aboutUs?.description||''} onChange={e=>handleNestedFieldChange('aboutUs','description',e.target.value)} />
+                      </div>
+                      <div className="cms-field" style={{marginTop:16}}>
+                        <label className="cms-label">Extended Story Text</label>
+                        <textarea className="cms-textarea" rows={4} value={tempSettings.aboutUs?.story||''} onChange={e=>handleNestedFieldChange('aboutUs','story',e.target.value)} />
+                      </div>
+                      <div className="cms-grid-2" style={{marginTop:16}}>
+                        <div className="cms-field">
+                          <label className="cms-label">Mission Statement</label>
+                          <textarea className="cms-textarea" rows={3} value={tempSettings.aboutUs?.mission||''} onChange={e=>handleNestedFieldChange('aboutUs','mission',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Vision Statement</label>
+                          <textarea className="cms-textarea" rows={3} value={tempSettings.aboutUs?.vision||''} onChange={e=>handleNestedFieldChange('aboutUs','vision',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">CTA Button Label</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.buttonText||''} onChange={e=>handleNestedFieldChange('aboutUs','buttonText',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">CTA Button Link</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.buttonLink||''} onChange={e=>handleNestedFieldChange('aboutUs','buttonLink',e.target.value)} />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🖼️</div>
+                        <div><div className="cms-section-title">About Us Images</div></div>
+                      </div>
+                      <CmsImageField label="Primary About Us Image" value={(tempSettings.aboutUs?.images||[])[0]||''} onChange={v=>handleNestedFieldChange('aboutUs','images',[v, ...((tempSettings.aboutUs?.images||[]).slice(1))])} />
+                      <CmsImageField label="Open Graph / Social Share Image" value={tempSettings.aboutUs?.ogImage||''} onChange={v=>handleNestedFieldChange('aboutUs','ogImage',v)} />
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🔍</div>
+                        <div><div className="cms-section-title">SEO Settings — About Us</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">SEO Title</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.seoTitle||''} onChange={e=>handleNestedFieldChange('aboutUs','seoTitle',e.target.value)} placeholder="About Best Lolly Shop…" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Meta Keywords</label>
+                          <input className="cms-input" value={tempSettings.aboutUs?.metaKeywords||''} onChange={e=>handleNestedFieldChange('aboutUs','metaKeywords',e.target.value)} placeholder="about us, lolly shop nz…" />
+                        </div>
+                      </div>
+                      <div className="cms-field" style={{marginTop:14}}>
+                        <label className="cms-label">Meta Description</label>
+                        <textarea className="cms-textarea" rows={3} value={tempSettings.aboutUs?.seoDescription||''} onChange={e=>handleNestedFieldChange('aboutUs','seoDescription',e.target.value)} />
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== CONTACT PAGE ===== */}
+                {activeCmsTab === 'cms-contact' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📍</div>
+                        <div><div className="cms-section-title">Contact Information</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Address</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.address||''} onChange={e=>handleNestedFieldChange('contactUs','address',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Phone Number</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.phone||''} onChange={e=>handleNestedFieldChange('contactUs','phone',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Email Address</label>
+                          <input className="cms-input" type="email" value={tempSettings.contactUs?.email||''} onChange={e=>handleNestedFieldChange('contactUs','email',e.target.value)} />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Business Hours</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.businessHours||''} onChange={e=>handleNestedFieldChange('contactUs','businessHours',e.target.value)} placeholder="Mon–Sat: 9AM–6PM" />
+                        </div>
+                      </div>
+                      <div className="cms-field" style={{marginTop:16}}>
+                        <label className="cms-label">Google Maps Embed URL</label>
+                        <input className="cms-input" value={tempSettings.contactUs?.googleMap||''} onChange={e=>handleNestedFieldChange('contactUs','googleMap',e.target.value)} placeholder="https://www.google.com/maps/embed?pb=…" />
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📲</div>
+                        <div><div className="cms-section-title">Social Media Links</div></div>
+                      </div>
+                      <div className="cms-grid-3">
+                        <div className="cms-field">
+                          <label className="cms-label">Facebook URL</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.facebookLink||''} onChange={e=>handleNestedFieldChange('contactUs','facebookLink',e.target.value)} placeholder="https://facebook.com/…" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Instagram URL</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.instagramLink||''} onChange={e=>handleNestedFieldChange('contactUs','instagramLink',e.target.value)} placeholder="https://instagram.com/…" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">TikTok URL</label>
+                          <input className="cms-input" value={tempSettings.contactUs?.tiktokLink||''} onChange={e=>handleNestedFieldChange('contactUs','tiktokLink',e.target.value)} placeholder="https://tiktok.com/@…" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📬</div>
+                        <div><div className="cms-section-title">Contact Form Settings</div></div>
+                      </div>
+                      <div className="cms-field">
+                        <label className="cms-label">Form Recipient Email</label>
+                        <input className="cms-input" type="email" value={tempSettings.contactUs?.formEmailRecipient||''} onChange={e=>handleNestedFieldChange('contactUs','formEmailRecipient',e.target.value)} />
+                      </div>
+                      <div style={{marginTop:14}}>
+                        <CmsToggle label="Contact Form Enabled" sub="Show the contact submission form on the page" checked={tempSettings.contactUs?.formEnabled!==false} onChange={v=>handleNestedFieldChange('contactUs','formEnabled',v)} />
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== FOOTER ===== */}
+                {activeCmsTab === 'cms-footer' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🦶</div>
+                        <div><div className="cms-section-title">Footer Branding</div></div>
+                      </div>
+                      <CmsImageField label="Footer Logo Image" value={tempSettings.footer?.logoImage||tempSettings.websiteLogo||''} onChange={v=>handleNestedFieldChange('footer','logoImage',v)} />
+                      <div className="cms-field" style={{marginTop:14}}>
+                        <label className="cms-label">Footer Tagline / Description</label>
+                        <textarea className="cms-textarea" rows={3} value={tempSettings.footer?.description||''} onChange={e=>handleNestedFieldChange('footer','description',e.target.value)} />
+                      </div>
+                      <div className="cms-field" style={{marginTop:14}}>
+                        <label className="cms-label">Copyright Text</label>
+                        <input className="cms-input" value={tempSettings.footer?.copyright||''} onChange={e=>handleNestedFieldChange('footer','copyright',e.target.value)} placeholder="© 2026 Best Lolly Shop. All rights reserved." />
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🔗</div>
+                        <div><div className="cms-section-title">Quick Links</div><div className="cms-section-subtitle">Manage footer navigation links</div></div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                        {(tempSettings.footer?.quickLinks||[]).map((lnk,i)=>(
+                          <div key={i} style={{display:'flex',gap:10,alignItems:'center'}}>
+                            <input className="cms-input" style={{flex:1}} placeholder="Label" value={lnk.label||''} onChange={e=>{const arr=[...(tempSettings.footer?.quickLinks||[])];arr[i]={...arr[i],label:e.target.value};handleNestedFieldChange('footer','quickLinks',arr);}} />
+                            <input className="cms-input" style={{flex:1}} placeholder="/path" value={lnk.link||''} onChange={e=>{const arr=[...(tempSettings.footer?.quickLinks||[])];arr[i]={...arr[i],link:e.target.value};handleNestedFieldChange('footer','quickLinks',arr);}} />
+                            <button type="button" className="cms-btn-icon" onClick={()=>{const arr=(tempSettings.footer?.quickLinks||[]).filter((_,j)=>j!==i);handleNestedFieldChange('footer','quickLinks',arr);}}>✕</button>
+                          </div>
+                        ))}
+                        <button type="button" className="btn btn-secondary" style={{width:'fit-content',padding:'8px 18px',fontSize:'12px',marginTop:6}} onClick={()=>handleNestedFieldChange('footer','quickLinks',[...(tempSettings.footer?.quickLinks||[]),{label:'New Link',link:'/'}])}>+ Add Quick Link</button>
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📄</div>
+                        <div><div className="cms-section-title">Policy Links</div><div className="cms-section-subtitle">Privacy, Terms, Refund policy links</div></div>
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                        {(tempSettings.footer?.policies||[]).map((pol,i)=>(
+                          <div key={i} style={{display:'flex',gap:10,alignItems:'center'}}>
+                            <input className="cms-input" style={{flex:1}} placeholder="Label" value={pol.label||''} onChange={e=>{const arr=[...(tempSettings.footer?.policies||[])];arr[i]={...arr[i],label:e.target.value};handleNestedFieldChange('footer','policies',arr);}} />
+                            <input className="cms-input" style={{flex:1}} placeholder="/policy-path" value={pol.link||''} onChange={e=>{const arr=[...(tempSettings.footer?.policies||[])];arr[i]={...arr[i],link:e.target.value};handleNestedFieldChange('footer','policies',arr);}} />
+                            <button type="button" className="cms-btn-icon" onClick={()=>{const arr=(tempSettings.footer?.policies||[]).filter((_,j)=>j!==i);handleNestedFieldChange('footer','policies',arr);}}>✕</button>
+                          </div>
+                        ))}
+                        <button type="button" className="btn btn-secondary" style={{width:'fit-content',padding:'8px 18px',fontSize:'12px',marginTop:6}} onClick={()=>handleNestedFieldChange('footer','policies',[...(tempSettings.footer?.policies||[]),{label:'New Policy',link:'/'}])}>+ Add Policy Link</button>
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== HEADER ===== */}
+                {activeCmsTab === 'cms-header' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🔝</div>
+                        <div><div className="cms-section-title">Header / Navbar Settings</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Logo Text (displayed if no logo image)</label>
+                          <input className="cms-input" value={tempSettings.header?.logoText||''} onChange={e=>handleNestedFieldChange('header','logoText',e.target.value)} placeholder="Best Lolly Shop" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Website Name (browser tab)</label>
+                          <input className="cms-input" value={tempSettings.websiteName||''} onChange={e=>handleCmsFieldChange(prev=>({...prev,websiteName:e.target.value}))} />
+                        </div>
+                      </div>
+                      <div style={{marginTop:16}}>
+                        <CmsImageField label="Header Logo Image" value={tempSettings.websiteLogo||''} onChange={v=>handleCmsFieldChange(prev=>({...prev,websiteLogo:v}))} />
+                      </div>
+                      <div style={{display:'flex',flexDirection:'column',gap:10,marginTop:16}}>
+                        <CmsToggle label="Sticky Header" sub="Header stays fixed at top while scrolling" checked={tempSettings.header?.sticky!==false} onChange={v=>handleNestedFieldChange('header','sticky',v)} />
+                        <CmsToggle label="Show Search Bar" sub="Display search icon in the header" checked={tempSettings.header?.showSearch!==false} onChange={v=>handleNestedFieldChange('header','showSearch',v)} />
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== MARQUEE ANNOUNCEMENTS ===== */}
+                {activeCmsTab === 'cms-marquee' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📢</div>
+                        <div><div className="cms-section-title">Scrolling Announcement Banners</div><div className="cms-section-subtitle">Add unlimited scrolling announcements. They rotate automatically.</div></div>
+                      </div>
+
+                      <div style={{display:'flex',flexDirection:'column',gap:16}}>
+                        {(tempSettings.marquees||[]).map((m,i)=>(
+                          <div key={i} className="cms-item-card">
+                            <div className="cms-item-card-header">
+                              <div style={{display:'flex',alignItems:'center',gap:10,flex:1}}>
+                                <span className="cms-item-drag-handle">⠿</span>
+                                <span style={{fontWeight:700,fontSize:13}}>Announcement #{i+1}</span>
+                                <span style={{padding:'3px 10px',borderRadius:999,fontSize:11,fontWeight:700,background:m.enabled?'#dcfce7':'#fee2e2',color:m.enabled?'#16a34a':'#dc2626'}}>{m.enabled?'Active':'Disabled'}</span>
+                              </div>
+                              <div className="cms-item-actions">
+                                {i>0&&<button type="button" className="cms-btn-icon move" title="Move up" onClick={()=>{const arr=[...(tempSettings.marquees||[])];[arr[i-1],arr[i]]=[arr[i],arr[i-1]];handleCmsFieldChange(prev=>({...prev,marquees:arr}));}}>↑</button>}
+                                {i<(tempSettings.marquees||[]).length-1&&<button type="button" className="cms-btn-icon move" title="Move down" onClick={()=>{const arr=[...(tempSettings.marquees||[])];[arr[i],arr[i+1]]=[arr[i+1],arr[i]];handleCmsFieldChange(prev=>({...prev,marquees:arr}));}}>↓</button>}
+                                <button type="button" className="cms-btn-icon" title="Delete" onClick={()=>handleCmsFieldChange(prev=>({...prev,marquees:(prev.marquees||[]).filter((_,j)=>j!==i)}))}>🗑</button>
+                              </div>
+                            </div>
+                            <div className="cms-grid-2">
+                              <div className="cms-field" style={{gridColumn:'1/-1'}}>
+                                <label className="cms-label">Announcement Text</label>
+                                <input className="cms-input" value={m.text||''} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],text:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Icon / Emoji (prefix)</label>
+                                <input className="cms-input" value={m.icon||''} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],icon:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} placeholder="🍬" />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Scroll Speed (px/s, lower=faster)</label>
+                                <input className="cms-input" type="number" min={10} max={120} value={m.speed||40} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],speed:Number(e.target.value)};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Text Color</label>
+                                <div className="cms-color-field">
+                                  <input type="color" value={m.color||'#ffffff'} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],color:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                                  <input type="text" value={m.color||'#ffffff'} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],color:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                                </div>
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Background Color</label>
+                                <div className="cms-color-field">
+                                  <input type="color" value={m.bgColor||'#e72c83'} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],bgColor:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                                  <input type="text" value={m.bgColor||'#e72c83'} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],bgColor:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                                </div>
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Schedule Start (optional)</label>
+                                <input className="cms-input" type="date" value={m.startDate||''} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],startDate:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Schedule End (optional)</label>
+                                <input className="cms-input" type="date" value={m.endDate||''} onChange={e=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],endDate:e.target.value};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                              </div>
+                              <div style={{gridColumn:'1/-1',display:'flex',gap:12,flexWrap:'wrap'}}>
+                                <CmsToggle label="Active / Enabled" sub="Show this announcement" checked={m.enabled!==false} onChange={v=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],enabled:v};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                                <CmsToggle label="Pause on Hover" sub="Stop scrolling when mouse hovers" checked={m.pauseOnHover!==false} onChange={v=>{const arr=[...(tempSettings.marquees||[])];arr[i]={...arr[i],pauseOnHover:v};handleCmsFieldChange(prev=>({...prev,marquees:arr}));}} />
+                              </div>
+                            </div>
+                            {/* Live preview strip */}
+                            <div className="cms-marquee-preview" style={{background:m.bgColor||'#e72c83'}}>
+                              <div className="cms-marquee-preview-inner">
+                                {[...Array(4)].map((_,k)=>(
+                                  <span key={k} style={{color:m.color||'#fff',fontWeight:700,fontSize:13}}>{m.icon} {m.text||'Your announcement text…'}</span>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button type="button" className="btn btn-secondary" style={{marginTop:16,padding:'10px 22px',fontWeight:700}} onClick={()=>handleCmsFieldChange(prev=>({...prev,marquees:[...(prev.marquees||[]),{text:'New announcement text',enabled:true,color:'#ffffff',bgColor:'#e72c83',icon:'🍬',speed:40,pauseOnHover:true}]}))}>
+                        + Add Announcement
+                      </button>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== POPUP PROMOTIONS ===== */}
+                {activeCmsTab === 'cms-popups' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🎁</div>
+                        <div><div className="cms-section-title">Popup Promotions</div><div className="cms-section-subtitle">Create offers that appear as modals to visitors</div></div>
+                      </div>
+
+                      <div style={{display:'flex',flexDirection:'column',gap:20}}>
+                        {(tempSettings.popupOffers||[]).map((pop,i)=>(
+                          <div key={i} className="cms-item-card">
+                            <div className="cms-item-card-header">
+                              <span style={{fontWeight:700,fontSize:13}}>Popup #{i+1} — {pop.title||'Untitled'}</span>
+                              <div className="cms-item-actions">
+                                <span style={{padding:'3px 10px',borderRadius:999,fontSize:11,fontWeight:700,background:pop.enabled?'#dcfce7':'#fee2e2',color:pop.enabled?'#16a34a':'#dc2626'}}>{pop.enabled?'Active':'Off'}</span>
+                                <button type="button" className="cms-btn-icon" onClick={()=>handleCmsFieldChange(prev=>({...prev,popupOffers:(prev.popupOffers||[]).filter((_,j)=>j!==i)}))}>🗑</button>
+                              </div>
+                            </div>
+                            <div className="cms-grid-2">
+                              <div className="cms-field">
+                                <label className="cms-label">Popup Title</label>
+                                <input className="cms-input" value={pop.title||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],title:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Coupon Code</label>
+                                <input className="cms-input" style={{fontFamily:'monospace',fontWeight:700}} value={pop.code||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],code:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} placeholder="SAVE15" />
+                              </div>
+                              <div className="cms-field" style={{gridColumn:'1/-1'}}>
+                                <label className="cms-label">Description</label>
+                                <textarea className="cms-textarea" rows={2} value={pop.description||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],description:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Button Label</label>
+                                <input className="cms-input" value={pop.buttonText||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],buttonText:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Button Link</label>
+                                <input className="cms-input" value={pop.buttonLink||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],buttonLink:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} placeholder="/shop" />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Discount %</label>
+                                <input className="cms-input" type="number" min={0} max={100} value={pop.discountPercent||0} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],discountPercent:Number(e.target.value)};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Display Delay (ms)</label>
+                                <input className="cms-input" type="number" min={0} value={pop.delay||3000} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],delay:Number(e.target.value)};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Auto-Close (ms, 0=never)</label>
+                                <input className="cms-input" type="number" min={0} value={pop.autoClose||0} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],autoClose:Number(e.target.value)};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Frequency (days between shows)</label>
+                                <input className="cms-input" type="number" min={0} value={pop.frequencyDays||1} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],frequencyDays:Number(e.target.value)};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Target Pages (comma-separated paths)</label>
+                                <input className="cms-input" value={(pop.targetPages||['/'])?.join(',')} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],targetPages:e.target.value.split(',').map(s=>s.trim())};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} placeholder="/, /shop, /checkout" />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Schedule Start</label>
+                                <input className="cms-input" type="date" value={pop.startDate||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],startDate:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div className="cms-field">
+                                <label className="cms-label">Schedule End</label>
+                                <input className="cms-input" type="date" value={pop.endDate||''} onChange={e=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],endDate:e.target.value};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div style={{gridColumn:'1/-1'}}>
+                                <CmsImageField label="Popup Image" value={pop.image||''} onChange={v=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],image:v};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                              <div style={{gridColumn:'1/-1'}}>
+                                <CmsToggle label="Popup Enabled" sub="Show this popup to visitors" checked={pop.enabled!==false} onChange={v=>{const arr=[...(tempSettings.popupOffers||[])];arr[i]={...arr[i],enabled:v};handleCmsFieldChange(prev=>({...prev,popupOffers:arr}));}} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <button type="button" className="btn btn-secondary" style={{marginTop:16,padding:'10px 22px',fontWeight:700}} onClick={()=>handleCmsFieldChange(prev=>({...prev,popupOffers:[...(prev.popupOffers||[]),{enabled:true,delay:3000,title:'🎉 Special Offer!',description:'Get exclusive savings today.',code:'SAVE10',discountPercent:10,buttonText:'Shop Now',buttonLink:'/shop',image:'',startDate:'',endDate:'',targetPages:['/'],frequencyDays:1}]}))}>
+                        + Add Popup Offer
+                      </button>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== SEO SETTINGS ===== */}
+                {activeCmsTab === 'cms-seo' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    {[
+                      {key:'/',label:'🏠 Home Page',placeholder:{title:'Online Lolly Shop NZ | Buy Bulk Lollies & Candy Online',desc:'Order delicious sweets…'}},
+                      {key:'/shop',label:'🛒 Shop / Category Pages',placeholder:{title:'Buy Lollies Online NZ',desc:'Browse our full range…'}},
+                      {key:'/about',label:'📖 About Us Page',placeholder:{title:'About Best Lolly Shop',desc:'Our sweet story…'}},
+                      {key:'/contact',label:'📍 Contact Page',placeholder:{title:'Contact Best Lolly Shop',desc:'Get in touch…'}},
+                    ].map(({key,label,placeholder})=>{
+                      const cur=(tempSettings.seoOverrides&&tempSettings.seoOverrides[key])||{};
+                      const upd=(field,val)=>{
+                        handleCmsFieldChange(prev=>({
+                          ...prev,
+                          seoOverrides:{
+                            ...(prev.seoOverrides||{}),
+                            [key]:{...((prev.seoOverrides||{})[key]||{}),[field]:val}
+                          }
+                        }));
+                      };
+                      return (
+                        <div key={key} className="cms-section-card">
+                          <div className="cms-section-header">
+                            <div className="cms-section-icon">🔍</div>
+                            <div><div className="cms-section-title">{label}</div><div className="cms-section-subtitle">Path: {key}</div></div>
+                          </div>
+                          <div className="cms-field">
+                            <label className="cms-label">SEO Title (max 60 chars)</label>
+                            <input className="cms-input" value={cur.title||''} onChange={e=>upd('title',e.target.value)} placeholder={placeholder.title} maxLength={70} />
+                            <span style={{fontSize:11,color:cur.title?.length>60?'#dc2626':'var(--color-text-muted)'}}>{(cur.title||'').length}/60</span>
+                          </div>
+                          <div className="cms-field" style={{marginTop:12}}>
+                            <label className="cms-label">Meta Description (max 160 chars)</label>
+                            <textarea className="cms-textarea" rows={2} value={cur.description||''} onChange={e=>upd('description',e.target.value)} placeholder={placeholder.desc} maxLength={170} />
+                            <span style={{fontSize:11,color:cur.description?.length>160?'#dc2626':'var(--color-text-muted)'}}>{(cur.description||'').length}/160</span>
+                          </div>
+                          <div className="cms-grid-2" style={{marginTop:12}}>
+                            <div className="cms-field">
+                              <label className="cms-label">Keywords</label>
+                              <input className="cms-input" value={cur.keywords||''} onChange={e=>upd('keywords',e.target.value)} placeholder="lollies nz, candy shop, bulk lollies…" />
+                            </div>
+                            <div className="cms-field">
+                              <label className="cms-label">Canonical URL (optional)</label>
+                              <input className="cms-input" value={cur.canonicalUrl||''} onChange={e=>upd('canonicalUrl',e.target.value)} placeholder="https://bestlollyshop.co.nz/" />
+                            </div>
+                          </div>
+                          <div style={{marginTop:12}}>
+                            <CmsImageField label="Open Graph Image (1200×630px ideal)" value={cur.ogImage||''} onChange={v=>upd('ogImage',v)} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== GENERAL SETTINGS ===== */}
+                {activeCmsTab === 'cms-general' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">⚙️</div>
+                        <div><div className="cms-section-title">Website Identity</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Website Name</label>
+                          <input className="cms-input" value={tempSettings.websiteName||''} onChange={e=>handleCmsFieldChange(prev=>({...prev,websiteName:e.target.value}))} placeholder="Best Lolly Shop" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Currency</label>
+                          <select className="cms-input" value={tempSettings.currency||'NZD'} onChange={e=>handleCmsFieldChange(prev=>({...prev,currency:e.target.value}))}>
+                            <option value="NZD">NZD — New Zealand Dollar</option>
+                            <option value="AUD">AUD — Australian Dollar</option>
+                            <option value="USD">USD — US Dollar</option>
+                            <option value="GBP">GBP — British Pound</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="cms-grid-2" style={{marginTop:14}}>
+                        <CmsImageField label="Website Logo (shown in header/footer)" value={tempSettings.websiteLogo||''} onChange={v=>handleCmsFieldChange(prev=>({...prev,websiteLogo:v}))} />
+                        <CmsImageField label="Favicon (.ico or .png, 32×32)" value={tempSettings.websiteFavicon||''} onChange={v=>handleCmsFieldChange(prev=>({...prev,websiteFavicon:v}))} />
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🎨</div>
+                        <div><div className="cms-section-title">Brand Colors</div><div className="cms-section-subtitle">These inject live CSS variables across the entire site</div></div>
+                      </div>
+                      <div className="cms-grid-4">
+                        <CmsColorPicker label="Primary Color" value={tempSettings.themeColors?.primary||'#e72c83'} onChange={v=>handleNestedFieldChange('themeColors','primary',v)} />
+                        <CmsColorPicker label="Secondary Color" value={tempSettings.themeColors?.secondary||'#f472b6'} onChange={v=>handleNestedFieldChange('themeColors','secondary',v)} />
+                        <CmsColorPicker label="Background" value={tempSettings.themeColors?.background||'#faf9fc'} onChange={v=>handleNestedFieldChange('themeColors','background',v)} />
+                        <CmsColorPicker label="Text Color" value={tempSettings.themeColors?.text||'#2d2645'} onChange={v=>handleNestedFieldChange('themeColors','text',v)} />
+                      </div>
+                      <div style={{marginTop:16,padding:16,borderRadius:12,background:'linear-gradient(135deg,'+((tempSettings.themeColors?.primary)||'#e72c83')+','+((tempSettings.themeColors?.secondary)||'#f472b6')+')',color:'white',fontWeight:700,textAlign:'center'}}>
+                        Live Color Preview — Primary → Secondary Gradient
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🔤</div>
+                        <div><div className="cms-section-title">Typography</div></div>
+                      </div>
+                      <div className="cms-field">
+                        <label className="cms-label">Primary Font Family</label>
+                        <select className="cms-input" value={tempSettings.fonts||'Outfit, sans-serif'} onChange={e=>handleCmsFieldChange(prev=>({...prev,fonts:e.target.value}))}>
+                          <option value="Outfit, sans-serif">Outfit — Rounded Premium (Default)</option>
+                          <option value="Inter, sans-serif">Inter — Clean Modern</option>
+                          <option value="Poppins, sans-serif">Poppins — Friendly & Rounded</option>
+                          <option value="Montserrat, sans-serif">Montserrat — Geometric Corporate</option>
+                          <option value="Nunito, sans-serif">Nunito — Soft & Playful</option>
+                          <option value="DM Sans, sans-serif">DM Sans — Contemporary</option>
+                        </select>
+                        <div style={{marginTop:8,padding:14,borderRadius:10,border:'1.5px solid var(--color-border)',fontFamily:tempSettings.fonts||'Outfit, sans-serif'}}>
+                          <span style={{fontSize:18,fontWeight:800}}>Font Preview: </span>
+                          <span style={{fontSize:14}}>The quick brown fox jumps over the lazy dog. 🍬🍭</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">📊</div>
+                        <div><div className="cms-section-title">Analytics & Tracking</div></div>
+                      </div>
+                      <div className="cms-grid-2">
+                        <div className="cms-field">
+                          <label className="cms-label">Google Analytics ID (GA4)</label>
+                          <input className="cms-input" style={{fontFamily:'monospace'}} value={tempSettings.googleAnalytics||''} onChange={e=>handleCmsFieldChange(prev=>({...prev,googleAnalytics:e.target.value}))} placeholder="G-XXXXXXXXXX" />
+                        </div>
+                        <div className="cms-field">
+                          <label className="cms-label">Facebook Pixel ID</label>
+                          <input className="cms-input" style={{fontFamily:'monospace'}} value={tempSettings.facebookPixel||''} onChange={e=>handleCmsFieldChange(prev=>({...prev,facebookPixel:e.target.value}))} placeholder="000000000000000" />
+                        </div>
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+
+                {/* ===== NAVIGATION MENU ===== */}
+                {activeCmsTab === 'cms-nav' && (
+                  <div style={{display:'flex',flexDirection:'column',gap:'20px'}}>
+                    <div className="cms-section-card">
+                      <div className="cms-section-header">
+                        <div className="cms-section-icon">🧭</div>
+                        <div><div className="cms-section-title">Mega Navigation Menu Editor</div><div className="cms-section-subtitle">Edit top-level categories and their dropdown sub-items</div></div>
+                      </div>
+
+                      <div style={{display:'flex',flexDirection:'column',gap:12}}>
+                        {(tempSettings.megaMenu||[]).map((cat,ci)=>(
+                          <div key={ci} className="cms-mega-menu-category">
+                            <div className="cms-mega-menu-cat-header">
+                              <div style={{display:'flex',alignItems:'center',gap:10,flex:1}}>
+                                <span className="cms-item-drag-handle">⠿</span>
+                                <input style={{border:'none',background:'transparent',fontWeight:800,fontSize:14,color:'var(--color-text)',outline:'none',flex:1}} value={cat.title||''} onChange={e=>{const arr=[...(tempSettings.megaMenu||[])];arr[ci]={...arr[ci],title:e.target.value};handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));}} />
+                              </div>
+                              <div style={{display:'flex',gap:6}}>
+                                {ci>0&&<button type="button" className="cms-btn-icon move" onClick={()=>{const arr=[...(tempSettings.megaMenu||[])];[arr[ci-1],arr[ci]]=[arr[ci],arr[ci-1]];handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));}}>↑</button>}
+                                {ci<(tempSettings.megaMenu||[]).length-1&&<button type="button" className="cms-btn-icon move" onClick={()=>{const arr=[...(tempSettings.megaMenu||[])];[arr[ci],arr[ci+1]]=[arr[ci+1],arr[ci]];handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));}}>↓</button>}
+                                <button type="button" className="cms-btn-icon" onClick={()=>handleCmsFieldChange(prev=>({...prev,megaMenu:(prev.megaMenu||[]).filter((_,j)=>j!==ci)}))}>🗑</button>
+                              </div>
+                            </div>
+                            <div className="cms-mega-menu-items">
+                              {(cat.items||[]).map((item,ii)=>(
+                                <div key={ii} className="cms-tag-item">
+                                  <span>{item}</span>
+                                  <button type="button" className="cms-tag-remove" onClick={()=>{const arr=[...(tempSettings.megaMenu||[])];arr[ci]={...arr[ci],items:arr[ci].items.filter((_,j)=>j!==ii)};handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));}}>×</button>
+                                </div>
+                              ))}
+                              <div style={{display:'flex',gap:6,alignItems:'center',marginTop:4}}>
+                                <input className="cms-input" style={{width:160,padding:'5px 10px',fontSize:12}} placeholder="Add sub-item…" value={newMegaMenuItemInputs[ci]||''} onChange={e=>setNewMegaMenuItemInputs(prev=>({...prev,[ci]:e.target.value}))}
+                                  onKeyDown={e=>{if(e.key==='Enter'&&newMegaMenuItemInputs[ci]?.trim()){const arr=[...(tempSettings.megaMenu||[])];arr[ci]={...arr[ci],items:[...(arr[ci].items||[]),newMegaMenuItemInputs[ci].trim()]};handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));setNewMegaMenuItemInputs(prev=>({...prev,[ci]:''}));}}} />
+                                <button type="button" className="cms-image-btn" onClick={()=>{if(!newMegaMenuItemInputs[ci]?.trim())return;const arr=[...(tempSettings.megaMenu||[])];arr[ci]={...arr[ci],items:[...(arr[ci].items||[]),newMegaMenuItemInputs[ci].trim()]};handleCmsFieldChange(prev=>({...prev,megaMenu:arr}));setNewMegaMenuItemInputs(prev=>({...prev,[ci]:''}));}}>+ Add</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{display:'flex',gap:10,marginTop:16,alignItems:'center'}}>
+                        <input className="cms-input" style={{maxWidth:220}} placeholder="New category name…" value={newMegaCatInput} onChange={e=>setNewMegaCatInput(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&newMegaCatInput.trim()){handleCmsFieldChange(prev=>({...prev,megaMenu:[...(prev.megaMenu||[]),{title:newMegaCatInput.trim(),items:[]}]}));setNewMegaCatInput('');}}} />
+                        <button type="button" className="btn btn-secondary" style={{padding:'10px 20px',fontWeight:700}} onClick={()=>{if(!newMegaCatInput.trim())return;handleCmsFieldChange(prev=>({...prev,megaMenu:[...(prev.megaMenu||[]),{title:newMegaCatInput.trim(),items:[]}]}));setNewMegaCatInput('');}}>+ Add Category</button>
+                      </div>
+                    </div>
+                    <SaveBar />
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* ===================== CMS THEME & BRANDING ===================== */}
+          {activeTab === 'cms-theme' && (
+            <div className="admin-tab-content">
+              <h2>🎨 Theme &amp; Branding</h2>
+              <p className="tab-subtitle">Customize brand colors, logo, fonts and analytics that inject into the live site CSS</p>
+
+              {hasUnsavedChanges && (
+                <div className="cms-unsaved-banner">
+                  <span>⚠️ Unsaved changes — click Save &amp; Publish to apply</span>
+                  <button onClick={handleSettingsSubmit}>Save &amp; Publish Now</button>
+                </div>
+              )}
+
+              <div style={{display:'flex',flexDirection:'column',gap:20}}>
+                {/* Identity */}
+                <div className="cms-section-card">
+                  <div className="cms-section-header">
+                    <div className="cms-section-icon">🏷️</div>
+                    <div><div className="cms-section-title">Brand Identity</div></div>
+                  </div>
+                  <div className="cms-grid-2">
+                    <div className="cms-field">
+                      <label className="cms-label">Website Name</label>
+                      <input className="cms-input" value={tempSettings.websiteName||''} onChange={e=>{setTempSettings(p=>({...p,websiteName:e.target.value}));setHasUnsavedChanges(true);}} />
+                    </div>
+                    <div className="cms-field">
+                      <label className="cms-label">Logo Text (fallback)</label>
+                      <input className="cms-input" value={tempSettings.header?.logoText||''} onChange={e=>handleNestedFieldChange('header','logoText',e.target.value)} placeholder="Best Lolly Shop" />
                     </div>
                   </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Contact Phone</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.contactUs?.phone || ''}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'phone', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+                  <div className="cms-grid-2" style={{marginTop:16}}>
+                    <div className="cms-image-field">
+                      <label className="cms-label">Logo Image</label>
+                      {tempSettings.websiteLogo && <img src={tempSettings.websiteLogo} alt="logo" className="cms-image-preview" style={{maxHeight:80,objectFit:'contain'}} onError={e=>e.target.style.display='none'} />}
+                      <div className="cms-image-actions">
+                        <input type="file" accept="image/*" id="logo-upload" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onloadend=()=>{setTempSettings(p=>({...p,websiteLogo:r.result}));setHasUnsavedChanges(true);};r.readAsDataURL(f);}} />
+                        <button type="button" className="cms-image-btn" onClick={()=>document.getElementById('logo-upload').click()}>📁 Upload Logo</button>
+                        {tempSettings.websiteLogo&&<button type="button" className="cms-image-btn danger" onClick={()=>{setTempSettings(p=>({...p,websiteLogo:''}));setHasUnsavedChanges(true);}}>✕ Remove</button>}
+                      </div>
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Business Hours</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.contactUs?.businessHours || ''}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'businessHours', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+                    <div className="cms-image-field">
+                      <label className="cms-label">Favicon</label>
+                      {tempSettings.websiteFavicon && <img src={tempSettings.websiteFavicon} alt="favicon" style={{width:48,height:48,borderRadius:8,border:'2px solid var(--color-border)'}} onError={e=>e.target.style.display='none'} />}
+                      <div className="cms-image-actions">
+                        <input type="file" accept="image/*,.ico" id="favicon-upload" style={{display:'none'}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onloadend=()=>{setTempSettings(p=>({...p,websiteFavicon:r.result}));setHasUnsavedChanges(true);};r.readAsDataURL(f);}} />
+                        <button type="button" className="cms-image-btn" onClick={()=>document.getElementById('favicon-upload').click()}>📁 Upload Favicon</button>
+                        {tempSettings.websiteFavicon&&<button type="button" className="cms-image-btn danger" onClick={()=>{setTempSettings(p=>({...p,websiteFavicon:''}));setHasUnsavedChanges(true);}}>✕ Remove</button>}
+                      </div>
                     </div>
                   </div>
+                </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Google Map Iframe Embed Link</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.contactUs?.googleMap || ''}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'googleMap', e.target.value)}
-                        placeholder="https://google.com/maps/embed?..."
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+                {/* Colors */}
+                <div className="cms-section-card">
+                  <div className="cms-section-header">
+                    <div className="cms-section-icon">🎨</div>
+                    <div><div className="cms-section-title">Brand Colors</div><div className="cms-section-subtitle">Live CSS variables injected site-wide</div></div>
+                  </div>
+                  <div className="cms-grid-4">
+                    {[
+                      {k:'primary',label:'Primary Color',def:'#e72c83'},
+                      {k:'secondary',label:'Secondary Color',def:'#f472b6'},
+                      {k:'background',label:'Background',def:'#faf9fc'},
+                      {k:'text',label:'Text Color',def:'#2d2645'},
+                    ].map(({k,label,def})=>(
+                      <div key={k} className="cms-field">
+                        <label className="cms-label">{label}</label>
+                        <div className="cms-color-field">
+                          <input type="color" value={tempSettings.themeColors?.[k]||def} onChange={e=>handleNestedFieldChange('themeColors',k,e.target.value)} />
+                          <input type="text" value={tempSettings.themeColors?.[k]||def} onChange={e=>handleNestedFieldChange('themeColors',k,e.target.value)} />
+                        </div>
+                        <div style={{height:8,borderRadius:4,background:tempSettings.themeColors?.[k]||def,marginTop:4}} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{marginTop:16,padding:20,borderRadius:16,background:`linear-gradient(135deg,${tempSettings.themeColors?.primary||'#e72c83'},${tempSettings.themeColors?.secondary||'#f472b6'})`,color:'white',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+                    <div>
+                      <div style={{fontWeight:900,fontSize:18}}>🍬 {tempSettings.websiteName||'Best Lolly Shop'}</div>
+                      <div style={{fontSize:12,opacity:0.85,marginTop:4}}>Live gradient preview — Primary → Secondary</div>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', height: '100%', marginTop: '24px' }}>
-                      <input
-                        type="checkbox"
-                        id="contact-form-enabled"
-                        checked={tempSettings.contactUs?.formEnabled !== false}
-                        onChange={(e) => handleNestedFieldChange('contactUs', 'formEnabled', e.target.checked)}
-                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                      />
-                      <label htmlFor="contact-form-enabled" style={{ fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-                        Enable Contact Submission Form
+                    <button style={{background:'white',color:tempSettings.themeColors?.primary||'#e72c83',border:'none',padding:'8px 20px',borderRadius:999,fontWeight:800,cursor:'default',fontSize:13}}>CTA Button</button>
+                  </div>
+                </div>
+
+                {/* Typography */}
+                <div className="cms-section-card">
+                  <div className="cms-section-header">
+                    <div className="cms-section-icon">🔤</div>
+                    <div><div className="cms-section-title">Typography</div></div>
+                  </div>
+                  <div className="cms-field">
+                    <label className="cms-label">Primary Font Family</label>
+                    <select className="cms-input" value={tempSettings.fonts||'Outfit, sans-serif'} onChange={e=>{setTempSettings(p=>({...p,fonts:e.target.value}));setHasUnsavedChanges(true);}}>
+                      <option value="Outfit, sans-serif">Outfit — Rounded Premium (Default)</option>
+                      <option value="Inter, sans-serif">Inter — Clean Modern</option>
+                      <option value="Poppins, sans-serif">Poppins — Friendly & Rounded</option>
+                      <option value="Montserrat, sans-serif">Montserrat — Geometric Corporate</option>
+                      <option value="Nunito, sans-serif">Nunito — Soft & Playful</option>
+                      <option value="DM Sans, sans-serif">DM Sans — Contemporary</option>
+                    </select>
+                    <div style={{marginTop:8,padding:14,borderRadius:10,border:'1.5px solid var(--color-border)',fontFamily:tempSettings.fonts||'Outfit, sans-serif'}}>
+                      <strong style={{fontSize:18}}>Preview: </strong>
+                      <span>The quick brown fox jumps — 🍬 Best Lolly Shop NZ</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Header toggles */}
+                <div className="cms-section-card">
+                  <div className="cms-section-header">
+                    <div className="cms-section-icon">🔝</div>
+                    <div><div className="cms-section-title">Header Options</div></div>
+                  </div>
+                  <div style={{display:'flex',flexDirection:'column',gap:10}}>
+                    <div className="cms-toggle-row">
+                      <div><div className="cms-toggle-label">Sticky Header</div><div className="cms-toggle-sub">Header stays fixed while scrolling</div></div>
+                      <label className="toggle-switch">
+                        <input type="checkbox" checked={tempSettings.header?.sticky!==false} onChange={e=>handleNestedFieldChange('header','sticky',e.target.checked)} />
+                        <span className="toggle-slider" />
+                      </label>
+                    </div>
+                    <div className="cms-toggle-row">
+                      <div><div className="cms-toggle-label">Show Search</div><div className="cms-toggle-sub">Display search bar in header</div></div>
+                      <label className="toggle-switch">
+                        <input type="checkbox" checked={tempSettings.header?.showSearch!==false} onChange={e=>handleNestedFieldChange('header','showSearch',e.target.checked)} />
+                        <span className="toggle-slider" />
                       </label>
                     </div>
                   </div>
                 </div>
 
-                {settingsSuccess && (
-                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
-                    {settingsSuccess}
-                  </div>
-                )}
-
-                <div>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
-                    Save CMS Pages
+                {settingsSuccess && <div className={settingsSuccess.startsWith('✅')?'cms-success-notice':'cms-error-notice'}>{settingsSuccess}</div>}
+                <div style={{display:'flex',justifyContent:'flex-end'}}>
+                  <button type="button" className="btn btn-primary" style={{padding:'12px 32px',fontWeight:800,fontSize:15}} onClick={handleSettingsSubmit}>
+                    💾 Save &amp; Publish Branding
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           )}
 
-          {activeTab === 'cms-theme' && (
-            <div className="admin-tab-content">
-              <h2>CMS Branding & Styling System</h2>
-              <p className="tab-subtitle">Customize website titles, logos, fonts, and brand colors injected into the design tokens</p>
-
-              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '20px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>🏷️ Brand Details</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Website Name</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.websiteName || ''}
-                        onChange={(e) => setTempSettings(prev => ({ ...prev, websiteName: e.target.value }))}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Sticky Navbar Header</label>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
-                        <input
-                          type="checkbox"
-                          id="sticky-header"
-                          checked={tempSettings.header?.sticky !== false}
-                          onChange={(e) => handleNestedFieldChange('header', 'sticky', e.target.checked)}
-                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-                        />
-                        <label htmlFor="sticky-header" style={{ fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
-                          Enable Sticky Scrolling Navbar
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Website Header Logo (Base64 Image)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.websiteLogo || ''}
-                        onChange={(e) => setTempSettings(prev => ({ ...prev, websiteLogo: e.target.value }))}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                      <input 
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, (base64) => setTempSettings(prev => ({ ...prev, websiteLogo: base64 })))}
-                        style={{ marginTop: '8px' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Header Stylized Text (Fallback)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.header?.logoText || ''}
-                        onChange={(e) => handleNestedFieldChange('header', 'logoText', e.target.value)}
-                        placeholder="e.g. Best Lolly Shop"
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>🎨 Color Palette & Typography</h3>
-                  
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Color</label>
-                      <input 
-                        type="color"
-                        value={tempSettings.theme?.colorPrimary || '#e72c83'}
-                        onChange={(e) => handleNestedFieldChange('theme', 'colorPrimary', e.target.value)}
-                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Secondary Color</label>
-                      <input 
-                        type="color"
-                        value={tempSettings.theme?.colorSecondary || '#f59e0b'}
-                        onChange={(e) => handleNestedFieldChange('theme', 'colorSecondary', e.target.value)}
-                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Page Background</label>
-                      <input 
-                        type="color"
-                        value={tempSettings.theme?.colorBg || '#fef0f7'}
-                        onChange={(e) => handleNestedFieldChange('theme', 'colorBg', e.target.value)}
-                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Text Base Color</label>
-                      <input 
-                        type="color"
-                        value={tempSettings.theme?.colorText || '#1e293b'}
-                        onChange={(e) => handleNestedFieldChange('theme', 'colorText', e.target.value)}
-                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Font Family</label>
-                      <select
-                        value={tempSettings.theme?.fontPrimary || 'Outfit'}
-                        onChange={(e) => handleNestedFieldChange('theme', 'fontPrimary', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      >
-                        <option value="Outfit">Outfit (Default Rounded Premium)</option>
-                        <option value="Inter">Inter (Clean Modern Sans-Serif)</option>
-                        <option value="Poppins">Poppins (Friendly Pop)</option>
-                        <option value="Montserrat">Montserrat (Geometric Corporate)</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                {settingsSuccess && (
-                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
-                    {settingsSuccess}
-                  </div>
-                )}
-
-                <div>
-                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
-                    Save Branding Settings
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
 
           {activeTab === 'media-library' && (
             <div className="admin-tab-content">
@@ -2896,7 +3414,67 @@ export const Admin = () => {
               </div>
             </div>
           )}
+          {/* ===================== MEDIA PICKER MODAL ===================== */}
+          {mediaPickerOpen && (
+            <div className="cms-media-modal-overlay" onClick={() => setMediaPickerOpen(false)}>
+              <div className="cms-media-modal" onClick={e => e.stopPropagation()}>
+                <div className="cms-media-modal-header">
+                  <div>
+                    <h3 style={{margin:0,fontSize:20,fontWeight:800}}>🖼️ Media Library</h3>
+                    <p style={{margin:'4px 0 0',fontSize:13,color:'var(--color-text-light)'}}>Click any image to select it</p>
+                  </div>
+                  <button onClick={() => setMediaPickerOpen(false)} style={{background:'none',border:'none',fontSize:24,cursor:'pointer',color:'var(--color-text-light)'}}>✕</button>
+                </div>
+
+                {/* Upload new from modal */}
+                <div style={{marginBottom:20,padding:14,borderRadius:12,border:'2px dashed var(--color-border)',textAlign:'center',cursor:'pointer'}}
+                  onClick={() => document.getElementById('media-picker-upload').click()}>
+                  <input type="file" id="media-picker-upload" style={{display:'none'}} accept="image/*"
+                    onChange={async e => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onloadend = async () => {
+                        try {
+                          await uploadMedia(file.name, file.type, reader.result);
+                        } catch(err) {
+                          alert(err.message);
+                        }
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  <span style={{fontSize:24}}>📁</span>
+                  <div style={{fontWeight:700,fontSize:13,marginTop:4}}>Upload New Image</div>
+                  <div style={{fontSize:11,color:'var(--color-text-muted)'}}>JPG, PNG, GIF, WebP — max 4MB</div>
+                </div>
+
+                <div className="cms-media-grid">
+                  {(mediaList || []).map((media, idx) => {
+                    const mediaUrl = `/api/media/file/${media.filename}`;
+                    return (
+                      <div key={idx} className="cms-media-item"
+                        onClick={() => {
+                          if (mediaPickerCallback) mediaPickerCallback(mediaUrl);
+                          setMediaPickerOpen(false);
+                          setMediaPickerCallback(null);
+                        }}>
+                        <img src={mediaUrl} alt={media.filename} />
+                        <div className="cms-media-item-name">{media.filename}</div>
+                      </div>
+                    );
+                  })}
+                  {(!mediaList || mediaList.length === 0) && (
+                    <div style={{gridColumn:'1/-1',padding:40,textAlign:'center',color:'var(--color-text-muted)'}}>
+                      📷 No images in library yet. Upload one above.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </main>
+
       </div>
     </div>
   );
