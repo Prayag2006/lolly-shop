@@ -104,6 +104,13 @@ export const ProductDetails = () => {
   // Best Before Date simulation
   const bbdSimulated = `BBD: ${product.id % 2 === 0 ? '5/2026' : '12/2026'}`;
 
+  // Simulated Flavours
+  const flavoursSimulated = 
+    product.category === 'Chocolates' ? 'Milk Chocolate Ganache, Roasted Almond Crunch' :
+    product.category === 'Gummies' ? 'Tangy Sour Peach, Wild Raspberry, Green Apple' :
+    product.category === 'Lollipops' ? 'Sweet Cherry Swirl, Blue Raspberry Twist' :
+    'Original Sweets Fruity Blend';
+
   const seoTitle = `${product.name} NZ | Buy Online at Best Lolly Shop`;
   const seoDescription = `Buy premium ${product.name} online at Best Lolly Shop New Zealand. Available in sizes 100g, 250g, 500g, and 1kg with fast courier delivery.`;
 
