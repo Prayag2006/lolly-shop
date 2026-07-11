@@ -363,9 +363,7 @@ export const Checkout = () => {
                               background: selectedOption?.id === option.id ? 'rgba(231, 44, 131, 0.06)' : 'rgba(255, 255, 255, 0.5)',
                               border: selectedOption?.id === option.id ? '2px solid var(--color-primary)' : '1px solid rgba(0, 0, 0, 0.08)',
                               borderRadius: '12px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center'
+                              cursor: 'pointer'
                             }}
                             onClick={() => {
                               setSelectedOption(option);

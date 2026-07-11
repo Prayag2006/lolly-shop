@@ -34,6 +34,11 @@ const require = createRequire(import.meta.url);
 let Database;
 if (!isServerless) {
   try {
+    dns.setServers(['8.8.8.8', '8.8.4.4']);
+  } catch (e) {
+    console.log('Failed to set DNS servers locally:', e.message);
+  }
+  try {
     // Use a variable for the module name so bundlers (esbuild/Vercel) cannot statically
     // analyze and attempt to bundle this native addon — it must be excluded from the bundle.
     const nativeModuleName = 'better-sqlite3';
