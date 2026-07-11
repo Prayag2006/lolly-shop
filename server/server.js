@@ -5,18 +5,10 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
-import dns from 'dns';
 import { fileURLToPath } from 'url';
-import { ensureDatabase, sqlReady } from './db.js';
+import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings } from './db.js';
 import Stripe from 'stripe';
 
-dns.setDefaultResultOrder('ipv4first');
-try {
-  dns.setServers(['8.8.8.8', '8.8.4.4']);
-} catch (e) {
-  console.log('Failed to set DNS servers:', e.message);
-}
-import { Product, User, Order, Contact, Brand, Testimonial, Settings } from './db.js';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,6 +44,29 @@ app.use(express.json());
 ensureDatabase();
 
 const sqlAvailable = () => sqlReady();
+
+// ── DB READINESS MIDDLEWARE (Serverless cold-start fix) ──
+// On Vercel, MongoDB connects asynchronously after the Lambda starts.
+// This middleware waits up to 9s for the DB to be ready before processing API requests.
+// This eliminates the race condition that causes 500 errors on first cold-start requests.
+const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
+let dbInitialized = false;
+app.use('/api', async (req, res, next) => {
+  if (!dbInitialized) {
+    try {
+      await Promise.race([
+        mongoReady,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('DB init timeout')), 9000))
+      ]);
+    } catch (e) {
+      // Timeout or connection failure — proceed with JSON fallback
+      console.warn('DB readiness check timed out, using JSON fallback:', e.message);
+    }
+    dbInitialized = true;
+  }
+  next();
+});
+
 
 // ── CENTRALIZED SMTP TRANSPORTER HELPER ──
 const createMailTransporter = async () => {
@@ -111,7 +126,8 @@ const createMailTransporter = async () => {
 };
 
 // ── LOCAL FILE DATABASE UTILITIES ──
-const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
+// Note: isServerless is already declared above in the DB readiness middleware section
+
 const DATA_DIR = isServerless
   ? path.resolve('/tmp', 'lollyshop-data')
   : path.resolve(__dirname, 'data');

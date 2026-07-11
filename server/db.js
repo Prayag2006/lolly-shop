@@ -6,11 +6,11 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import dns from 'dns';
 
-dns.setDefaultResultOrder('ipv4first');
+// Only set DNS preferences in non-serverless environments to avoid Lambda restrictions
 try {
-  dns.setServers(['8.8.8.8', '8.8.4.4']);
+  dns.setDefaultResultOrder('ipv4first');
 } catch (e) {
-  console.log('Failed to set DNS servers in db.js:', e.message);
+  // Silently ignore — Vercel/Lambda restricts dns module configuration
 }
 
 import { Product as MongoProduct } from './models/Product.js';
@@ -26,17 +26,23 @@ import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } fro
 const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.env');
 dotenv.config({ path: envPath });
 
-const require = createRequire(import.meta.url);
-let Database;
-try {
-  Database = require('better-sqlite3');
-} catch (e) {
-  // SQLite is optional, so we ignore loading errors here
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
+
+const require = createRequire(import.meta.url);
+let Database;
+if (!isServerless) {
+  try {
+    Database = require('better-sqlite3');
+  } catch (e) {
+    // SQLite is optional in local environments
+    console.log('better-sqlite3 not available:', e.message);
+  }
+}
+// In serverless environments (Vercel/Netlify), skip SQLite entirely.
+// The app will use MongoDB Atlas (primary) or in-memory JSON fallback.
+
 const DATA_DIR = isServerless
   ? path.resolve('/tmp', 'lollyshop-data')
   : path.resolve(__dirname, 'data');
@@ -47,6 +53,7 @@ let sqlEnabled = false;
 
 let useMongo = !!process.env.MONGODB_URI;
 
+
 const createDataDir = () => {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -55,8 +62,17 @@ const createDataDir = () => {
     
     // In serverless environments, copy committed data files from the read-only source directory to /tmp
     if (isServerless) {
-      const srcDir = path.resolve(__dirname, 'data');
-      if (fs.existsSync(srcDir)) {
+      // Try multiple possible source directories for the bundled data files
+      const possibleSrcDirs = [
+        path.resolve(__dirname, 'data'),
+        path.resolve(process.cwd(), 'server/data'),
+        path.resolve(process.cwd(), 'data'),
+      ];
+      let srcDir = null;
+      for (const dir of possibleSrcDirs) {
+        if (fs.existsSync(dir)) { srcDir = dir; break; }
+      }
+      if (srcDir) {
         const files = fs.readdirSync(srcDir);
         for (const file of files) {
           const srcPath = path.join(srcDir, file);
@@ -66,6 +82,8 @@ const createDataDir = () => {
             console.log(`Copied seed file to serverless storage: ${file}`);
           }
         }
+      } else {
+        console.log('No bundled data directory found — serverless will use in-memory fallback data');
       }
     }
   } catch (err) {
@@ -259,21 +277,34 @@ const autoSeedMongo = async () => {
   }
 };
 
-// Always pre-initialize fallback SQLite database to handle connecting phase or connections drops robustly
+// Always pre-initialize fallback SQLite database to handle connecting phase or connection drops robustly
 ensureDatabase();
 
+// Export a promise that resolves when the preferred DB is ready.
+// Route handlers can await this for first-request DB readiness on cold starts.
+export let mongoReady = Promise.resolve(false);
+
 if (useMongo) {
-  mongoose.connect(process.env.MONGODB_URI)
+  // Set a connection timeout to avoid hanging serverless functions
+  const mongoOptions = {
+    serverSelectionTimeoutMS: 8000,
+    connectTimeoutMS: 8000,
+    socketTimeoutMS: 10000,
+  };
+  mongoReady = mongoose.connect(process.env.MONGODB_URI, mongoOptions)
     .then(() => {
       console.log('Successfully connected to MongoDB Atlas database.');
       autoSeedMongo();
+      return true;
     })
     .catch((err) => {
       console.error('Failed to connect to MongoDB Atlas database:', err.message);
-      console.log('Falling back to SQLite database...');
+      console.log('Falling back to SQLite/JSON database...');
       useMongo = false;
+      return false;
     });
 }
+
 
 const matchesQuery = (row, query) => {
   if (!query || typeof query !== 'object') return false;
