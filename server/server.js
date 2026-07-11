@@ -111,7 +111,8 @@ const createMailTransporter = async () => {
 };
 
 // ── LOCAL FILE DATABASE UTILITIES ──
-const DATA_DIR = process.env.VERCEL
+const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
+const DATA_DIR = isServerless
   ? path.resolve('/tmp', 'lollyshop-data')
   : path.resolve(__dirname, 'data');
 try {
@@ -2341,6 +2342,24 @@ app.put('/api/settings', async (req, res) => {
   } catch (error) {
     res.status(400).json({ message: 'Error updating settings', error: error.message });
   }
+});
+
+// ── UNMATCHED API ROUTE 404 HANDLER ──
+app.use('/api/*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `API endpoint not found: ${req.method} ${req.originalUrl}`
+  });
+});
+
+// ── GLOBAL SERVER ERROR HANDLER MIDDLEWARE ──
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    error: process.env.NODE_ENV === 'production' ? undefined : err.stack
+  });
 });
 
 

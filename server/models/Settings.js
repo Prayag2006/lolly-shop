@@ -75,4 +75,4 @@ settingsSchema.virtual('id').get(function() {
 settingsSchema.set('toJSON', { virtuals: true });
 settingsSchema.set('toObject', { virtuals: true });
 
-export const Settings = mongoose.model('Settings', settingsSchema);
+export const Settings = mongoose.models.Settings || mongoose.model('Settings', settingsSchema);

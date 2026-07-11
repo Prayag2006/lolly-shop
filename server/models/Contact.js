@@ -15,4 +15,4 @@ contactSchema.virtual('id').get(function() {
 contactSchema.set('toJSON', { virtuals: true });
 contactSchema.set('toObject', { virtuals: true });
 
-export const Contact = mongoose.model('Contact', contactSchema);
+export const Contact = mongoose.models.Contact || mongoose.model('Contact', contactSchema);

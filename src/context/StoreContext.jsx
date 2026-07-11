@@ -85,7 +85,7 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
-      if (data) {
+      if (res.ok && data && data.marqueeText) {
         setSettings(data);
       }
     } catch (err) {

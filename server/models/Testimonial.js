@@ -15,4 +15,4 @@ testimonialSchema.virtual('id').get(function() {
 testimonialSchema.set('toJSON', { virtuals: true });
 testimonialSchema.set('toObject', { virtuals: true });
 
-export const Testimonial = mongoose.model('Testimonial', testimonialSchema);
+export const Testimonial = mongoose.models.Testimonial || mongoose.model('Testimonial', testimonialSchema);

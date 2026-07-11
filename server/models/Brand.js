@@ -13,4 +13,4 @@ brandSchema.virtual('id').get(function() {
 brandSchema.set('toJSON', { virtuals: true });
 brandSchema.set('toObject', { virtuals: true });
 
-export const Brand = mongoose.model('Brand', brandSchema);
+export const Brand = mongoose.models.Brand || mongoose.model('Brand', brandSchema);

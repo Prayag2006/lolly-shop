@@ -36,7 +36,8 @@ try {
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const DATA_DIR = process.env.VERCEL
+const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
+const DATA_DIR = isServerless
   ? path.resolve('/tmp', 'lollyshop-data')
   : path.resolve(__dirname, 'data');
 const DB_PATH = path.join(DATA_DIR, 'lollyshop.db');
@@ -53,7 +54,7 @@ const createDataDir = () => {
     }
     
     // In serverless environments, copy committed data files from the read-only source directory to /tmp
-    if (process.env.VERCEL) {
+    if (isServerless) {
       const srcDir = path.resolve(__dirname, 'data');
       if (fs.existsSync(srcDir)) {
         const files = fs.readdirSync(srcDir);
@@ -196,7 +197,6 @@ const seedSqliteFromJSON = () => {
 };
 
 export const ensureDatabase = () => {
-  if (useMongo) return; // Skip SQLite database setup if using MongoDB
   if (db) return;
   try {
     createDataDir();
@@ -259,6 +259,9 @@ const autoSeedMongo = async () => {
   }
 };
 
+// Always pre-initialize fallback SQLite database to handle connecting phase or connections drops robustly
+ensureDatabase();
+
 if (useMongo) {
   mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
@@ -269,10 +272,7 @@ if (useMongo) {
       console.error('Failed to connect to MongoDB Atlas database:', err.message);
       console.log('Falling back to SQLite database...');
       useMongo = false;
-      ensureDatabase();
     });
-} else {
-  ensureDatabase();
 }
 
 const matchesQuery = (row, query) => {
