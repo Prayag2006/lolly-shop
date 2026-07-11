@@ -141,7 +141,7 @@ const categorySeoData = {
 };
 
 export const Shop = ({ onProductClick }) => {
-  const { products } = useStore();
+  const { products, settings } = useStore();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Search, Category, Price Filter States
@@ -293,7 +293,8 @@ export const Shop = ({ onProductClick }) => {
     if (categorySeoData[selectedCategory]) {
       return categorySeoData[selectedCategory];
     }
-    return categorySeoData['All'];
+    const defaultSeo = settings?.seoOverrides?.shop || settings?.seoOverrides?.['/shop'] || categorySeoData['All'];
+    return defaultSeo;
   };
 
   const seoInfo = getActiveSeoInfo();

@@ -20,29 +20,8 @@ export const StoreProvider = ({ children }) => {
     }
   });
   
-  const [categories, setCategories] = useState(() => {
-    const defaultCats = [
-      'NZ Lollies', 'Soft Lollies', 'Hard Lollies', 'Sour Lollies', 'Sweet Lollies', 'Sugar Coated', 'Mayceys', 'Finni', 'Pascals', 'Other', 'Sugar Free', 'Vegan', 'Jellybeans',
-      'Imported Lollies', 'Airheads', 'Cotton Candy', 'Theatre Boxes', 'Popping Candy', 'Novelty', 'Lollipops',
-      'Chocolates', 'Bars', 'Cadbury', 'Nestle', 'Whitakers', 'Imported Chocolates', 'Share bags',
-      'Drinks', 'Hydration', 'Cans', 'Bottles', 'Multi Pack',
-      'Snacks', 'Chips', 'Tackies', 'Cheetos', 'Kool Aid',
-      'Bulk',
-      'TikTok Viral', 'Peel me lollies', 'Freeze Dried Candies',
-      'Pick by Colour', 'Red Colour', 'Blue Colour', 'Yellow Colour', 'Pink Colour', 'Black Colour',
-      'Confectionery', 'Toys', 'Toys with Lolly',
-      'Special / Clearance', 'Heading 1', 'Heading 2'
-    ];
-    const saved = localStorage.getItem('hc_categories');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length <= 4 && parsed.includes('Gummies')) {
-        return defaultCats;
-      }
-      return parsed;
-    }
-    return defaultCats;
-  });
+  const [categories, setCategories] = useState([]);
+  const [mediaList, setMediaList] = useState([]);
 
   const [cart, setCart] = useState(() => {
     const saved = localStorage.getItem('hc_cart');
@@ -71,6 +50,8 @@ export const StoreProvider = ({ children }) => {
     fetchContacts();
     fetchTestimonials();
     fetchSettings();
+    fetchCategories();
+    fetchMediaList();
 
     // Poll for new orders and contacts in real-time
     const pollInterval = setInterval(() => {
@@ -85,7 +66,7 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/settings');
       const data = await res.json();
-      if (res.ok && data && data.marqueeText) {
+      if (res.ok && data) {
         setSettings(data);
       }
     } catch (err) {
@@ -97,7 +78,10 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || ''
+        },
         body: JSON.stringify(newSettings)
       });
       const data = await res.json();
@@ -534,18 +518,139 @@ export const StoreProvider = ({ children }) => {
   };
 
 
-  const addCategory = (categoryName) => {
-    if (!categoryName) return false;
-    const trimmed = categoryName.trim();
-    if (categories.some(cat => cat.toLowerCase() === trimmed.toLowerCase())) {
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch('/api/categories');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+    }
+  };
+
+  const fetchMediaList = async () => {
+    try {
+      const res = await fetch('/api/media');
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setMediaList(data);
+      }
+    } catch (err) {
+      console.error('Error fetching media:', err);
+    }
+  };
+
+  const addCategory = async (catData) => {
+    const payload = typeof catData === 'string' ? {
+      name: catData,
+      description: `All sweets in the ${catData} collection`,
+      image: '',
+      banner: '',
+      displayOrder: categories.length,
+      enabled: true
+    } : catData;
+
+    try {
+      const res = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || ''
+        },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
       return false;
     }
-    const capitalized = trimmed
-      .split(' ')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-    setCategories(prev => [...prev, capitalized]);
-    return true;
+  };
+
+  const updateCategory = async (id, catData) => {
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || ''
+        },
+        body: JSON.stringify(catData)
+      });
+      if (res.ok) {
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  const deleteCategory = async (id) => {
+    try {
+      const res = await fetch(`/api/categories/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || ''
+        }
+      });
+      if (res.ok) {
+        await fetchCategories();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  const uploadMedia = async (filename, contentType, base64Data) => {
+    try {
+      const res = await fetch('/api/media', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || ''
+        },
+        body: JSON.stringify({ filename, contentType, base64Data })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        await fetchMediaList();
+        return data;
+      }
+      throw new Error(data.message || 'Upload error');
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
+  };
+
+  const deleteMedia = async (filename) => {
+    try {
+      const res = await fetch(`/api/media/${filename}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || ''
+        }
+      });
+      if (res.ok) {
+        await fetchMediaList();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
   };
 
   const addContactSubmission = async (submission) => {
@@ -695,6 +800,12 @@ export const StoreProvider = ({ children }) => {
         addContactSubmission,
         categories,
         addCategory,
+        updateCategory,
+        deleteCategory,
+        mediaList,
+        uploadMedia,
+        deleteMedia,
+        fetchMediaList,
         brands,
         addBrand,
         deleteBrand,

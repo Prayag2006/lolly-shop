@@ -102,7 +102,7 @@ const BrandSvg = ({ type, name }) => {
 };
 
 export const Home = ({ onProductClick }) => {
-  const { products, brands, testimonials: dbTestimonials, addTestimonial, currentUser } = useStore();
+  const { products, brands, testimonials: dbTestimonials, addTestimonial, currentUser, settings } = useStore();
   const [activeFaq, setActiveFaq] = useState(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
@@ -261,11 +261,18 @@ export const Home = ({ onProductClick }) => {
     }
   ];
 
+  const seoHome = settings?.seoOverrides?.home || settings?.seoOverrides?.['/'] || {
+    title: "Online Lolly Shop NZ | Buy Bulk Lollies & Candy Online",
+    description: "Order delicious sweets from New Zealand's favourite online lolly shop. Bulk lollies, sour gummies, imported chocolates & pick and mix. Fast NZ-wide delivery!"
+  };
+
   return (
     <div className="home-page">
       <SEO 
-        title="Online Lolly Shop NZ | Buy Bulk Lollies & Candy Online"
-        description="Order delicious sweets from New Zealand's favourite online lolly shop. Bulk lollies, sour gummies, imported chocolates & pick and mix. Fast NZ-wide delivery!"
+        title={seoHome.title}
+        description={seoHome.description}
+        keywords={seoHome.keywords}
+        ogImage={seoHome.ogImage}
         schema={schema}
       />
       {/* 1. Hero */}
@@ -379,10 +386,10 @@ export const Home = ({ onProductClick }) => {
             </div>
             <h2 className="story-title">Our Sweet Journey</h2>
             <p className="story-desc">
-              What started as a tiny confectionery passion project in a home kitchen has grown into New Zealand's most beloved premium online candy shop. At Best Lolly Shop, we believe in spreading pure joy and nostalgic happiness, one sweet bite at a time.
+              {settings?.aboutUs?.description || "What started as a tiny confectionery passion project in a home kitchen has grown into New Zealand's most beloved premium online candy shop. At Best Lolly Shop, we believe in spreading pure joy and nostalgic happiness, one sweet bite at a time."}
             </p>
             <p className="story-desc">
-              We carefully curate our catalog from the finest international master confectioners. From tangy, fuzzy gummies to rich, hand-crafted Belgian truffles, we bring the world of gourmet sweets straight to your doorstep.
+              {settings?.aboutUs?.story || "We carefully curate our catalog from the finest international master confectioners. From tangy, fuzzy gummies to rich, hand-crafted Belgian truffles, we bring the world of gourmet sweets straight to your doorstep."}
             </p>
 
             {/* Counters */}

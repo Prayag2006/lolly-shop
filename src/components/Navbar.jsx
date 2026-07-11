@@ -99,14 +99,26 @@ export const Navbar = ({ onCartOpen }) => {
     { name: 'Contact Us', path: '/contact' }
   ];
 
+  const isSticky = settings?.header?.sticky !== false;
+
   return (
-    <nav className="navbar">
+    <nav className="navbar" style={{ position: isSticky ? 'sticky' : 'relative' }}>
       <div className="container nav-container">
         {/* Logo */}
         <Link to="/" className="logo-link">
-          <div className="logo-text">
-            Best <span>Lolly Shop</span>
-          </div>
+          {settings?.websiteLogo ? (
+            <img src={settings.websiteLogo} alt={settings.websiteName || 'Best Lolly Shop'} className="logo-image" style={{ maxHeight: '40px', objectFit: 'contain' }} />
+          ) : (
+            <div className="logo-text">
+              {settings?.header?.logoText ? (
+                <>
+                  {settings.header.logoText.split(' ').slice(0, -1).join(' ')} <span>{settings.header.logoText.split(' ').slice(-1)[0]}</span>
+                </>
+              ) : (
+                <>Best <span>Lolly Shop</span></>
+              )}
+            </div>
+          )}
         </Link>
 
         {/* Desktop Nav Links */}

@@ -59,3 +59,7 @@
     animation-duration: 18s;
   }
 }
+
+.marquee-banner.pause-on-hover:hover .marquee-track {
+  animation-play-state: paused;
+}

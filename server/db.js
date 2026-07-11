@@ -20,6 +20,8 @@ import { Contact as MongoContact } from './models/Contact.js';
 import { Order as MongoOrder } from './models/Order.js';
 import { Testimonial as MongoTestimonial } from './models/Testimonial.js';
 import { Settings as MongoSettings } from './models/Settings.js';
+import { Category as MongoCategory } from './models/Category.js';
+import { Media as MongoMedia } from './models/Media.js';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
 // Synchronously load environment variables before checking database config
@@ -159,6 +161,20 @@ const initTables = () => {
   db.prepare(`CREATE TABLE IF NOT EXISTS settings (
     key TEXT PRIMARY KEY,
     data TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS categories (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS media (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
     updatedAt TEXT NOT NULL
   )`).run();
 };
@@ -527,6 +543,8 @@ const SqlContact = makeModelClass('contacts');
 const SqlOrder = makeModelClass('orders');
 const SqlTestimonial = makeModelClass('testimonials');
 const SqlSettings = makeModelClass('settings', 'key');
+const SqlCategory = makeModelClass('categories');
+const SqlMedia = makeModelClass('media');
 
 const getActiveModel = (mongoModel, sqlModel) => {
   return (useMongo && mongoose.connection.readyState === 1) ? mongoModel : sqlModel;
@@ -556,6 +574,8 @@ export const Contact = makeDynamicModel(MongoContact, SqlContact);
 export const Order = makeDynamicModel(MongoOrder, SqlOrder);
 export const Testimonial = makeDynamicModel(MongoTestimonial, SqlTestimonial);
 export const Settings = makeDynamicModel(MongoSettings, SqlSettings);
+export const Category = makeDynamicModel(MongoCategory, SqlCategory);
+export const Media = makeDynamicModel(MongoMedia, SqlMedia);
 
 export const getUsersByEmail = async (email) => {
   if (useMongo && mongoose.connection.readyState === 1) {

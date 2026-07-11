@@ -11,37 +11,92 @@ export const PromoModal = () => {
   const [currentOfferIndex, setCurrentOfferIndex] = useState(0);
   
   const timerRef = useRef(null);
+  const autoCloseTimerRef = useRef(null);
 
-  // Extract all enabled offers
-  const activeOffers = settings?.popupOffers?.filter(o => o.enabled) || 
-    (settings?.popupOffer?.enabled ? [settings.popupOffer] : []);
+  const now = new Date();
+  const currentPath = window.location.pathname;
+
+  // Filter popupOffers by scheduling, page targeting, and frequency
+  const activeOffers = (settings?.popupOffers || []).filter((offer, idx) => {
+    if (!offer.enabled) return false;
+
+    // Check scheduling dates
+    if (offer.startDate) {
+      if (now < new Date(offer.startDate)) return false;
+    }
+    if (offer.endDate) {
+      if (now > new Date(offer.endDate)) return false;
+    }
+
+    // Check page targeting
+    if (offer.targetPages && offer.targetPages.length > 0) {
+      const match = offer.targetPages.some(page => {
+        if (page === '*') return true;
+        return page.toLowerCase() === currentPath.toLowerCase();
+      });
+      if (!match) return false;
+    }
+
+    // Check frequency (don't show if shown recently based on frequencyDays setting)
+    const frequencyDays = offer.frequencyDays || 1;
+    const lastShownKey = `lolly_popup_last_shown_${idx}`;
+    const lastShown = localStorage.getItem(lastShownKey);
+    if (lastShown) {
+      const diffMs = now.getTime() - new Date(lastShown).getTime();
+      const diffDays = diffMs / (1000 * 60 * 60 * 24);
+      if (diffDays < frequencyDays) return false;
+    }
+
+    return true;
+  });
 
   useEffect(() => {
-    if (activeOffers.length === 0 || window.location.pathname.startsWith('/admin')) return;
+    if (activeOffers.length === 0 || currentPath.startsWith('/admin')) return;
 
     // Show the first offer after its configured delay
     const firstOffer = activeOffers[0];
     timerRef.current = setTimeout(() => {
       setCurrentOfferIndex(0);
       setIsOpen(true);
+      
+      // Save last shown timestamp
+      localStorage.setItem(`lolly_popup_last_shown_0`, now.toISOString());
+
+      // Handle auto close if configured
+      if (firstOffer.autoCloseSeconds || firstOffer.autoClose) {
+        const secs = firstOffer.autoCloseSeconds || 8;
+        autoCloseTimerRef.current = setTimeout(() => {
+          handleClose();
+        }, secs * 1000);
+      }
     }, firstOffer.delay || 3000);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
     };
-  }, [settings]);
+  }, [settings, currentPath]);
 
   const handleClose = () => {
     setIsOpen(false);
+    if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
     
     // Check if there is a next offer to show
     const nextIndex = currentOfferIndex + 1;
-    if (nextIndex < activeOffers.length && !window.location.pathname.startsWith('/admin')) {
+    if (nextIndex < activeOffers.length && !currentPath.startsWith('/admin')) {
       const nextOffer = activeOffers[nextIndex];
-      // Start timer for the next offer using its delay as time gap
       timerRef.current = setTimeout(() => {
         setCurrentOfferIndex(nextIndex);
         setIsOpen(true);
+        localStorage.setItem(`lolly_popup_last_shown_${nextIndex}`, new Date().toISOString());
+
+        // Handle auto close for next offer
+        if (nextOffer.autoCloseSeconds || nextOffer.autoClose) {
+          const secs = nextOffer.autoCloseSeconds || 8;
+          autoCloseTimerRef.current = setTimeout(() => {
+            handleClose();
+          }, secs * 1000);
+        }
       }, nextOffer.delay || 4000);
     }
   };
@@ -54,10 +109,17 @@ export const PromoModal = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  if (!isOpen || activeOffers.length === 0 || window.location.pathname.startsWith('/admin')) return null;
+  if (!isOpen || activeOffers.length === 0 || currentPath.startsWith('/admin')) return null;
 
   const currentOffer = activeOffers[currentOfferIndex];
-  const { title, description, code } = currentOffer;
+  const { title, description, code, buttonText, buttonLink, image } = currentOffer;
+
+  const handleCtaClick = () => {
+    handleClose();
+    if (buttonLink) {
+      window.location.href = buttonLink;
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -69,7 +131,6 @@ export const PromoModal = () => {
           exit={{ scale: 0.9, opacity: 0, y: 20 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
         >
-          {/* Decorative elements */}
           <div className="promo-modal-glow pink"></div>
           <div className="promo-modal-glow purple"></div>
 
@@ -82,9 +143,15 @@ export const PromoModal = () => {
           </button>
 
           <div className="promo-modal-content">
-            <div className="promo-icon-badge">
-              <Gift size={28} className="gift-icon" />
-            </div>
+            {image ? (
+              <div className="promo-modal-image-container" style={{ width: '100%', maxHeight: '180px', overflow: 'hidden', borderRadius: '12px', marginBottom: '16px' }}>
+                <img src={image} alt={title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              </div>
+            ) : (
+              <div className="promo-icon-badge">
+                <Gift size={28} className="gift-icon" />
+              </div>
+            )}
 
             <h2 className="promo-title">{title}</h2>
             <p className="promo-description">{description}</p>
@@ -106,8 +173,8 @@ export const PromoModal = () => {
               </div>
             )}
 
-            <button className="btn btn-primary promo-shop-btn" onClick={handleClose}>
-              Start Shopping Now
+            <button className="btn btn-primary promo-shop-btn" onClick={handleCtaClick}>
+              {buttonText || 'Start Shopping Now'}
             </button>
           </div>
         </motion.div>

@@ -1,6 +1,6 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { StoreProvider } from './context/StoreContext';
+import { StoreProvider, useStore } from './context/StoreContext';
 import { Navbar } from './components/Navbar';
 import { MarqueeBanner } from './components/MarqueeBanner';
 import { Footer } from './components/Footer';
@@ -85,6 +85,7 @@ function App() {
 
   return (
     <StoreProvider>
+      <ThemeInjector />
       <Router>
         <div className="app-layout">
           {/* Announcement Banner */}
@@ -173,5 +174,33 @@ function App() {
     </StoreProvider>
   );
 }
+
+const ThemeInjector = () => {
+  const { settings } = useStore();
+  const themeColors = settings?.themeColors || {
+    primary: '#e72c83',
+    secondary: '#f472b6',
+    background: '#faf9fc',
+    text: '#2d2645'
+  };
+  const fontFamily = settings?.fonts || 'Outfit, sans-serif';
+
+  return (
+    <style>{`
+      :root {
+        --color-primary: ${themeColors.primary || '#e72c83'} !important;
+        --color-secondary: ${themeColors.secondary || '#f472b6'} !important;
+        --color-bg: ${themeColors.background || '#faf9fc'} !important;
+        --color-text: ${themeColors.text || '#2d2645'} !important;
+        --font-primary: ${fontFamily} !important;
+      }
+      body {
+        font-family: var(--font-primary) !important;
+        background-color: var(--color-bg) !important;
+        color: var(--color-text) !important;
+      }
+    `}</style>
+  );
+};
 
 export default App;

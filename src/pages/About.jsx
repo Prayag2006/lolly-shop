@@ -1,9 +1,26 @@
 import React from 'react';
 import { Sparkles, Heart, ShieldCheck, Compass, Users } from 'lucide-react';
 import { CandyVisual } from '../components/SvgCandies';
+import { useStore } from '../context/StoreContext';
+import { SEO } from '../components/SEO';
 import './About.css';
 
 export const About = () => {
+  const { settings } = useStore();
+
+  const aboutSettings = settings?.aboutUs || {
+    heading: 'Our Sweet Journey',
+    subheading: 'Crafting smiles and supplying the finest confections across New Zealand since 2018.',
+    description: 'Lolly Shop began with a simple mission: to bring the joy of premium confections right to your doorstep. Over the years, we have sourced the finest candies from around the globe while supporting local Kiwi makers.',
+    story: 'Our story started in Auckland with a tiny storefront and a big passion for quality confectionery. Today, we are proud to be New Zealand\'s leading online sweet delivery store, sending thousands of packages of happiness every month.',
+    mission: 'To satisfy every sweet tooth with top-tier, fresh lollies, while delivering exceptional, reliable service.',
+    vision: 'To become the premier confection hub in the Southern Hemisphere, known for unique imported varieties and premium local packaging.',
+    images: ['/about_showcase1.png'],
+    gallery: [],
+    seoTitle: 'About Best Lolly Shop - Premium NZ Sweets',
+    seoDescription: 'Read our story and mission. Learn how Best Lolly Shop became New Zealand\'s favorite online sweet candy store.'
+  };
+
   const values = [
     {
       icon: <Sparkles size={24} />,
@@ -50,6 +67,12 @@ export const About = () => {
 
   return (
     <div className="about-page">
+      <SEO 
+        title={aboutSettings.seoTitle || "About Us - Best Lolly Shop"} 
+        description={aboutSettings.seoDescription}
+        keywords={aboutSettings.metaKeywords}
+        image={aboutSettings.ogImage}
+      />
       {/* Hero Banner Section */}
       <section className="about-hero">
         <div className="about-hero-glow glow-pink animate-pulse-slow"></div>
@@ -60,8 +83,8 @@ export const About = () => {
             <span className="badge">
               <Sparkles size={13} style={{ marginRight: '5px' }} /> Our Story
             </span>
-            <h1>Our Sweet Journey</h1>
-            <p>Bringing premium confections, luxury chocolates, and sour straps straight to Kiwi doors since 2018.</p>
+            <h1>{aboutSettings.heading}</h1>
+            <p>{aboutSettings.subheading}</p>
           </div>
         </div>
         
@@ -75,34 +98,60 @@ export const About = () => {
           <div className="about-story-grid">
             <div className="about-story-text">
               <h2>Sharing Happiness, One Sweet Box at a Time</h2>
-              <p>
-                Lolly Shop began with a simple craving for authentic, premium candy. We realized how difficult it was to source high-fidelity imported sweets and luxury chocolates that tasted as good as they looked.
-              </p>
-              <p>
-                What started in a small home office in Auckland has grown into one of New Zealand's favorite online sweet destinations. We hand-pick confections from the world’s leading candy artisans, package them beautifully in custom glassmorphic pouches, and ship them direct to your door.
-              </p>
+              <p>{aboutSettings.description}</p>
+              <p>{aboutSettings.story}</p>
             </div>
             
             <div className="about-story-visual">
-              <div className="about-visual-box glass-card animate-float">
-                <div className="about-candy-circle">
-                  <CandyVisual emoji="🍭" size={72} />
+              {aboutSettings.images && aboutSettings.images[0] && aboutSettings.images[0] !== '/about_showcase1.png' ? (
+                <div className="about-visual-box-image-container" style={{ width: '100%', height: '340px', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+                  <img src={aboutSettings.images[0]} alt="Showcase" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
-                <div className="about-decor-circle">
-                  <CandyVisual emoji="🍩" size={48} />
-                </div>
-                <div className="about-floating-card glass-card">
-                  <Heart size={20} className="glow-icon" />
-                  <div>
-                    <h4>100% Sweet</h4>
-                    <p>NZ Owned</p>
+              ) : (
+                <div className="about-story-visual">
+                  <div className="about-visual-box glass-card animate-float">
+                    <div className="about-candy-circle">
+                      <CandyVisual emoji="🍭" size={72} />
+                    </div>
+                    <div className="about-decor-circle">
+                      <CandyVisual emoji="🍩" size={48} />
+                    </div>
+                    <div className="about-floating-card glass-card">
+                      <Heart size={20} className="glow-icon" />
+                      <div>
+                        <h4>100% Sweet</h4>
+                        <p>NZ Owned</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
       </section>
+
+      {/* Mission & Vision Section */}
+      {(aboutSettings.mission || aboutSettings.vision) && (
+        <section className="about-mission-vision section-padding" style={{ background: 'rgba(231, 44, 131, 0.02)', borderTop: '1px solid rgba(231,44,131,0.05)', borderBottom: '1px solid rgba(231,44,131,0.05)' }}>
+          <div className="container">
+            <div className="about-story-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+              {aboutSettings.mission && (
+                <div className="glass-card" style={{ padding: '40px', borderRadius: '24px' }}>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--color-primary)' }}>Our Mission</h3>
+                  <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>{aboutSettings.mission}</p>
+                </div>
+              )}
+              {aboutSettings.vision && (
+                <div className="glass-card" style={{ padding: '40px', borderRadius: '24px' }}>
+                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--color-secondary)' }}>Our Vision</h3>
+                  <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>{aboutSettings.vision}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Core Values Section */}
       <section className="about-values-section section-padding">
@@ -124,6 +173,26 @@ export const About = () => {
           </div>
         </div>
       </section>
+
+      {/* Gallery Section */}
+      {aboutSettings.gallery && aboutSettings.gallery.length > 0 && (
+        <section className="about-gallery section-padding">
+          <div className="container">
+            <div className="section-header">
+              <span className="badge">Gallery</span>
+              <h2>Visual Sweetness</h2>
+              <p>Explore snapshots of our fresh confections and packaging process</p>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px', marginTop: '30px' }}>
+              {aboutSettings.gallery.map((img, i) => (
+                <div key={i} style={{ height: '200px', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+                  <img src={img} alt={`Gallery ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Team Section */}
       <section className="about-team-section section-padding">

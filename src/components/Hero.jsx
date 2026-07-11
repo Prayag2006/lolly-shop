@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, Award, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useStore } from '../context/StoreContext';
 import './Hero.css';
 
 export const Hero = () => {
+  const { settings } = useStore();
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -18,6 +20,20 @@ export const Hero = () => {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
+
+  const heroSettings = settings?.hero || {
+    heading: 'SWEETEN YOUR | EVERYDAY LIFE!',
+    subheading: "NZ's Favorite Online Lolly Shop & Candy Store",
+    description: "Indulge in our exquisite gourmet selection of hand-picked imported lollies, luxury chocolates, and sour straps. Freshly packed and delivered straight to your door across NZ.",
+    buttonText: 'Explore Sweet Shop',
+    buttonLink: '/shop',
+    secondaryButtonText: 'Best Sellers',
+    secondaryButtonLink: '#favourites',
+    heroImage: '/hero_candy_display.png',
+    backgroundImage: '',
+    floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+    badgeText: 'Premium New Zealand Confections'
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -36,44 +52,30 @@ export const Hero = () => {
     }
   };
 
+  const headingText = heroSettings.heading || "SWEETEN YOUR | EVERYDAY LIFE!";
+  const parts = headingText.split('|');
+  const mainPart = parts[0].trim();
+  const gradientPart = parts[1] ? parts[1].trim() : '';
+
+  const iconsList = heroSettings.floatingIcons || ['🍬', '🍭', '🍫', '🍑', '🍒'];
+
   return (
-    <section className="hero-section">
+    <section className="hero-section" style={{ backgroundImage: heroSettings.backgroundImage ? `url(${heroSettings.backgroundImage})` : 'none' }}>
       {/* Radial mesh background glows */}
       <div className="hero-glow glow-pink animate-pulse-slow"></div>
       <div className="hero-glow glow-gold"></div>
       <div className="hero-glow glow-purple"></div>
 
       {/* Modern floating glassmorphic candy bubbles */}
-      <div 
-        className="floating-glass-bubble bubble-1 animate-float"
-        style={{ transform: `translate(${mouseOffset.x * -0.6}px, ${mouseOffset.y * -0.6}px)` }}
-      >
-        <span>🍭</span>
-      </div>
-      <div 
-        className="floating-glass-bubble bubble-2 animate-float-reverse"
-        style={{ transform: `translate(${mouseOffset.x * 0.7}px, ${mouseOffset.y * 0.7}px)` }}
-      >
-        <span>🍬</span>
-      </div>
-      <div 
-        className="floating-glass-bubble bubble-3 animate-float"
-        style={{ transform: `translate(${mouseOffset.x * -0.4}px, ${mouseOffset.y * -0.4}px)` }}
-      >
-        <span>🍫</span>
-      </div>
-      <div 
-        className="floating-glass-bubble bubble-4 animate-float-reverse"
-        style={{ transform: `translate(${mouseOffset.x * 0.5}px, ${mouseOffset.y * 0.5}px)` }}
-      >
-        <span>🍑</span>
-      </div>
-      <div 
-        className="floating-glass-bubble bubble-5 animate-float"
-        style={{ transform: `translate(${mouseOffset.x * -0.8}px, ${mouseOffset.y * -0.8}px)` }}
-      >
-        <span>🍒</span>
-      </div>
+      {iconsList.map((icon, idx) => (
+        <div 
+          key={`bubble-${idx}`}
+          className={`floating-glass-bubble bubble-${Math.min(5, idx + 1)} ${idx % 2 === 1 ? 'animate-float-reverse' : 'animate-float'}`}
+          style={{ transform: `translate(${mouseOffset.x * (idx % 2 === 0 ? -0.4 - idx * 0.1 : 0.3 + idx * 0.1)}px, ${mouseOffset.y * (idx % 2 === 0 ? -0.4 - idx * 0.1 : 0.3 + idx * 0.1)}px)` }}
+        >
+          <span>{icon}</span>
+        </div>
+      ))}
 
       <div className="container hero-container">
         {/* Left Column: Premium content */}
@@ -84,33 +86,46 @@ export const Hero = () => {
           animate="visible"
         >
           {/* Glowing Badge */}
-          <motion.div className="hero-badge" variants={itemVariants}>
-            <Sparkles size={14} className="badge-spark" />
-            <span>Premium New Zealand Confections</span>
-          </motion.div>
+          {heroSettings.badgeText && (
+            <motion.div className="hero-badge" variants={itemVariants}>
+              <Sparkles size={14} className="badge-spark" />
+              <span>{heroSettings.badgeText}</span>
+            </motion.div>
+          )}
 
           {/* Heading */}
           <motion.h1 className="hero-title" variants={itemVariants}>
-            SWEETEN YOUR <br />
-            <span className="gradient-text">EVERYDAY LIFE!</span>
-            <span className="hero-seo-subtitle" style={{ display: 'block', fontSize: '1.25rem', marginTop: '12px', fontWeight: '500', opacity: 0.9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-              NZ's Favorite Online Lolly Shop & Candy Store
-            </span>
+            {mainPart}
+            {gradientPart && (
+              <>
+                <br />
+                <span className="gradient-text">{gradientPart}</span>
+              </>
+            )}
+            {heroSettings.subheading && (
+              <span className="hero-seo-subtitle" style={{ display: 'block', fontSize: '1.25rem', marginTop: '12px', fontWeight: '500', opacity: 0.9, letterSpacing: '0.5px', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                {heroSettings.subheading}
+              </span>
+            )}
           </motion.h1>
 
           {/* Subheading description */}
           <motion.p className="hero-subtitle" variants={itemVariants}>
-            Indulge in our exquisite gourmet selection of hand-picked imported lollies, luxury chocolates, and sour straps. Freshly packed and delivered straight to your door across NZ.
+            {heroSettings.description}
           </motion.p>
 
           {/* Call to Actions */}
           <motion.div className="hero-buttons" variants={itemVariants}>
-            <Link to="/shop" className="btn btn-primary hero-btn-explore">
-              Explore Sweet Shop <ArrowRight size={18} />
-            </Link>
-            <a href="#favourites" className="btn btn-secondary hero-btn-bestsellers">
-              Best Sellers
-            </a>
+            {heroSettings.buttonText && (
+              <Link to={heroSettings.buttonLink || '/shop'} className="btn btn-primary hero-btn-explore">
+                {heroSettings.buttonText} <ArrowRight size={18} />
+              </Link>
+            )}
+            {heroSettings.secondaryButtonText && (
+              <a href={heroSettings.secondaryButtonLink || '#favourites'} className="btn btn-secondary hero-btn-bestsellers">
+                {heroSettings.secondaryButtonText}
+              </a>
+            )}
           </motion.div>
 
           {/* Features Row */}
@@ -145,7 +160,7 @@ export const Hero = () => {
             {/* The Main High-Quality Candy Jar Image */}
             <div className="showcase-image-container">
               <img 
-                src="/hero_candy_display.png" 
+                src={heroSettings.heroImage || '/hero_candy_display.png'} 
                 alt="Best Lolly Shop Showcase Jar" 
                 className="showcase-main-image"
               />

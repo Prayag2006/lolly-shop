@@ -6,7 +6,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings } from './db.js';
+import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media } from './db.js';
 import Stripe from 'stripe';
 
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
@@ -207,6 +207,30 @@ const seededTestimonials = defaultTestimonials.map((t, idx) => ({
 
 const defaultSettings = {
   marqueeText: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50! | 🍭 GET 10% OFF YOUR FIRST ORDER WITH CODE: SWEET10",
+  marquees: [
+    {
+      text: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50!",
+      enabled: true,
+      color: '#ffffff',
+      bgColor: '#e72c83',
+      icon: '🍬',
+      speed: 40,
+      pauseOnHover: true,
+      startDate: '',
+      endDate: ''
+    },
+    {
+      text: "🍭 GET 10% OFF YOUR FIRST ORDER WITH CODE: SWEET10",
+      enabled: true,
+      color: '#ffffff',
+      bgColor: '#f472b6',
+      icon: '🍭',
+      speed: 35,
+      pauseOnHover: true,
+      startDate: '',
+      endDate: ''
+    }
+  ],
   popupOffer: {
     enabled: true,
     delay: 3000,
@@ -222,15 +246,14 @@ const defaultSettings = {
       title: "🎉 Special Sweet Deal!",
       description: "Get 15% off on all sour gummies this weekend. Use code at checkout!",
       code: "SOUR15",
-      image: ""
-    },
-    {
-      enabled: true,
-      delay: 6000,
-      title: "🍬 Weekend Choc Treat!",
-      description: "Double the joy with 20% off all Swiss chocolates. Code: CHOCO20",
-      code: "CHOCO20",
-      image: ""
+      discountPercent: 15,
+      buttonText: "Shop Sours",
+      buttonLink: "/shop?category=Sour%20Lollies",
+      image: "",
+      startDate: "",
+      endDate: "",
+      targetPages: ["/"],
+      frequencyDays: 1
     }
   ],
   megaMenu: [
@@ -274,7 +297,81 @@ const defaultSettings = {
       title: 'Special / Clearance',
       items: ['Heading 1', 'Heading 2']
     }
-  ]
+  ],
+  websiteName: 'Best Lolly Shop',
+  websiteLogo: '',
+  websiteFavicon: '',
+  themeColors: {
+    primary: '#e72c83',
+    secondary: '#f472b6',
+    background: '#faf9fc',
+    text: '#2d2645'
+  },
+  fonts: 'Outfit, sans-serif',
+  currency: 'NZD',
+  timezone: 'Pacific/Auckland',
+  googleAnalytics: '',
+  facebookPixel: '',
+  hero: {
+    heading: 'SWEETEN YOUR EVERYDAY LIFE!',
+    subheading: 'PREMIUM NEW ZEALAND CONFECTIONS',
+    description: "Indulge in our exquisite gourmet selection of hand-picked imported lollies, luxury chocolates, and sour straps. Freshly packed and delivered straight to your door across NZ.",
+    buttonText: 'Explore Sweet Shop',
+    buttonLink: '/shop',
+    secondaryButtonText: 'Best Sellers',
+    secondaryButtonLink: '#favourites',
+    heroImage: '/hero_candy_display.png',
+    backgroundImage: '',
+    floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+    badgeText: 'New NZ Confections'
+  },
+  aboutUs: {
+    heading: 'Our Sweet Journey',
+    subheading: 'Crafting smiles and supplying the finest confections across New Zealand since 2018.',
+    description: 'Lolly Shop began with a simple mission: to bring the joy of premium confections right to your doorstep. Over the years, we have sourced the finest candies from around the globe while supporting local Kiwi makers.',
+    story: 'Our story started in Auckland with a tiny storefront and a big passion for quality confectionery. Today, we are proud to be New Zealand\'s leading online sweet delivery store, sending thousands of packages of happiness every month.',
+    mission: 'To satisfy every sweet tooth with top-tier, fresh lollies, while delivering exceptional, reliable service.',
+    vision: 'To become the premier confection hub in the Southern Hemisphere, known for unique imported varieties and premium local packaging.',
+    images: ['/about_showcase1.png'],
+    gallery: [],
+    buttonText: 'Visit the Shop',
+    buttonLink: '/shop',
+    seoTitle: 'About Best Lolly Shop - Premium NZ Sweets',
+    seoDescription: 'Read our story and mission. Learn how Best Lolly Shop became New Zealand\'s favorite online sweet candy store.',
+    metaKeywords: 'about us, lolly shop, candy nz, kiwi sweets',
+    ogImage: ''
+  },
+  contactUs: {
+    address: 'Grey Lynn, Auckland 1021, New Zealand',
+    phone: '021 123 4567',
+    email: 'bestlollyshopnz@gmail.com',
+    businessHours: 'Monday - Saturday: 9:00 AM - 6:00 PM',
+    googleMap: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3192.3664790382346!2d174.7408713!3d-36.8576402!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6d0d47f9f0f9797f%3A0xe54ef92ad04cb310!2sGrey%20Lynn%2C%20Auckland!5e0!3m2!1sen!2snz!4v1700000000000',
+    facebookLink: 'https://facebook.com',
+    instagramLink: 'https://instagram.com',
+    tiktokLink: 'https://tiktok.com',
+    formEmailRecipient: 'bestlollyshopnz@gmail.com',
+    formEnabled: true
+  },
+  footer: {
+    description: 'NZ\'s favorite online candy store. Hand-picked imported confections, luxury chocolates, and sour straps delivered directly to your doorstep.',
+    quickLinks: [
+      { label: 'Shop All', link: '/shop' },
+      { label: 'About Us', link: '/about' },
+      { label: 'Contact Us', link: '/contact' }
+    ],
+    policies: [
+      { label: 'Privacy Policy', link: '/privacy-policy' },
+      { label: 'Terms of Service', link: '/terms-of-service' }
+    ],
+    copyright: '© 2026 Best Lolly Shop. All rights reserved.'
+  },
+  header: {
+    sticky: true,
+    showSearch: true,
+    logoText: 'Best Lolly Shop'
+  },
+  seoOverrides: {}
 };
 
 // Pre-initialize local files
@@ -2690,6 +2787,356 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Password reset execution error', error: error.message });
+  }
+});
+
+// ── CATEGORIES API ──
+app.get('/api/categories', async (req, res) => {
+  try {
+    let list = [];
+    if (sqlAvailable()) {
+      list = await Category.find().sort({ displayOrder: 1, name: 1 });
+    } else {
+      list = readLocalData('categories.json', []);
+    }
+
+    // Auto-seed categories from megaMenu if empty
+    if (list.length === 0) {
+      const catsToSeed = [];
+      const menuCats = defaultSettings.megaMenu || [];
+      menuCats.forEach((m, idx) => {
+        catsToSeed.push({
+          id: `cat-${idx}-${Date.now()}`,
+          name: m.title,
+          description: `All sweets in the ${m.title} collection`,
+          image: '',
+          banner: '',
+          displayOrder: idx,
+          enabled: true,
+          seoTitle: `${m.title} - Best Lolly Shop`,
+          seoDescription: `Shop our wide range of ${m.title} confections at Best Lolly Shop NZ.`,
+          seoKeywords: `${m.title.toLowerCase()}, lolly shop, sweets, nz`
+        });
+      });
+
+      if (sqlAvailable()) {
+        await Category.insertMany(catsToSeed);
+        list = await Category.find().sort({ displayOrder: 1, name: 1 });
+      } else {
+        writeLocalData('categories.json', catsToSeed);
+        list = catsToSeed;
+      }
+    }
+
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving categories', error: error.message });
+  }
+});
+
+app.post('/api/categories', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    if (sqlAvailable()) {
+      const newCat = new Category(req.body);
+      await newCat.save();
+      res.status(201).json(newCat);
+    } else {
+      const list = readLocalData('categories.json', []);
+      const newCat = {
+        id: `cat-${Date.now()}`,
+        ...req.body,
+        createdAt: new Date().toISOString()
+      };
+      list.push(newCat);
+      writeLocalData('categories.json', list);
+      res.status(201).json(newCat);
+    }
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating category', error: error.message });
+  }
+});
+
+app.put('/api/categories/:id', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    if (sqlAvailable()) {
+      const updated = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      if (!updated) return res.status(404).json({ message: 'Category not found' });
+      res.json(updated);
+    } else {
+      const list = readLocalData('categories.json', []);
+      const idx = list.findIndex(c => String(c.id) === String(req.params.id));
+      if (idx === -1) return res.status(404).json({ message: 'Category not found' });
+
+      list[idx] = { ...list[idx], ...req.body, updatedAt: new Date().toISOString() };
+      writeLocalData('categories.json', list);
+      res.json(list[idx]);
+    }
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating category', error: error.message });
+  }
+});
+
+app.delete('/api/categories/:id', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    if (sqlAvailable()) {
+      const deleted = await Category.findByIdAndDelete(req.params.id);
+      if (!deleted) return res.status(404).json({ message: 'Category not found' });
+      res.json({ message: 'Category deleted successfully' });
+    } else {
+      const list = readLocalData('categories.json', []);
+      const filtered = list.filter(c => String(c.id) !== String(req.params.id));
+      if (list.length === filtered.length) return res.status(404).json({ message: 'Category not found' });
+
+      writeLocalData('categories.json', filtered);
+      res.json({ message: 'Category deleted successfully' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting category', error: error.message });
+  }
+});
+
+// ── MEDIA LIBRARY API ──
+app.get('/api/media', async (req, res) => {
+  try {
+    let list = [];
+    if (sqlAvailable()) {
+      list = await Media.find().sort({ createdAt: -1 });
+    } else {
+      list = readLocalData('media.json', []);
+    }
+    // Return objects without base64Data to keep payload small in lists
+    const cleanList = list.map(m => ({
+      id: m.id || m.filename,
+      filename: m.filename,
+      contentType: m.contentType,
+      sizeBytes: m.sizeBytes,
+      folder: m.folder || 'uploads',
+      createdAt: m.createdAt,
+      url: `/api/media/file/${m.filename}`
+    }));
+    res.json(cleanList);
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving media list', error: error.message });
+  }
+});
+
+app.post('/api/media', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    const { filename, contentType, base64Data } = req.body;
+    if (!filename || !contentType || !base64Data) {
+      return res.status(400).json({ message: 'Filename, contentType, and base64Data are required' });
+    }
+
+    if (!contentType.startsWith('image/')) {
+      return res.status(400).json({ message: 'Only image files are allowed for upload.' });
+    }
+
+    const sizeBytes = Buffer.from(base64Data, 'base64').length;
+    const safeName = filename.replace(/[^a-zA-Z0-9\._-]/g, '_');
+
+    if (sqlAvailable()) {
+      const existing = await Media.findOne({ filename: safeName });
+      if (existing) {
+        existing.base64Data = base64Data;
+        existing.contentType = contentType;
+        existing.sizeBytes = sizeBytes;
+        await existing.save();
+        res.status(200).json({ filename: safeName, url: `/api/media/file/${safeName}`, message: 'File replaced successfully' });
+      } else {
+        const item = new Media({ filename: safeName, contentType, base64Data, sizeBytes });
+        await item.save();
+        res.status(201).json({ filename: safeName, url: `/api/media/file/${safeName}`, message: 'File uploaded successfully' });
+      }
+    } else {
+      const list = readLocalData('media.json', []);
+      const idx = list.findIndex(m => m.filename === safeName);
+      const mediaObj = {
+        filename: safeName,
+        contentType,
+        base64Data,
+        sizeBytes,
+        folder: 'uploads',
+        createdAt: new Date().toISOString()
+      };
+      if (idx !== -1) {
+        list[idx] = mediaObj;
+      } else {
+        list.push(mediaObj);
+      }
+      writeLocalData('media.json', list);
+      res.status(idx !== -1 ? 200 : 201).json({ filename: safeName, url: `/api/media/file/${safeName}` });
+    }
+  } catch (error) {
+    res.status(400).json({ message: 'Error uploading media', error: error.message });
+  }
+});
+
+app.delete('/api/media/:filename', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    const safeName = req.params.filename;
+
+    if (sqlAvailable()) {
+      const deleted = await Media.findOneAndDelete({ filename: safeName });
+      if (!deleted) return res.status(404).json({ message: 'File not found' });
+      res.json({ message: 'File deleted successfully' });
+    } else {
+      const list = readLocalData('media.json', []);
+      const filtered = list.filter(m => m.filename !== safeName);
+      if (list.length === filtered.length) return res.status(404).json({ message: 'File not found' });
+
+      writeLocalData('media.json', filtered);
+      res.json({ message: 'File deleted successfully' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting media', error: error.message });
+  }
+});
+
+// Binary file streaming server
+app.get('/api/media/file/:filename', async (req, res) => {
+  try {
+    const safeName = req.params.filename;
+    let fileObj = null;
+
+    if (sqlAvailable()) {
+      fileObj = await Media.findOne({ filename: safeName });
+    } else {
+      const list = readLocalData('media.json', []);
+      fileObj = list.find(m => m.filename === safeName);
+    }
+
+    if (!fileObj) {
+      return res.status(404).send('Not Found');
+    }
+
+    const buffer = Buffer.from(fileObj.base64Data, 'base64');
+    res.setHeader('Content-Type', fileObj.contentType);
+    res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// ── PRODUCT CMS ACTIONS ──
+app.post('/api/products/:id/duplicate', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    let sourceProduct = null;
+    if (sqlAvailable()) {
+      sourceProduct = await Product.findById(req.params.id);
+    } else {
+      const list = readLocalData('products.json', seededProducts);
+      sourceProduct = list.find(p => String(p.id) === String(req.params.id));
+    }
+
+    if (!sourceProduct) return res.status(404).json({ message: 'Source product not found' });
+
+    const rawData = sourceProduct.toObject ? sourceProduct.toObject() : sourceProduct;
+    const duplicatedData = {
+      ...rawData,
+      name: `${rawData.name} (Copy)`,
+      sku: rawData.sku ? `${rawData.sku}-COPY` : '',
+      isNew: true,
+      reviews: [],
+      rating: 5.0,
+      reviewsCount: 0
+    };
+    
+    delete duplicatedData._id;
+    delete duplicatedData.id;
+    delete duplicatedData.createdAt;
+    delete duplicatedData.updatedAt;
+
+    if (sqlAvailable()) {
+      const newProd = new Product(duplicatedData);
+      await newProd.save();
+      res.status(201).json(newProd);
+    } else {
+      const list = readLocalData('products.json', seededProducts);
+      const newProd = {
+        id: `p-${Date.now()}`,
+        ...duplicatedData,
+        createdAt: new Date().toISOString()
+      };
+      list.unshift(newProd);
+      writeLocalData('products.json', list);
+      res.status(201).json(newProd);
+    }
+  } catch (error) {
+    res.status(400).json({ message: 'Error duplicating product', error: error.message });
+  }
+});
+
+app.post('/api/products/import', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    const productsToImport = req.body;
+    if (!Array.isArray(productsToImport)) {
+      return res.status(400).json({ message: 'Body must be an array of products' });
+    }
+
+    if (sqlAvailable()) {
+      const importedList = [];
+      for (const item of productsToImport) {
+        delete item.id;
+        delete item._id;
+        const newP = new Product(item);
+        await newP.save();
+        importedList.push(newP);
+      }
+      res.status(201).json({ success: true, message: `Successfully imported ${importedList.length} products` });
+    } else {
+      const list = readLocalData('products.json', seededProducts);
+      const now = new Date().toISOString();
+      const importedList = productsToImport.map((p, idx) => ({
+        id: `p-import-${Date.now()}-${idx}`,
+        ...p,
+        createdAt: now
+      }));
+      const mergedList = [...importedList, ...list];
+      writeLocalData('products.json', mergedList);
+      res.status(201).json({ success: true, message: `Successfully imported ${importedList.length} products` });
+    }
+  } catch (error) {
+    res.status(400).json({ message: 'Error importing products', error: error.message });
+  }
+});
+
+app.get('/api/products-export', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+
+    let list = [];
+    if (sqlAvailable()) {
+      list = await Product.find();
+    } else {
+      list = readLocalData('products.json', seededProducts);
+    }
+
+    res.json(list);
+  } catch (error) {
+    res.status(500).json({ message: 'Error exporting products', error: error.message });
   }
 });
 

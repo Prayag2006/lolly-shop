@@ -84,10 +84,11 @@ export const Admin = () => {
   const { 
     currentUser, products, orders, contactSubmissions, 
     addProduct, updateProduct, deleteProduct, updateProductStock, 
-    updateOrderStatus, categories, addCategory, brands, 
+    updateOrderStatus, categories, addCategory, updateCategory, deleteCategory, brands, 
     addBrand, deleteBrand, updateBrand, testimonials, 
     deleteProductReview, deleteTestimonial,
-    settings, updateSettings, updateProductQuantity, updateOrderDelivery, removeOrderItem
+    settings, updateSettings, updateProductQuantity, updateOrderDelivery, removeOrderItem,
+    mediaList, uploadMedia, deleteMedia
   } = useStore();
 
   const activeMegaMenuFromSettings = settings?.megaMenu && settings.megaMenu.length > 0 ? settings.megaMenu : [
@@ -368,6 +369,26 @@ export const Admin = () => {
     }
   };
 
+  const handleNestedFieldChange = (section, field, value) => {
+    setTempSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...(prev[section] || {}),
+        [field]: value
+      }
+    }));
+  };
+
+  const handleImageUpload = (e, callback) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      callback(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const getProductCollections = (product) => {
     if (Array.isArray(product.collections)) {
       return product.collections;
@@ -571,6 +592,34 @@ export const Admin = () => {
             >
               <Activity size={18} />
               <span>Promotions / Settings</span>
+            </button>
+            <button
+              className={`admin-nav-item ${activeTab === 'cms-pages' ? 'active' : ''}`}
+              onClick={() => setActiveTab('cms-pages')}
+            >
+              <FileText size={18} />
+              <span>CMS Pages</span>
+            </button>
+            <button
+              className={`admin-nav-item ${activeTab === 'cms-theme' ? 'active' : ''}`}
+              onClick={() => setActiveTab('cms-theme')}
+            >
+              <Grid size={18} />
+              <span>CMS Theme & Branding</span>
+            </button>
+            <button
+              className={`admin-nav-item ${activeTab === 'media-library' ? 'active' : ''}`}
+              onClick={() => setActiveTab('media-library')}
+            >
+              <ShoppingBag size={18} />
+              <span>Media Library ({mediaList ? mediaList.length : 0})</span>
+            </button>
+            <button
+              className={`admin-nav-item ${activeTab === 'categories' ? 'active' : ''}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              <Tag size={18} />
+              <span>Categories ({categories ? categories.length : 0})</span>
             </button>
           </nav>
         </aside>
@@ -2264,6 +2313,587 @@ export const Admin = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'cms-pages' && (
+            <div className="admin-tab-content">
+              <h2>CMS Content Pages Editor</h2>
+              <p className="tab-subtitle">Edit the content of your Hero banner, About Us story, and Contact Details</p>
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                
+                {/* Hero section */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>✨ Homepage Hero Section</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Heading (Use | for gradient highlight)</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.heading || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'heading', e.target.value)}
+                        placeholder="e.g. SWEETEN YOUR | EVERYDAY LIFE!"
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading (SEO Line)</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.subheading || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'subheading', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Description Text</label>
+                    <textarea 
+                      rows="3"
+                      value={tempSettings.hero?.description || ''}
+                      onChange={(e) => handleNestedFieldChange('hero', 'description', e.target.value)}
+                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Text</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.buttonText || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'buttonText', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Link</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.buttonLink || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'buttonLink', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Hero Image (Base64 or URL)</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.heroImage || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'heroImage', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, (base64) => handleNestedFieldChange('hero', 'heroImage', base64))}
+                        style={{ marginTop: '8px' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Text</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.hero?.badgeText || ''}
+                        onChange={(e) => handleNestedFieldChange('hero', 'badgeText', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* About Us section */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📖 About Us Page Settings</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Page Heading</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.aboutUs?.heading || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'heading', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading description</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.aboutUs?.subheading || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'subheading', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Story Text</label>
+                      <textarea 
+                        rows="4"
+                        value={tempSettings.aboutUs?.description || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'description', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Extended Story Text</label>
+                      <textarea 
+                        rows="4"
+                        value={tempSettings.aboutUs?.story || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'story', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Our Mission</label>
+                      <textarea 
+                        rows="3"
+                        value={tempSettings.aboutUs?.mission || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'mission', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Our Vision</label>
+                      <textarea 
+                        rows="3"
+                        value={tempSettings.aboutUs?.vision || ''}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'vision', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Us section */}
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📞 Contact Page Settings</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Office Address</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.contactUs?.address || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'address', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Contact Email</label>
+                      <input 
+                        type="email"
+                        value={tempSettings.contactUs?.email || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'email', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Contact Phone</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.contactUs?.phone || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'phone', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Business Hours</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.contactUs?.businessHours || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'businessHours', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Google Map Iframe Embed Link</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.contactUs?.googleMap || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'googleMap', e.target.value)}
+                        placeholder="https://google.com/maps/embed?..."
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', height: '100%', marginTop: '24px' }}>
+                      <input
+                        type="checkbox"
+                        id="contact-form-enabled"
+                        checked={tempSettings.contactUs?.formEnabled !== false}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'formEnabled', e.target.checked)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      <label htmlFor="contact-form-enabled" style={{ fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                        Enable Contact Submission Form
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                {settingsSuccess && (
+                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
+                    {settingsSuccess}
+                  </div>
+                )}
+
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
+                    Save CMS Pages
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'cms-theme' && (
+            <div className="admin-tab-content">
+              <h2>CMS Branding & Styling System</h2>
+              <p className="tab-subtitle">Customize website titles, logos, fonts, and brand colors injected into the design tokens</p>
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '20px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>🏷️ Brand Details</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Website Name</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.websiteName || ''}
+                        onChange={(e) => setTempSettings(prev => ({ ...prev, websiteName: e.target.value }))}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Sticky Navbar Header</label>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                        <input
+                          type="checkbox"
+                          id="sticky-header"
+                          checked={tempSettings.header?.sticky !== false}
+                          onChange={(e) => handleNestedFieldChange('header', 'sticky', e.target.checked)}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        <label htmlFor="sticky-header" style={{ fontWeight: '700', fontSize: '13px', cursor: 'pointer' }}>
+                          Enable Sticky Scrolling Navbar
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Website Header Logo (Base64 Image)</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.websiteLogo || ''}
+                        onChange={(e) => setTempSettings(prev => ({ ...prev, websiteLogo: e.target.value }))}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                      <input 
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => handleImageUpload(e, (base64) => setTempSettings(prev => ({ ...prev, websiteLogo: base64 })))}
+                        style={{ marginTop: '8px' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Header Stylized Text (Fallback)</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.header?.logoText || ''}
+                        onChange={(e) => handleNestedFieldChange('header', 'logoText', e.target.value)}
+                        placeholder="e.g. Best Lolly Shop"
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>🎨 Color Palette & Typography</h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Color</label>
+                      <input 
+                        type="color"
+                        value={tempSettings.theme?.colorPrimary || '#e72c83'}
+                        onChange={(e) => handleNestedFieldChange('theme', 'colorPrimary', e.target.value)}
+                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Secondary Color</label>
+                      <input 
+                        type="color"
+                        value={tempSettings.theme?.colorSecondary || '#f59e0b'}
+                        onChange={(e) => handleNestedFieldChange('theme', 'colorSecondary', e.target.value)}
+                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Page Background</label>
+                      <input 
+                        type="color"
+                        value={tempSettings.theme?.colorBg || '#fef0f7'}
+                        onChange={(e) => handleNestedFieldChange('theme', 'colorBg', e.target.value)}
+                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Text Base Color</label>
+                      <input 
+                        type="color"
+                        value={tempSettings.theme?.colorText || '#1e293b'}
+                        onChange={(e) => handleNestedFieldChange('theme', 'colorText', e.target.value)}
+                        style={{ width: '100%', height: '40px', padding: '0', borderRadius: '8px', border: '1px solid var(--color-border)', cursor: 'pointer' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Font Family</label>
+                      <select
+                        value={tempSettings.theme?.fontPrimary || 'Outfit'}
+                        onChange={(e) => handleNestedFieldChange('theme', 'fontPrimary', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                      >
+                        <option value="Outfit">Outfit (Default Rounded Premium)</option>
+                        <option value="Inter">Inter (Clean Modern Sans-Serif)</option>
+                        <option value="Poppins">Poppins (Friendly Pop)</option>
+                        <option value="Montserrat">Montserrat (Geometric Corporate)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                {settingsSuccess && (
+                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
+                    {settingsSuccess}
+                  </div>
+                )}
+
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
+                    Save Branding Settings
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'media-library' && (
+            <div className="admin-tab-content">
+              <h2>Media Asset Library</h2>
+              <p className="tab-subtitle">Upload Base64 image files directly into the database. Access and copy their dynamic streaming URLs to use anywhere on products or sections.</p>
+
+              {/* Drag and Drop Uploader */}
+              <div 
+                className="glass-card" 
+                style={{ 
+                  padding: '30px', 
+                  border: '2px dashed var(--color-primary)', 
+                  borderRadius: '24px', 
+                  textAlign: 'center', 
+                  marginBottom: '30px',
+                  background: 'rgba(231,44,131,0.01)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}
+                onClick={() => document.getElementById('media-upload-input').click()}
+              >
+                <input 
+                  type="file" 
+                  id="media-upload-input" 
+                  style={{ display: 'none' }} 
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onloadend = async () => {
+                      try {
+                        await uploadMedia(file.name, file.type, reader.result);
+                        alert('Asset uploaded successfully! 🎉');
+                      } catch (err) {
+                        alert(err.message);
+                      }
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
+                <span style={{ fontSize: '32px' }}>📷</span>
+                <h4 style={{ margin: 0, fontWeight: '800' }}>Drag & Drop file here, or click to browse</h4>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Supports JPG, PNG, GIF, WebP (up to 4MB)</p>
+              </div>
+
+              {/* Asset list grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '20px' }}>
+                {(mediaList || []).map((media, idx) => {
+                  const mediaUrl = `/api/media/file/${media.filename}`;
+                  return (
+                    <div key={idx} className="glass-card" style={{ padding: '12px', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      <div style={{ height: '120px', borderRadius: '10px', overflow: 'hidden', border: '1px solid var(--color-border)', background: 'var(--color-background)' }}>
+                        <img src={mediaUrl} alt={media.filename} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                      <div style={{ fontSize: '12px', fontWeight: '700', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={media.filename}>
+                        {media.filename}
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '10px', flex: 1 }}
+                          onClick={() => {
+                            navigator.clipboard.writeText(mediaUrl);
+                            alert('URL copied to clipboard! 📋');
+                          }}
+                        >
+                          Copy Link
+                        </button>
+                        <button
+                          className="btn btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '10px', color: '#dc2626', borderColor: '#fca5a5' }}
+                          onClick={async () => {
+                            if (window.confirm('Delete this asset?')) {
+                              await deleteMedia(media.filename);
+                            }
+                          }}
+                        >
+                          <Trash2 size={10} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {mediaList.length === 0 && (
+                  <div style={{ gridColumn: '1 / -1', padding: '40px', textAlign: 'center', color: 'var(--color-text-muted)' }}>
+                    📷 No uploaded files in library yet.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'categories' && (
+            <div className="admin-tab-content animate-fade-in">
+              <h2>Category Management Panel</h2>
+              <p className="tab-subtitle">Create, list, and delete lolly product categories stored in the database</p>
+
+              {/* Add Category Form */}
+              <div className="glass-card" style={{ padding: '24px', marginBottom: '30px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>➕ Add New Category</h3>
+                <form 
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(e.target);
+                    const name = fd.get('name').trim();
+                    const desc = fd.get('desc').trim();
+                    if (!name) return;
+                    const success = await addCategory({
+                      name,
+                      description: desc || `All sweet confections in ${name}`,
+                      image: '',
+                      banner: '',
+                      enabled: true
+                    });
+                    if (success) {
+                      e.target.reset();
+                      alert('Category added successfully! 🎉');
+                    } else {
+                      alert('Error adding category');
+                    }
+                  }}
+                  style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: '14px', alignItems: 'flex-end' }}
+                >
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '11px' }}>Category Name</label>
+                    <input 
+                      type="text" 
+                      name="name" 
+                      placeholder="e.g. Marshmallows" 
+                      required 
+                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '11px' }}>Description text</label>
+                    <input 
+                      type="text" 
+                      name="desc" 
+                      placeholder="e.g. Soft and fluffy marshmallow treats" 
+                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                    />
+                  </div>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 20px', height: '40px', fontWeight: '700' }}>
+                    Add Category
+                  </button>
+                </form>
+              </div>
+
+              {/* Categories table list */}
+              <div className="glass-card" style={{ overflow: 'hidden' }}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th style={{ textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(categories || []).map((cat, idx) => {
+                      const name = cat.name || cat;
+                      const desc = cat.description || 'No description provided.';
+                      return (
+                        <tr key={idx}>
+                          <td style={{ fontWeight: '700' }}>{name}</td>
+                          <td style={{ color: 'var(--color-text-muted)' }}>{desc}</td>
+                          <td style={{ textAlign: 'right' }}>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (window.confirm(`Delete category "${name}"? This cannot be undone.`)) {
+                                  const success = await deleteCategory(cat._id || cat.id || name);
+                                  if (success) {
+                                    alert('Category deleted! 🗑️');
+                                  } else {
+                                    alert('Failed to delete category.');
+                                  }
+                                }
+                              }}
+                              style={{
+                                background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer',
+                                display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700'
+                              }}
+                            >
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </main>
