@@ -34,7 +34,10 @@ const require = createRequire(import.meta.url);
 let Database;
 if (!isServerless) {
   try {
-    Database = require('better-sqlite3');
+    // Use a variable for the module name so bundlers (esbuild/Vercel) cannot statically
+    // analyze and attempt to bundle this native addon — it must be excluded from the bundle.
+    const nativeModuleName = 'better-sqlite3';
+    Database = require(nativeModuleName);
   } catch (e) {
     // SQLite is optional in local environments
     console.log('better-sqlite3 not available:', e.message);
@@ -42,6 +45,7 @@ if (!isServerless) {
 }
 // In serverless environments (Vercel/Netlify), skip SQLite entirely.
 // The app will use MongoDB Atlas (primary) or in-memory JSON fallback.
+
 
 const DATA_DIR = isServerless
   ? path.resolve('/tmp', 'lollyshop-data')
