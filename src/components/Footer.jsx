@@ -105,7 +105,11 @@ export const Footer = () => {
                 <li>
                   <MapPin size={16} fill="none" />
                   <a 
-                    href={contactSettings.googleMap || '#'} 
+                    href={
+                      !contactSettings.googleMap || contactSettings.googleMap.includes('/embed')
+                        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(contactSettings.address)}`
+                        : contactSettings.googleMap
+                    } 
                     target="_blank" 
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none', transition: 'color var(--transition-fast)' }}
