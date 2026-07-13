@@ -133,19 +133,19 @@ export const About = () => {
 
       {/* Mission & Vision Section */}
       {(aboutSettings.mission || aboutSettings.vision) && (
-        <section className="about-mission-vision section-padding" style={{ background: 'rgba(231, 44, 131, 0.02)', borderTop: '1px solid rgba(231,44,131,0.05)', borderBottom: '1px solid rgba(231,44,131,0.05)' }}>
+        <section className="about-mission-vision section-padding">
           <div className="container">
-            <div className="about-story-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+            <div className="about-mission-grid">
               {aboutSettings.mission && (
-                <div className="glass-card" style={{ padding: '40px', borderRadius: '24px' }}>
-                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--color-primary)' }}>Our Mission</h3>
-                  <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>{aboutSettings.mission}</p>
+                <div className="glass-card mission-card">
+                  <h3>Our Mission</h3>
+                  <p>{aboutSettings.mission}</p>
                 </div>
               )}
               {aboutSettings.vision && (
-                <div className="glass-card" style={{ padding: '40px', borderRadius: '24px' }}>
-                  <h3 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '16px', color: 'var(--color-secondary)' }}>Our Vision</h3>
-                  <p style={{ fontSize: '15px', color: 'var(--color-text-muted)', lineHeight: '1.6' }}>{aboutSettings.vision}</p>
+                <div className="glass-card vision-card">
+                  <h3>Our Vision</h3>
+                  <p>{aboutSettings.vision}</p>
                 </div>
               )}
             </div>
@@ -181,12 +181,12 @@ export const About = () => {
             <div className="section-header">
               <span className="badge">Gallery</span>
               <h2>Visual Sweetness</h2>
-              <p>Explore snapshots of our fresh confections and packaging process</p>
+              <p>Explore snapshots of our confections and packaging process</p>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '20px', marginTop: '30px' }}>
+            <div className="about-gallery-grid">
               {aboutSettings.gallery.map((img, i) => (
-                <div key={i} style={{ height: '200px', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
-                  <img src={img} alt={`Gallery ${i}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div key={i} className="about-gallery-item">
+                  <img src={img} alt={`Gallery ${i}`} />
                 </div>
               ))}
             </div>
