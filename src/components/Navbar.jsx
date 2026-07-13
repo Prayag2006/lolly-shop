@@ -57,7 +57,9 @@ export const Navbar = ({ onCartOpen }) => {
 
   const activeMegaMenuFromSettings = settings?.megaMenu && settings.megaMenu.length > 0 ? settings.megaMenu : megaMenuData;
   const standardCategories = new Set(activeMegaMenuFromSettings.flatMap(group => [group.title, ...group.items]));
-  const customCategories = (categories || []).filter(cat => cat && !standardCategories.has(cat));
+  const customCategories = (categories || [])
+    .map(cat => typeof cat === 'string' ? cat : (cat?.name || ''))
+    .filter(name => name.trim() && !standardCategories.has(name));
   
   const activeMegaMenuData = [...activeMegaMenuFromSettings];
   if (customCategories.length > 0) {
