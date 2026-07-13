@@ -24,7 +24,7 @@ const renderBotText = (text) => {
 // ── LOCAL TRAINED RESPONSES (used when Gemini API is unavailable) ─────────────
 const TRAINED_RESPONSES = {
   greeting: (timeGreeting) =>
-    `${timeGreeting}! 🍭 Welcome to **Best Lolly Shop New Zealand!** I am your **Best Lolly Shop AI Assistant**.\n\nTo make your shopping experience even sweeter:\n🎟️ Use code **SWEET10** at checkout for **10% OFF** your entire order!\n🚚 Enjoy **FREE shipping** on all NZ orders over **$50 NZD**!\n🏙️ Hamilton customers get **FREE delivery** automatically!\n\nHow can I help satisfy your candy cravings today? 😊`,
+    `${timeGreeting}! 🍭\n\nHi! I'm the **Best Lolly Shop Assistant** — here to help you find the perfect sweets!\n\n🎟️ Use code **SWEET10** at checkout for **10% OFF** your order!\n🚚 **FREE shipping** on NZ orders over **$50 NZD**!\n🏙️ **Hamilton** customers get FREE delivery on every order!\n\nWhat can I help you find today? 😊`,
 
   gummies: () =>
     `🍬 **Our Best-Selling Gummies & Chewy Sweets!**\n\n` +
@@ -94,54 +94,72 @@ const TRAINED_RESPONSES = {
   discount_fallback: () =>
     `🎟️ Use coupon code **SWEET10** at checkout to get **10% OFF** your entire order!\n\nPlus, we offer **FREE shipping** on NZ orders over **$50**. Ready to grab some treats? 🛒`,
 
+  bulk: () =>
+    `📦 **Bulk Candy Orders**\n\nWe LOVE bulk orders! Here's what we offer:\n\n🛍️ **Bag Sizes:**\n• **100g** — Perfect for trying new flavours\n• **250g** — Great personal treat\n• **500g** — Ideal for sharing / small events\n• **1kg** — **Best value!** Recommended for parties & large groups\n\n🎨 **Custom Printing:** Add your logo or message to lollies & packaging!\n🎁 **Gift Boxes:** Custom-wrapped candy boxes available.\n\n📧 For large or custom bulk orders, email us: **BestLollyShop@gmail.com**\n\nHow many people are you shopping for? 😊`,
+
+  payment: () =>
+    `💳 **Payment Methods Accepted**\n\nWe support a wide range of payment options for your convenience:\n\n✅ Credit Card (Visa, Mastercard)\n✅ Debit Card\n✅ Google Pay\n✅ Apple Pay\n✅ Shop Pay\n✅ PayPal\n✅ Bank Transfer\n\nAll transactions are **100% secure** and encrypted. 🔐\n\nReady to complete your order? Head to the **Checkout** page! 🛒`,
+
+  recommend: () =>
+    `🍭 I'd love to recommend the perfect sweets for you!\n\nTo help me find the best match, could you tell me:\n\n1️⃣ **What's the occasion?** (personal treat, gift, birthday, party, wedding, corporate)\n2️⃣ **How many people** are you buying for?\n3️⃣ **Flavour preference?** (sour, sweet, chocolate, fruity, caramel, mixed)\n4️⃣ **Any dietary needs?** (vegan, gluten-free, halal, nut-free)\n5️⃣ **Budget?** (rough guide helps me find the best value!)\n\nOnce I know, I'll pick the perfect sweets! 😊`,
+
   default: () =>
-    `I'd love to help! 🍭 Could you tell me a bit more about what you're looking for?\n\nFor example:\n• Are you shopping for a specific occasion? (birthday, party, gift)\n• Do you have a favourite flavour? (sour, chocolate, fruity)\n• Any dietary requirements? (vegan, gluten-free)\n\nOr feel free to browse our quick options below! 😊`,
+    `🍭 I'm here to help! Could you tell me a bit more about what you're looking for?\n\nFor example:\n• A specific flavour or product type?\n• Shopping for a special occasion?\n• Need help with an order or account?\n\nOr tap one of the quick options below! 😊`,
 };
 
 const getLocalFallback = (query, timeGreeting) => {
   const lower = String(query || '').toLowerCase();
 
-  if (lower.match(/hello|hi+|hey+|howdy|good morning|good afternoon|good evening|yo+/)) {
+  if (lower.match(/hello|\bhi\b|\bhey\b|howdy|good morning|good afternoon|good evening|\byo\b/)) {
     return TRAINED_RESPONSES.greeting(timeGreeting);
   }
-  if (lower.match(/bye|goodbye|see you later|cheers|thanks|thank you/)) {
-    return `Thank you so much for visiting **Best Lolly Shop**! 🍭 Have a wonderfully sweet day! Come back anytime — we'll have something delicious waiting for you. 😊\n\nDon't forget code **SWEET10** for 10% off your next order! 🎟️`;
+  if (lower.match(/bye|goodbye|see you|cheers|thanks|thank you/)) {
+    return `Thank you for visiting **Best Lolly Shop**! 🍭 Have a wonderfully sweet day!\n\nCome back anytime — don't forget code **SWEET10** for 10% off your next order! 🎟️`;
   }
-  if (lower.match(/gumm|worm|peach|sour ring|jet plane|chew|jelly|lolly|lollies|gummy/)) {
+  if (lower.match(/gumm|worm|peach|sour|jet plane|chew|jelly|lolly|lollies|gummy|fruity|neon/)) {
     return TRAINED_RESPONSES.gummies();
   }
   if (lower.match(/choc|truffle|caramel|caramilk|chocolate fish|cadbury|whittaker|cocoa/)) {
     return TRAINED_RESPONSES.chocolates();
   }
-  if (lower.match(/party|kid|pick.and.mix|gift|wedding|birthday|baby shower|corporate|christmas|easter|halloween|valentin|event|favour|favor/)) {
+  if (lower.match(/party|kid|pick.and.mix|gift box|wedding|birthday|baby shower|corporate|christmas|easter|halloween|valentin|event|favour|favor|school|movie night/)) {
     return TRAINED_RESPONSES.party();
   }
-  if (lower.match(/ship|deliver|postage|freight|dispatch|track|arrival|courier/)) {
+  if (lower.match(/ship|deliver|postage|freight|dispatch|arrival|courier/)) {
     return TRAINED_RESPONSES.shipping();
   }
-  if (lower.match(/discount|coupon|promo|code|sale|offer|deal|saving|cheap/)) {
+  if (lower.match(/discount|coupon|promo|code|sale|offer|deal|saving/)) {
     return TRAINED_RESPONSES.discount();
   }
-  if (lower.match(/vegan|vegetarian|halal|gelatin|gluten|allerg|dietary|nut.free|dairy.free|ingredient/)) {
+  if (lower.match(/vegan|vegetarian|halal|gelatin|gluten|allerg|dietary|nut.free|dairy.free|ingredient|sugar.free/)) {
     return TRAINED_RESPONSES.dietary();
   }
-  if (lower.match(/best|popular|top|recommend|favourite|favorite|trending|what.should|help me choose/)) {
-    return `I'd love to recommend something perfect! 🍭\n\nBefore I do, could you tell me:\n1️⃣ **What's the occasion?** (personal treat, gift, party, event)\n2️⃣ **How many people** are you buying for?\n3️⃣ **Flavour preference?** (sour, sweet, chocolate, fruity, mixed)\n4️⃣ **Any dietary needs?** (vegan, gluten-free, nut-free)\n5️⃣ **Budget?** (rough guide helps me find the best value!)\n\nOnce I know, I'll pick the perfect sweets for you! 😊`;
+  if (lower.match(/bulk|wholesale|large order|big order|how many|quantity|100g|250g|500g|1kg/)) {
+    return TRAINED_RESPONSES.bulk();
   }
-  if (lower.match(/return|refund|damaged|wrong order|complaint|broken|missing/)) {
-    return `😟 I'm sorry to hear that! We want every order to be perfect.\n\n**Our Return & Refund Policy:**\n• Due to food safety regulations, **opened packs cannot be returned**.\n• If your order arrived **damaged, incorrect, or missing items** — we will fix it!\n\n📧 **Contact our support team:**\n**BestLollyShop@gmail.com**\n\nPlease include your **order number** and a photo if applicable, and we'll sort it out quickly! 💪`;
+  if (lower.match(/pay|payment|credit card|debit|paypal|apple pay|google pay|shop pay|bank transfer/)) {
+    return TRAINED_RESPONSES.payment();
+  }
+  if (lower.match(/best|popular|top|recommend|favourite|favorite|trending|what should|help me choose|suggest|not sure|don.t know/)) {
+    return TRAINED_RESPONSES.recommend();
+  }
+  if (lower.match(/return|refund|damaged|wrong order|complaint|broken|missing|incorrect/)) {
+    return `😟 I'm sorry to hear that! We want every order to be perfect.\n\n**Our Return & Refund Policy:**\n• Opened packs cannot be returned (food safety regulations).\n• Damaged, incorrect, or missing items — **We WILL fix it!**\n\n📧 **Contact us:** BestLollyShop@gmail.com\nPlease include your **order number** and a photo if possible.\n\nYour satisfaction is our priority! 💪`;
   }
   if (lower.match(/contact|email|phone|support|help|talk to|speak to|human/)) {
-    return `📞 **Contact Best Lolly Shop Support**\n\n📧 **Email:** BestLollyShop@gmail.com\n🌐 **Website:** https://www.bestlollyshop.co.nz/contact\n\n⏱️ We aim to respond to all emails within **24 hours** on business days.\n\nIs there anything else I can help you with right now? 😊`;
+    return `📞 **Contact Best Lolly Shop**\n\n📧 **Email:** BestLollyShop@gmail.com\n🌐 **Contact Form:** https://www.bestlollyshop.co.nz/contact\n\n⏱️ We reply within **24 hours** on business days.\n\nIs there anything else I can help you with? 😊`;
   }
-  if (lower.match(/price|cost|how much|cheap|expens|afford|budget/)) {
-    return `💰 **Pricing at Best Lolly Shop**\n\nOur products are priced based on bag size:\n• **100g** — Great for sampling a new flavour\n• **250g** — Popular for personal treats\n• **500g** — Perfect for sharing\n• **1kg** — **Best value!** Great for parties & bulk buyers\n\n🎟️ Don't forget to use **SWEET10** for **10% OFF** any order!\n🚚 Free shipping on orders over **$50 NZD**\n\nWould you like me to recommend the best value options? 🍬`;
+  if (lower.match(/price|cost|how much|afford|budget/)) {
+    return `💰 **Pricing & Best Value**\n\nPrices vary by bag size:\n• **100g** — Sample a new flavour\n• **250g** — Personal treat\n• **500g** — Perfect for sharing\n• **1kg** — **Best value!** Great for parties\n\n🎟️ Use **SWEET10** for **10% OFF**!\n🚚 Free shipping on orders **$50 NZD+**\n\nWant me to recommend the best value option? 🍬`;
   }
-  if (lower.match(/track|order status|where is my order|when will|my order/)) {
-    return `📦 **Tracking Your Order**\n\nOnce your order is dispatched, you'll receive an **email with your tracking number**.\n\n⏱️ Standard delivery takes **3–5 business days** across New Zealand.\n\nIf you haven't received a tracking email or your order is overdue, please contact us:\n📧 **BestLollyShop@gmail.com** with your order number.\n\nIs there anything else I can help with? 😊`;
+  if (lower.match(/track|order status|where is my order|when will|cancel|edit my order/)) {
+    return `📦 **Order Help**\n\nOnce dispatched, you'll receive a **tracking email** with your tracking number.\n\n⏱️ Standard delivery: **3–5 business days** NZ-wide.\n\nFor order status, cancellations or edits — please contact us quickly:\n📧 **BestLollyShop@gmail.com** with your order number. 😊`;
   }
   if (lower.match(/account|login|password|sign in|sign up|register|forgot/)) {
-    return `🔐 **Account & Login Help**\n\n**Forgot Password?**\n1. Go to the **Login page**\n2. Click **"Forgot Password?"**\n3. Enter your email address\n4. Check your inbox for a reset link\n\n**Can't sign in?** Make sure:\n✅ You're using the correct email address\n✅ Caps Lock is off\n✅ Try clearing your browser cache\n\nStill having trouble? Contact us at **BestLollyShop@gmail.com** 📧`;
+    return `🔐 **Account & Login Help**\n\n**Forgot Password?**\n1. Go to the **Login page**\n2. Click **Forgot Password?**\n3. Enter your email → Check inbox for reset link\n\n**Can't sign in?** Check email, Caps Lock, try incognito mode.\n\nStill stuck? Email: **BestLollyShop@gmail.com** 📧`;
+  }
+  if (lower.match(/international|overseas|australia|uk|usa|worldwide/)) {
+    return `🌏 **International Shipping**\n\nCurrently, we ship within **New Zealand only**.\n\nWe don't offer international shipping at this time.\n\nFor updates on international shipping, subscribe to our newsletter or contact us:\n📧 **BestLollyShop@gmail.com** 😊`;
   }
   return TRAINED_RESPONSES.default();
 };
@@ -240,12 +258,14 @@ export const ChatBot = () => {
 
   // Each suggestion has a unique `query` that matches a specific trained response
   const suggestions = [
-    { label: '🍬 Best Gummies',      query: 'Show me your best gummy lollies and sour sweets' },
-    { label: '🍫 Top Chocolates',    query: 'What are your top chocolate products I should try?' },
-    { label: '🎉 Party Picks',       query: 'I need candy ideas for a kids birthday party and events' },
+    { label: '🍬 Gummies & Sour',    query: 'Show me your best gummy lollies and sour sweets' },
+    { label: '🍫 Chocolates',        query: 'What are your top chocolate products I should try?' },
+    { label: '🎉 Party & Events',    query: 'I need candy for a birthday party event and gifts' },
     { label: '🚚 Shipping Info',     query: 'Tell me about your shipping and delivery options' },
-    { label: '🎟️ Discount Code',    query: 'Do you have any discount codes or special deals?' },
-    { label: '🌿 Dietary Options',   query: 'Do you have vegan gluten-free or gelatin-free lolly options?' },
+    { label: '🎟️ Discounts',        query: 'Do you have any discount codes or special deals?' },
+    { label: '🌿 Dietary Options',   query: 'Do you have vegan gluten-free or halal lolly options?' },
+    { label: '📦 Bulk Orders',       query: 'I want to buy bulk candy for a large group or event' },
+    { label: '🍭 Recommend Me',      query: 'Help me choose the best sweets I am not sure what to get' },
   ];
 
   return (
@@ -276,10 +296,10 @@ export const ChatBot = () => {
                 <span className="bot-avatar-pulse"></span>
               </div>
               <div>
-                <h3>Best Lolly Shop AI Assistant</h3>
+                <h3>Best Lolly Shop Assistant 🍭</h3>
                 <span className="bot-status">
                   <span className="status-dot"></span>
-                  Powered by Gemini AI ✨
+                  Online — here to help! ✨
                 </span>
               </div>
             </div>
@@ -362,7 +382,7 @@ export const ChatBot = () => {
           </form>
 
           <div className="chatbot-footer-note">
-            🔐 Secured · Powered by Google Gemini
+            🔐 Best Lolly Shop · BestLollyShop.co.nz
           </div>
         </div>
       )}
