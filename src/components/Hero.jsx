@@ -23,7 +23,7 @@ export const Hero = () => {
 
   const heroSettings = settings?.hero || {
     heading: 'SWEETEN YOUR | EVERYDAY LIFE!',
-    subheading: "NZ's Favorite Online Lolly Shop & Candy Store",
+    subheading: "NZ's Favourite Online Lolly Shop & Candy Store",
     description: "Indulge in our exquisite gourmet selection of hand-picked imported lollies, luxury chocolates, and sour straps. Freshly packed and delivered straight to your door across NZ.",
     buttonText: 'Explore Sweet Shop',
     buttonLink: '/shop',
@@ -161,7 +161,7 @@ export const Hero = () => {
             <div className="showcase-image-container">
               <img 
                 src={heroSettings.heroImage || '/hero_candy_display.png'} 
-                alt="Best Lolly Shop Showcase Jar" 
+                alt="Best Lolly Shop New Zealand - Buy Sweets & Chocolates Online" 
                 className="showcase-main-image"
               />
             </div>

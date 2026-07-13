@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 export const SEO = ({ title, description, canonicalUrl, ogType, ogImage, schema }) => {
   useEffect(() => {
     // 1. Update Document Title
-    document.title = title || "Best Lolly Shop - New Zealand's Favorite Candy Store";
+    document.title = title || "Best Lolly Shop - New Zealand's Favourite Online Lolly Shop";
 
     // 2. Update Meta Description
     let metaDescription = document.querySelector('meta[name="description"]');
@@ -25,14 +25,35 @@ export const SEO = ({ title, description, canonicalUrl, ogType, ogImage, schema 
       canonical.setAttribute('rel', 'canonical');
       document.head.appendChild(canonical);
     }
-    canonical.setAttribute('href', canonicalUrl || window.location.href);
+    
+    // Clean URL parameters except category/search for SEO canonicalization
+    const getCleanCanonical = () => {
+      if (canonicalUrl) return canonicalUrl;
+      if (typeof window === 'undefined') return "https://www.bestlollyshop.co.nz";
+      try {
+        const url = new URL(window.location.href);
+        const cleanParams = new URLSearchParams();
+        ['category', 'search'].forEach(param => {
+          if (url.searchParams.has(param)) {
+            cleanParams.set(param, url.searchParams.get(param));
+          }
+        });
+        url.search = cleanParams.toString();
+        return url.toString();
+      } catch (e) {
+        return window.location.href;
+      }
+    };
+    
+    const canonicalHref = getCleanCanonical();
+    canonical.setAttribute('href', canonicalHref);
 
     // 4. Update Open Graph Meta Tags
     const ogTags = {
       'og:title': title || "Best Lolly Shop",
       'og:description': description || "Shop the finest selection of lollies online.",
       'og:type': ogType || 'website',
-      'og:url': canonicalUrl || window.location.href,
+      'og:url': canonicalHref,
       'og:image': ogImage || `${window.location.origin}/logo.png`,
       'og:site_name': 'Best Lolly Shop'
     };

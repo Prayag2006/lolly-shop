@@ -63,9 +63,18 @@ const PageLoadingFallback = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
+    // Bypass splash screen if already shown in this session
+    if (typeof window !== 'undefined' && sessionStorage.getItem('lolly_shop_splash_shown') === 'true') {
+      return false;
+    }
     // Bypass splash screen entirely on password reset path
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reset-password')) {
       return false;
+    }
+    // Bypass splash screen for search engine crawlers to prevent indexing empty tags
+    if (typeof navigator !== 'undefined') {
+      const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
+      if (isBot) return false;
     }
     // Bypass splash screen entirely on slow connections (2G, 3G, or saveData active)
     const conn = typeof navigator !== 'undefined' && (navigator.connection || navigator.mozConnection || navigator.webkitConnection);

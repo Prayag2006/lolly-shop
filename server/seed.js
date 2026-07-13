@@ -64,14 +64,11 @@ async function seed() {
     await Product.insertMany(productsToSeed);
     console.log(`Seeded ${productsToSeed.length} products.`);
 
-    // Seed Testimonials
-    const testimonialCount = await Testimonial.countDocuments();
-    if (testimonialCount === 0) {
-      await Testimonial.insertMany(defaultTestimonials);
-      console.log(`Seeded ${defaultTestimonials.length} testimonials.`);
-    } else {
-      console.log('Testimonials already seeded.');
-    }
+    // Seed Testimonials - Clear old ones first to sync NZ locations and reviews
+    console.log('Clearing existing testimonial collection...');
+    await Testimonial.deleteMany({});
+    await Testimonial.insertMany(defaultTestimonials);
+    console.log(`Seeded ${defaultTestimonials.length} testimonials.`);
 
     console.log('Database seeding completed successfully.');
   } catch (error) {

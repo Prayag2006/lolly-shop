@@ -183,7 +183,7 @@ export const Home = ({ onProductClick }) => {
     },
     {
       q: 'Do you offer bulk or wholesale pricing?',
-      a: 'Yes! We offer special pricing for bulk orders, corporate gifting, and parties. Please contact us at BestLollyShop@gmail.com or call +91 123 456 7890 to discuss your custom sweet requests!'
+      a: 'Yes! We offer special pricing for bulk orders, corporate gifting, and parties. Please contact us at bestlollyshopnz@gmail.com or call +64 21 123 4567 to discuss your custom sweet requests!'
     }
   ];
 
@@ -223,9 +223,57 @@ export const Home = ({ onProductClick }) => {
       ],
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91 123 456 7890",
+        "telephone": "+64 21 123 4567",
         "contactType": "customer service",
-        "email": "BestLollyShop@gmail.com"
+        "email": "bestlollyshopnz@gmail.com",
+        "areaServed": "NZ"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Grey Lynn",
+        "addressLocality": "Auckland",
+        "postalCode": "1021",
+        "addressCountry": "NZ"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "LocalBusiness",
+      "@id": `${domain}/#localbusiness`,
+      "name": "Best Lolly Shop",
+      "image": `${domain}/logo.png`,
+      "url": domain,
+      "telephone": "+64 21 123 4567",
+      "email": "bestlollyshopnz@gmail.com",
+      "priceRange": "$$",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Grey Lynn",
+        "addressLocality": "Auckland",
+        "postalCode": "1021",
+        "addressCountry": "NZ"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": -36.8576402,
+        "longitude": 174.7408713
+      },
+      "openingHoursSpecification": {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday"
+        ],
+        "opens": "09:00",
+        "closes": "18:00"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "New Zealand"
       }
     },
     {
@@ -699,7 +747,7 @@ export const Home = ({ onProductClick }) => {
                 Satisfy Your Cravings with the Best Lollies Online in NZ
               </h3>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                At Best Lolly Shop, we believe that life is better with a little sweetness. That’s why we’ve curated an extensive selection of the finest confections from New Zealand and around the globe. From classic Kiwi favorites like jet planes and milk bottles to imported American candy and traditional British sweets, our digital shelves are stocked to delight candy lovers of all ages.
+                At Best Lolly Shop, we believe that life is better with a little sweetness. That’s why we’ve curated an extensive selection of the finest confections from New Zealand and around the globe. From classic Kiwi favourites like jet planes and milk bottles to imported American candy and traditional British sweets, our digital shelves are stocked to delight candy lovers of all ages.
               </p>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
                 Buying lollies online in NZ has never been easier. Skip the supermarket queues and browse our clean, user-friendly online sweet shop from the comfort of your home. With just a few clicks, you can fill your cart with gourmet quality gummies, rich chocolates, spicy sour lollies, and everything in between. We pack each order with care in our food-grade facilities and provide fast, reliable shipping across the country—from Cape Reinga to the Bluff.
@@ -712,14 +760,14 @@ export const Home = ({ onProductClick }) => {
                 Why settle for a pre-packaged bag of mixed sweets when you can create your own custom candy masterpiece? Our signature <strong>Pick and Mix Lollies</strong> experience puts you in the driver’s seat. Choose from over 100 varieties of loose candy, including fizzy sour straps, sweet marshmallow drops, gummy bears, chewable licorice, and classic hard candies.
               </p>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Our custom pick and mix builder is perfect for creating personalized gift bags, party favors, or simply treating yourself to your exact favorite combinations. Select your bag size, add your favorite treats, and let us do the rest! It’s the ultimate way to enjoy a candy store experience online.
+                Our custom pick and mix builder is perfect for creating personalized gift bags, party favours, or simply treating yourself to your exact favourite combinations. Select your bag size, add your favourite treats, and let us do the rest! It’s the ultimate way to enjoy a candy store experience online.
               </p>
 
               <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
                 Save Big with Bulk Lollies NZ
               </h3>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Hosting a major event or just want to stock up and save? Our <strong>Bulk Lollies NZ</strong> section offers wholesale prices on large quantities of New Zealand's favorite sweets. We stock 1kg, 2kg, and larger bulk bags of gummies, chocolates, and party mixes, making us the go-to supplier for:
+                Hosting a major event or just want to stock up and save? Our <strong>Bulk Lollies NZ</strong> section offers wholesale prices on large quantities of New Zealand's favourite sweets. We stock 1kg, 2kg, and larger bulk bags of gummies, chocolates, and party mixes, making us the go-to supplier for:
               </p>
               <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '1.8rem' }}>
                 <li style={{ marginBottom: '0.5rem' }}><strong>Birthday Parties</strong>: Colorful candy arrangements to match any theme.</li>

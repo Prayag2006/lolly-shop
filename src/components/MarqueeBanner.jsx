@@ -28,7 +28,7 @@ export const MarqueeBanner = () => {
 
   // Fallback if no marquees are defined/enabled
   if (activeMarquees.length === 0) {
-    const fallbackText = settings?.marqueeText || "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50!";
+    const fallbackText = settings?.marqueeText || "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!";
     const announcements = fallbackText.split('|').map(s => s.trim()).filter(Boolean);
     
     return (

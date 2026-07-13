@@ -80,7 +80,7 @@ const categorySeoData = {
   },
   'Hard Lollies': {
     title: "Hard Candies, Rock & Lollipops NZ | Best Lolly Shop",
-    description: "Buy classic hard-boiled candies, lollipops, and traditional rock candy online. Perfect for party bags and wedding favors in NZ.",
+    description: "Buy classic hard-boiled candies, lollipops, and traditional rock candy online. Perfect for party bags and wedding favours in NZ.",
     h1: "Classic Hard-Boiled Candies & Lollipops",
     intro: "Discover nostalgic hard-boiled sweets, travel drops, and gourmet lollipops. Perfect for slow-sucking sweetness that lasts."
   },
@@ -94,7 +94,7 @@ const categorySeoData = {
     title: "Create Custom Pick & Mix Lollies NZ | Best Lolly Shop",
     description: "Build your dream candy bag online with our custom Pick and Mix lollies. Choose from 100+ gummies, sours, and chocolates. Fast shipping.",
     h1: "Build Your Custom Pick and Mix Candy Bag",
-    intro: "Mix and match your absolute favorite sweets! Select your bag size and fill it with our premium selection of gummies, sours, chocolates, and chews."
+    intro: "Mix and match your absolute favourite sweets! Select your bag size and fill it with our premium selection of gummies, sours, chocolates, and chews."
   },
   'American': {
     title: "Imported American Candy & Soda NZ | Best Lolly Shop",
@@ -104,7 +104,7 @@ const categorySeoData = {
   },
   'British': {
     title: "British Sweets & UK Confectionery NZ | Best Lolly Shop",
-    description: "Buy authentic English sweets, sherbets, and UK chocolates online in New Zealand. Fast dispatch and secure delivery for British favorites.",
+    description: "Buy authentic English sweets, sherbets, and UK chocolates online in New Zealand. Fast dispatch and secure delivery for British favourites.",
     h1: "Authentic British Sweets & UK Classics",
     intro: "Bring back sweet memories of the UK with our range of traditional British sweets, boiled sherbets, and popular English chocolate bars."
   },
@@ -112,7 +112,7 @@ const categorySeoData = {
     title: "Buy Bulk Lollies & Party Candy NZ | Best Lolly Shop",
     description: "Save money with wholesale bulk lollies. Buy 1kg+ bags of gummies, party mixes, and chocolates online. Fast courier delivery in NZ.",
     h1: "Wholesale Bulk Lollies for Parties & Events",
-    intro: "Stock up and save with our bulk candy bags! Ideal for weddings, large events, corporate branding, or party favor bag filling. Great value per kilogram."
+    intro: "Stock up and save with our bulk candy bags! Ideal for weddings, large events, corporate branding, or party favour bag filling. Great value per kilogram."
   },
   'Sugar Free': {
     title: "Sugar Free Candy & Diabetic Sweets NZ | Best Lolly Shop",
@@ -131,6 +131,24 @@ const categorySeoData = {
     description: "Shop the best selection of NZ lollies online. Chewies, gummies, hard candies, and nostalgic sweets. Fast delivery throughout New Zealand.",
     h1: "Premium New Zealand Lollies & Confectionery",
     intro: "Browse New Zealand's finest lollies! From traditional Kiwi classics to international favourites, find everything to satisfy your sweet tooth here."
+  },
+  'NZ Lollies': {
+    title: "Kiwi Classics & Traditional NZ Lollies | Best Lolly Shop",
+    description: "Shop nostalgic New Zealand lollies online. Jet planes, pineapple lumps, milk bottles and Mayceys. Fast nationwide courier delivery.",
+    h1: "Kiwi Classics & Traditional NZ Lollies",
+    intro: "Take a trip down memory lane! Our NZ Lollies collection features your all-time favourite Kiwiana confections, freshly packed and delivered across New Zealand."
+  },
+  'Soft Lollies': {
+    title: "Chewy Soft Lollies & Gummies NZ | Best Lolly Shop",
+    description: "Buy soft chewy sweets, gummy fruits, and soft candies online. Fresh stock, delicious flavours, and quick delivery across New Zealand.",
+    h1: "Soft & Chewy Lollies Collection",
+    intro: "Indulge in our collection of soft, pillowy, and chewy lollies. From milk bottles to wine gums, find your perfect chew here."
+  },
+  'Mayceys': {
+    title: "Mayceys Lollies NZ | Sour Peaches & Apples Online",
+    description: "Shop premium Mayceys lollies online, including the famous Mayceys sour peaches, sour apples, and globs. Made in New Zealand.",
+    h1: "Mayceys Confectionery Collection",
+    intro: "Proudly crafted in New Zealand! Mayceys confections are legendary for their intense flavours and perfect chew. Taste the local pride today."
   },
   'Drinks & Snacks': {
     title: "Imported Drinks & American Snacks NZ | Best Lolly Shop",
@@ -283,18 +301,40 @@ export const Shop = ({ onProductClick }) => {
     });
 
   const getActiveSeoInfo = () => {
-    if (selectedSubcategory && categorySeoData[selectedSubcategory]) {
-      return categorySeoData[selectedSubcategory];
+    let base = categorySeoData['All'];
+    
+    if (selectedSubcategory) {
+      if (categorySeoData[selectedSubcategory]) {
+        base = categorySeoData[selectedSubcategory];
+      } else {
+        base = {
+          title: `Buy ${selectedSubcategory} Online NZ | Best Lolly Shop`,
+          description: `Order fresh ${selectedSubcategory} online at Best Lolly Shop New Zealand. High-quality sweets, competitive prices, and fast courier delivery nationwide.`,
+          h1: selectedSubcategory,
+          intro: `Browse our delicious range of ${selectedSubcategory}. Hand-picked and packed fresh for our NZ customers.`
+        };
+      }
+    } else if (selectedCategory && selectedCategory !== 'All') {
+      if (categorySeoData[selectedCategory]) {
+        base = categorySeoData[selectedCategory];
+      } else {
+        const parentName = parentGroups[selectedParent]?.name;
+        if (parentName && categorySeoData[parentName]) {
+          base = categorySeoData[parentName];
+        } else {
+          base = {
+            title: `Buy ${selectedCategory} Online NZ | Best Lolly Shop`,
+            description: `Order ${selectedCategory} online at New Zealand's favourite candy store. Great prices and fast nationwide delivery.`,
+            h1: selectedCategory,
+            intro: `Explore our collection of ${selectedCategory}. Packed with love in Auckland.`
+          };
+        }
+      }
+    } else {
+      const defaultSeo = settings?.seoOverrides?.shop || settings?.seoOverrides?.['/shop'] || categorySeoData['All'];
+      base = defaultSeo;
     }
-    const parentName = parentGroups[selectedParent]?.name;
-    if (categorySeoData[parentName]) {
-      return categorySeoData[parentName];
-    }
-    if (categorySeoData[selectedCategory]) {
-      return categorySeoData[selectedCategory];
-    }
-    const defaultSeo = settings?.seoOverrides?.shop || settings?.seoOverrides?.['/shop'] || categorySeoData['All'];
-    return defaultSeo;
+    return base;
   };
 
   const seoInfo = getActiveSeoInfo();
@@ -315,12 +355,44 @@ export const Shop = ({ onProductClick }) => {
     }))
   };
 
+  const breadcrumbElements = [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Home",
+      "item": domain
+    },
+    {
+      "@type": "ListItem",
+      "position": 2,
+      "name": "Shop",
+      "item": `${domain}/shop`
+    }
+  ];
+
+  if (selectedCategory && selectedCategory !== 'All') {
+    breadcrumbElements.push({
+      "@type": "ListItem",
+      "position": 3,
+      "name": selectedCategory,
+      "item": `${domain}/shop?category=${encodeURIComponent(selectedCategory)}`
+    });
+  }
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": breadcrumbElements
+  };
+
+  const shopSchemas = [itemListSchema, breadcrumbSchema];
+
   return (
     <div className="shop-page">
       <SEO 
         title={seoInfo.title}
         description={seoInfo.description}
-        schema={itemListSchema}
+        schema={shopSchemas}
       />
       {/* Banner */}
       <div className="shop-banner">

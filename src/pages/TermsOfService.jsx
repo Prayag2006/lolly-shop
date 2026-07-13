@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { SEO } from '../components/SEO';
 import './TermsOfService.css';
 
 export const TermsOfService = () => {
@@ -8,6 +9,7 @@ export const TermsOfService = () => {
 
   return (
     <div className="terms-page container">
+      <SEO title="Terms of Service - Best Lolly Shop NZ" description="Read our terms of service governing purchases and deliveries under the New Zealand Consumer Guarantees Act." />
       <div className="glass-card terms-card">
         <h1>Terms of Service</h1>
         <p className="terms-updated">Last Updated: July 2026</p>
@@ -65,7 +67,7 @@ export const TermsOfService = () => {
             <li>If a product is faulty, damaged during transit, or does not match its description, we will meet our obligations under the CGA to provide a replacement, remedy, or refund.</li>
             <li>Due to food safety regulations, we cannot accept returns on opened lolly packaging unless the goods themselves are faulty.</li>
           </ul>
-          <p>For return inquiries, please contact us at <a href="mailto:BestLollyShop@gmail.com">BestLollyShop@gmail.com</a>.</p>
+          <p>For return inquiries, please contact us at <a href="mailto:bestlollyshopnz@gmail.com">bestlollyshopnz@gmail.com</a>.</p>
         </section>
 
         <section className="terms-section">

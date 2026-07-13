@@ -32,7 +32,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: true,
     isNew: false,
-    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favourites']
   },
   {
     name: 'Pascall Jet Planes',
@@ -49,7 +49,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: true,
     isNew: false,
-    collections: ['Kiwi Classics', 'Gummies', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Gummies', 'NZ Favourites']
   },
   {
     name: 'Pascall Milk Bottles',
@@ -66,7 +66,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: false,
     isNew: true,
-    collections: ['Kiwi Classics', 'Retro', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Retro', 'NZ Favourites']
   },
   {
     name: 'Mayceys Sour Peaches',
@@ -100,7 +100,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: true,
     isNew: false,
-    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favourites']
   },
   {
     name: 'Chocolate Fish (Pascall)',
@@ -117,7 +117,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: false,
     isNew: true,
-    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Chocolates', 'NZ Favourites']
   },
   {
     name: 'Pascall Minties',
@@ -134,7 +134,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: false,
     isNew: false,
-    collections: ['Kiwi Classics', 'Retro', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Retro', 'NZ Favourites']
   },
   {
     name: 'Mayceys Sour Apples',
@@ -202,7 +202,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: true,
     isNew: false,
-    collections: ['Kiwi Classics', 'Gummies', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Gummies', 'NZ Favourites']
   },
   {
     name: 'Buzz Bar (Cadbury)',
@@ -219,7 +219,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: false,
     isNew: false,
-    collections: ['Bars', 'Chocolates', 'NZ Favorites']
+    collections: ['Bars', 'Chocolates', 'NZ Favourites']
   },
   {
     name: 'Raspberry Sherbet Bombs',
@@ -236,7 +236,7 @@ export const initialProducts = [
     inStock: true,
     isPopular: true,
     isNew: false,
-    collections: ['Kiwi Classics', 'Retro', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Retro', 'NZ Favourites']
   },
   {
     name: 'Toffee Milks',
@@ -253,37 +253,37 @@ export const initialProducts = [
     inStock: true,
     isPopular: false,
     isNew: false,
-    collections: ['Kiwi Classics', 'Retro', 'NZ Favorites']
+    collections: ['Kiwi Classics', 'Retro', 'NZ Favourites']
   }
 ];
 
 export const defaultTestimonials = [
   {
-    name: 'Priya Sharma',
+    name: 'Phoebe S. (Auckland)',
     role: 'Sweet Enthusiast',
     avatar: 'P',
-    quote: 'Best Lolly Shop has the most amazing collection! The quality is unmatched and delivery is always on time. My kids absolutely love their gummies!',
+    quote: 'Best Lolly Shop has the most amazing selection! The quality is unmatched and courier delivery within Auckland was overnight. My kids absolutely love their favourites!',
     rating: 5
   },
   {
-    name: 'Rajesh Kumar',
+    name: 'Rawiri K. (Wellington)',
     role: 'Regular Customer',
     avatar: 'R',
-    quote: 'I\'ve ordered from many candy stores, but none compare to Best Lolly Shop. Fresh, delicious, and beautifully packaged. Perfect for gifting!',
+    quote: 'I\'ve ordered from many candy stores, but none compare to Best Lolly Shop. Fresh, delicious sweets, and beautifully packaged. Perfect for gifting in NZ!',
     rating: 5
   },
   {
-    name: 'Anita Patel',
+    name: 'Alisha P. (Christchurch)',
     role: 'Party Planner',
     avatar: 'A',
-    quote: 'Their bulk orders for parties are fantastic! Great variety, competitive prices, and the customer service is exceptional. Highly recommended!',
+    quote: 'Their bulk lollies for parties are fantastic! Great variety, competitive NZD prices, and the customer service is exceptional. Highly recommended!',
     rating: 5
   },
   {
-    name: 'Vikram Singh',
+    name: 'Val M. (Dunedin)',
     role: 'Chocolate Lover',
     avatar: 'V',
-    quote: 'The chocolates are divine! Premium quality at reasonable prices. Best Lolly Shop is now my go-to for all sweet cravings.',
+    quote: 'The chocolates are divine! Premium quality at reasonable prices. Best Lolly Shop is now my go-to for all sweet cravings in NZ.',
     rating: 5
   }
 ];

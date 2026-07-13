@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { SEO } from '../components/SEO';
 import './PrivacyPolicy.css';
 
 export const PrivacyPolicy = () => {
@@ -8,6 +9,7 @@ export const PrivacyPolicy = () => {
 
   return (
     <div className="privacy-page container">
+      <SEO title="Privacy Policy - Best Lolly Shop NZ" description="Read our privacy policy detailing how we collect and protect your customer data in compliance with the New Zealand Privacy Act 2020." />
       <div className="glass-card privacy-card">
         <h1>Privacy Policy</h1>
         <p className="privacy-updated">Last Updated: July 2026</p>
@@ -69,7 +71,7 @@ export const PrivacyPolicy = () => {
           </p>
           <p>
             If you wish to access or correct your details, please contact our Privacy Officer at 
-            <a href="mailto:BestLollyShop@gmail.com"> BestLollyShop@gmail.com</a>. We will respond to your request within 20 working days.
+            <a href="mailto:bestlollyshopnz@gmail.com"> bestlollyshopnz@gmail.com</a>. We will respond to your request within 20 working days.
           </p>
         </section>
 

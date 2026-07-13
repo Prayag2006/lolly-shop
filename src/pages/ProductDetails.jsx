@@ -178,6 +178,33 @@ export const ProductDetails = () => {
     };
   }
 
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": domain
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": `${domain}/shop`
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.name,
+        "item": `${domain}/product/${product.id}`
+      }
+    ]
+  };
+
+  const productSchemas = [productSchema, breadcrumbSchema];
+
   return (
     <div className="product-details-page">
       <SEO 
@@ -185,7 +212,7 @@ export const ProductDetails = () => {
         description={seoDescription}
         ogImage={product.image}
         ogType="product"
-        schema={productSchema}
+        schema={productSchemas}
       />
       {/* Add Success Banner */}
       <div id="add-success-banner" className="add-success-banner">
@@ -562,7 +589,7 @@ export const ProductDetails = () => {
                 <div className="rec-image-wrapper">
                   <img 
                     src={p.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
-                    alt={p.name} 
+                    alt={`Buy ${p.name} Online NZ`} 
                     className="rec-image"
                     onError={(e) => {
                       e.target.onerror = null;
