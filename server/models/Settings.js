@@ -42,7 +42,6 @@ const settingsSchema = new mongoose.Schema({
   popupOffers: [{
     enabled: { type: Boolean, default: true },
     delay: { type: Number, default: 3000 },
-    autoClose: { type: Number, default: 0 },
     title: { type: String, default: "🎉 Special Sweet Deal!" },
     description: { type: String, default: "Get 15% off on all sour gummies this weekend. Use code at checkout!" },
     code: { type: String, default: "SOUR15" },
@@ -193,8 +192,7 @@ const settingsSchema = new mongoose.Schema({
         { label: 'Terms of Service', link: '/terms-of-service' }
       ]
     },
-    copyright: { type: String, default: '© 2026 Best Lolly Shop. All rights reserved.' },
-    logoImage: { type: String, default: '' }
+    copyright: { type: String, default: '© 2026 Best Lolly Shop. All rights reserved.' }
   },
 
   // Header Settings
@@ -211,8 +209,7 @@ const settingsSchema = new mongoose.Schema({
       title: { type: String },
       description: { type: String },
       keywords: { type: String },
-      ogImage: { type: String },
-      canonicalUrl: { type: String }
+      ogImage: { type: String }
     },
     default: {}
   }

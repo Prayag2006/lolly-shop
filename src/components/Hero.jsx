@@ -140,7 +140,7 @@ export const Hero = () => {
             </div>
             <div className="hero-feature-item">
               <ShieldCheck size={16} />
-              <span>Safe NZ Delivery</span>
+              <span>Free Hamilton Delivery</span>
             </div>
           </motion.div>
         </motion.div>
@@ -189,7 +189,7 @@ export const Hero = () => {
               <div className="ic-icon">🚚</div>
               <div className="ic-details">
                 <h4>Free Delivery</h4>
-                <p>Orders over $50 NZD</p>
+                <p>Hamilton, New Zealand</p>
               </div>
             </motion.div>
           </div>

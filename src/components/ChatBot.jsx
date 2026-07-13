@@ -2,34 +2,160 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Sparkles } from 'lucide-react';
 import './ChatBot.css';
 
-// Render **bold** markdown inline in bot messages
+// Render **bold** and line breaks in bot messages
 const renderBotText = (text) => {
   if (!text) return null;
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
-    }
-    return <span key={i}>{part}</span>;
+  return text.split('\n').map((line, lineIdx) => {
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <span key={lineIdx}>
+        {parts.map((part, i) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i}>{part.slice(2, -2)}</strong>;
+          }
+          return <span key={i}>{part}</span>;
+        })}
+        {lineIdx < text.split('\n').length - 1 && <br />}
+      </span>
+    );
   });
+};
+
+// ── LOCAL TRAINED RESPONSES (used when Gemini API is unavailable) ─────────────
+const TRAINED_RESPONSES = {
+  greeting: (timeGreeting) =>
+    `${timeGreeting}! 🍭 Welcome to **Best Lolly Shop New Zealand!** I am your **Best Lolly Shop AI Assistant**.\n\nTo make your shopping experience even sweeter:\n🎟️ Use code **SWEET10** at checkout for **10% OFF** your entire order!\n🚚 Enjoy **FREE shipping** on all NZ orders over **$50 NZD**!\n🏙️ Hamilton customers get **FREE delivery** automatically!\n\nHow can I help satisfy your candy cravings today? 😊`,
+
+  gummies: () =>
+    `🍬 **Our Best-Selling Gummies & Chewy Sweets!**\n\n` +
+    `⭐ **Sour Neon Worms** — Tangy rainbow-coated gummy worms, absolutely irresistible! Perfect for sour candy lovers.\n\n` +
+    `⭐ **Mayceys Sour Peaches** — The gold standard of sour candy in NZ. Intensely sour, then sweet — addictive!\n\n` +
+    `⭐ **Pascall Jet Planes** — A Kiwi classic! Firm chewy candy in fun aeroplane shapes, loved by all ages.\n\n` +
+    `⭐ **Trolli Sour Brite Crawlers** — Fruity & sour worms in bright neon colours — a party favourite.\n\n` +
+    `🛍️ Available in **100g, 250g, 500g & 1kg** bags. The **1kg bag is the best value!**\n\nWould you like to mix & match, or are you looking for a specific flavour? 😋`,
+
+  chocolates: () =>
+    `🍫 **Our Top Chocolate Picks!**\n\n` +
+    `⭐ **Premium Dark Truffles** — Luxurious Belgian ganache centres in rich dark chocolate. Perfect for gifting!\n\n` +
+    `⭐ **Cadbury Caramilk Bar** — Silky smooth golden caramel chocolate — impossibly moreish.\n\n` +
+    `⭐ **Pascall Chocolate Fish** — A New Zealand icon! Marshmallow coated in creamy milk chocolate.\n\n` +
+    `⭐ **Whittaker's Peanut Butter Cups** — Kiwi favourite. Velvety chocolate shell with peanut butter filling.\n\n` +
+    `⭐ **Cadbury Roses Selection Box** — A gorgeous assorted chocolate box, ideal for gifts & events.\n\n` +
+    `🎁 All chocolates are available as **gift boxes** with custom wrapping!\n\nAny specific chocolate preference — dark, milk, or white? 🍫`,
+
+  party: () =>
+    `🎉 **Party & Event Candy Solutions!**\n\n` +
+    `We LOVE helping make your events extra special! Here's what we offer:\n\n` +
+    `🎂 **Birthday Parties** — Custom pick-and-mix bulk bags, lolly bags for every guest!\n` +
+    `👶 **Baby Showers** — Pastel-coloured sweets, personalised lolly favours in matching themes.\n` +
+    `💒 **Weddings & Engagements** — Elegant candy buffets, personalised lollies with your names & date.\n` +
+    `🏢 **Corporate Events** — Logo-printed candy, branded confectionery, bulk promotional packs.\n` +
+    `🎃 **Halloween / Christmas / Easter** — Seasonal themed treats & gift packs.\n\n` +
+    `📦 **Bulk Bags:** 100g, 250g, 500g & 1kg options available.\n` +
+    `🎨 **Custom Printing:** We print logos & messages on lollies and packaging!\n\n` +
+    `How many guests are you expecting, and what's your budget? I'll tailor the perfect sweet package for you! 🎁`,
+
+  shipping: () =>
+    `🚚 **Shipping & Delivery Information**\n\n` +
+    `🏙️ **Hamilton, NZ** — **FREE delivery** automatically applied at checkout! No code needed.\n\n` +
+    `🇳🇿 **Rest of New Zealand:**\n` +
+    `✅ Orders **over $50 NZD** → **FREE express shipping!**\n` +
+    `📦 Orders **under $50 NZD** → Flat rate of **$5 NZD**\n\n` +
+    `⏱️ **Delivery Time:** 3–5 business days (NZ-wide)\n` +
+    `📍 We currently ship within **New Zealand only**\n\n` +
+    `📦 **Order Tracking:** Once your order is dispatched, you'll receive an email with your tracking number.\n\n` +
+    `💡 **Tip:** Add more items to hit $50 and get FREE shipping! Need help finding something to top up your order? 😊`,
+
+  discount: () =>
+    `🎟️ **Current Deals & Discount Codes!**\n\n` +
+    `💥 **SWEET10** — Use at checkout for **10% OFF** your ENTIRE order! Valid for all products.\n\n` +
+    `🚚 **Free Shipping Deal** — Spend **$50 NZD or more** and get **FREE express shipping** automatically!\n\n` +
+    `🏙️ **Hamilton Free Delivery** — Live in Hamilton, NZ? You automatically get **FREE delivery** on every order!\n\n` +
+    `🛍️ **Bulk Buy Savings** — The bigger the bag, the better the value:\n` +
+    `• 100g → Great for trying new flavours\n` +
+    `• 1kg → Best value per gram — save more, eat more! 🍬\n\n` +
+    `📧 **Newsletter Subscribers** get exclusive early access to sales and new arrivals!\n\nReady to start shopping? 🛒`,
+
+  dietary: () =>
+    `🌿 **Dietary & Allergy Options at Best Lolly Shop**\n\n` +
+    `We have delicious options for everyone! Here's what's available:\n\n` +
+    `✅ **Gluten-Free:** Many of our lollies are naturally gluten-free. Check the dietary badge on each product page.\n\n` +
+    `✅ **Gelatin-Free / Vegan-Friendly:** Options include:\n` +
+    `• **Mayceys Sour Peaches** — Gelatin-free & vegan!\n` +
+    `• **Spaceman Candy Sticks** — Gelatin-free & vegan!\n` +
+    `• **Sour Rainbow Belts** — No gelatin, great for vegans.\n\n` +
+    `✅ **Nut-Free Options:** Many of our gummy sweets are produced in nut-free facilities. Please check individual labels.\n\n` +
+    `⚠️ **Allergen Information:** Full ingredient lists and allergen info are listed on every product page.\n\n` +
+    `❓ Have a specific allergy or dietary need? Tell me and I'll point you to the right products! 💚`,
+
+  shipping_fallback: () =>
+    `🚚 **We offer FREE delivery in Hamilton, New Zealand!** 🎉\n\nFor other NZ locations:\n✅ Orders over **$50 NZD** → FREE express shipping!\n📦 Orders under $50 → Flat rate **$5 NZD**\n⏱️ Standard delivery: **3–5 business days**\n\nCan I help you find some sweets? 😊`,
+
+  discount_fallback: () =>
+    `🎟️ Use coupon code **SWEET10** at checkout to get **10% OFF** your entire order!\n\nPlus, we offer **FREE shipping** on NZ orders over **$50**. Ready to grab some treats? 🛒`,
+
+  default: () =>
+    `I'd love to help! 🍭 Could you tell me a bit more about what you're looking for?\n\nFor example:\n• Are you shopping for a specific occasion? (birthday, party, gift)\n• Do you have a favourite flavour? (sour, chocolate, fruity)\n• Any dietary requirements? (vegan, gluten-free)\n\nOr feel free to browse our quick options below! 😊`,
+};
+
+const getLocalFallback = (query, timeGreeting) => {
+  const lower = String(query || '').toLowerCase();
+
+  if (lower.match(/hello|hi+|hey+|howdy|good morning|good afternoon|good evening|yo+/)) {
+    return TRAINED_RESPONSES.greeting(timeGreeting);
+  }
+  if (lower.match(/bye|goodbye|see you later|cheers|thanks|thank you/)) {
+    return `Thank you so much for visiting **Best Lolly Shop**! 🍭 Have a wonderfully sweet day! Come back anytime — we'll have something delicious waiting for you. 😊\n\nDon't forget code **SWEET10** for 10% off your next order! 🎟️`;
+  }
+  if (lower.match(/gumm|worm|peach|sour ring|jet plane|chew|jelly|lolly|lollies|gummy/)) {
+    return TRAINED_RESPONSES.gummies();
+  }
+  if (lower.match(/choc|truffle|caramel|caramilk|chocolate fish|cadbury|whittaker|cocoa/)) {
+    return TRAINED_RESPONSES.chocolates();
+  }
+  if (lower.match(/party|kid|pick.and.mix|gift|wedding|birthday|baby shower|corporate|christmas|easter|halloween|valentin|event|favour|favor/)) {
+    return TRAINED_RESPONSES.party();
+  }
+  if (lower.match(/ship|deliver|postage|freight|dispatch|track|arrival|courier/)) {
+    return TRAINED_RESPONSES.shipping();
+  }
+  if (lower.match(/discount|coupon|promo|code|sale|offer|deal|saving|cheap/)) {
+    return TRAINED_RESPONSES.discount();
+  }
+  if (lower.match(/vegan|vegetarian|halal|gelatin|gluten|allerg|dietary|nut.free|dairy.free|ingredient/)) {
+    return TRAINED_RESPONSES.dietary();
+  }
+  if (lower.match(/best|popular|top|recommend|favourite|favorite|trending|what.should|help me choose/)) {
+    return `I'd love to recommend something perfect! 🍭\n\nBefore I do, could you tell me:\n1️⃣ **What's the occasion?** (personal treat, gift, party, event)\n2️⃣ **How many people** are you buying for?\n3️⃣ **Flavour preference?** (sour, sweet, chocolate, fruity, mixed)\n4️⃣ **Any dietary needs?** (vegan, gluten-free, nut-free)\n5️⃣ **Budget?** (rough guide helps me find the best value!)\n\nOnce I know, I'll pick the perfect sweets for you! 😊`;
+  }
+  if (lower.match(/return|refund|damaged|wrong order|complaint|broken|missing/)) {
+    return `😟 I'm sorry to hear that! We want every order to be perfect.\n\n**Our Return & Refund Policy:**\n• Due to food safety regulations, **opened packs cannot be returned**.\n• If your order arrived **damaged, incorrect, or missing items** — we will fix it!\n\n📧 **Contact our support team:**\n**BestLollyShop@gmail.com**\n\nPlease include your **order number** and a photo if applicable, and we'll sort it out quickly! 💪`;
+  }
+  if (lower.match(/contact|email|phone|support|help|talk to|speak to|human/)) {
+    return `📞 **Contact Best Lolly Shop Support**\n\n📧 **Email:** BestLollyShop@gmail.com\n🌐 **Website:** https://www.bestlollyshop.co.nz/contact\n\n⏱️ We aim to respond to all emails within **24 hours** on business days.\n\nIs there anything else I can help you with right now? 😊`;
+  }
+  if (lower.match(/price|cost|how much|cheap|expens|afford|budget/)) {
+    return `💰 **Pricing at Best Lolly Shop**\n\nOur products are priced based on bag size:\n• **100g** — Great for sampling a new flavour\n• **250g** — Popular for personal treats\n• **500g** — Perfect for sharing\n• **1kg** — **Best value!** Great for parties & bulk buyers\n\n🎟️ Don't forget to use **SWEET10** for **10% OFF** any order!\n🚚 Free shipping on orders over **$50 NZD**\n\nWould you like me to recommend the best value options? 🍬`;
+  }
+  if (lower.match(/track|order status|where is my order|when will|my order/)) {
+    return `📦 **Tracking Your Order**\n\nOnce your order is dispatched, you'll receive an **email with your tracking number**.\n\n⏱️ Standard delivery takes **3–5 business days** across New Zealand.\n\nIf you haven't received a tracking email or your order is overdue, please contact us:\n📧 **BestLollyShop@gmail.com** with your order number.\n\nIs there anything else I can help with? 😊`;
+  }
+  if (lower.match(/account|login|password|sign in|sign up|register|forgot/)) {
+    return `🔐 **Account & Login Help**\n\n**Forgot Password?**\n1. Go to the **Login page**\n2. Click **"Forgot Password?"**\n3. Enter your email address\n4. Check your inbox for a reset link\n\n**Can't sign in?** Make sure:\n✅ You're using the correct email address\n✅ Caps Lock is off\n✅ Try clearing your browser cache\n\nStill having trouble? Contact us at **BestLollyShop@gmail.com** 📧`;
+  }
+  return TRAINED_RESPONSES.default();
 };
 
 export const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   const getInitialGreeting = () => {
     const clientHour = new Date().getHours();
-    let timeGreeting = "Hello";
-    if (clientHour >= 5 && clientHour < 12) {
-      timeGreeting = "Good morning";
-    } else if (clientHour >= 12 && clientHour < 17) {
-      timeGreeting = "Good afternoon";
-    } else if (clientHour >= 17 && clientHour < 22) {
-      timeGreeting = "Good evening";
-    } else {
-      timeGreeting = "Good evening";
-    }
-    return `${timeGreeting}! 🍭 Welcome to Best Lolly Shop New Zealand! I am your **Best Lolly Shop AI Assistant**. To make your shopping experience even sweeter, make sure to use coupon code **SWEET10** at checkout to get a yummy **10% OFF** your entire order! Plus, we offer **FREE shipping** on NZ orders over $50! 🚚 How can I help satisfy your candy cravings today?`;
+    let timeGreeting = 'Hello';
+    if (clientHour >= 5 && clientHour < 12) timeGreeting = 'Good morning';
+    else if (clientHour >= 12 && clientHour < 17) timeGreeting = 'Good afternoon';
+    else if (clientHour >= 17) timeGreeting = 'Good evening';
+    return TRAINED_RESPONSES.greeting(timeGreeting);
   };
 
   const [messages, setMessages] = useState([
@@ -49,14 +175,9 @@ export const ChatBot = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  useEffect(() => { scrollToBottom(); }, [messages, isTyping]);
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping]);
-
-  useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 300);
-    }
+    if (isOpen) setTimeout(() => inputRef.current?.focus(), 300);
   }, [isOpen]);
 
   const handleSendMessage = async (textToSend) => {
@@ -74,8 +195,13 @@ export const ChatBot = () => {
     setInputValue('');
     setIsTyping(true);
 
+    const clientHour = new Date().getHours();
+    let timeGreeting = 'Good day';
+    if (clientHour >= 5 && clientHour < 12) timeGreeting = 'Good morning';
+    else if (clientHour >= 12 && clientHour < 17) timeGreeting = 'Good afternoon';
+    else if (clientHour >= 17) timeGreeting = 'Good evening';
+
     try {
-      // Build multi-turn conversation for the server
       const conversationHistory = [...messages, userMsg].slice(-12).map(m => ({
         role: m.sender === 'bot' ? 'assistant' : 'user',
         content: m.text
@@ -84,9 +210,9 @@ export const ChatBot = () => {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           messages: conversationHistory,
-          clientHour: new Date().getHours()
+          clientHour
         })
       });
 
@@ -96,51 +222,15 @@ export const ChatBot = () => {
       setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: data.reply || "I don't want to give you incorrect information. Please contact our support team, and they'll be happy to assist you.",
+        text: data.reply || getLocalFallback(trimmed, timeGreeting),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
-    } catch (err) {
-      console.error('Chatbot error:', err);
-      // Rich local fallback
-      const lower = trimmed.toLowerCase();
-      const clientHour = new Date().getHours();
-      let timeGreeting = "Good day";
-      if (clientHour >= 5 && clientHour < 12) {
-        timeGreeting = "Good morning";
-      } else if (clientHour >= 12 && clientHour < 17) {
-        timeGreeting = "Good afternoon";
-      } else if (clientHour >= 17 && clientHour < 22) {
-        timeGreeting = "Good evening";
-      } else {
-        timeGreeting = "Good evening";
-      }
-
-      let fallback;
-      if (lower.match(/hello|hi+|hey+|howdy|morning|afternoon|evening|yo+/)) {
-        fallback = `Hello! ${timeGreeting}! 🍭 Welcome to Best Lolly Shop New Zealand! I am your Best Lolly Shop AI Assistant. To make your shopping experience even sweeter, make sure to use coupon code **SWEET10** at checkout for **10% OFF** your entire order! Plus, we offer **FREE shipping** on all NZ orders over $50! 🚚 How can I help satisfies your candy cravings today?`;
-      } else if (lower.match(/bye+|goodbye|see you|thanks|thank/)) {
-        fallback = "Thank you for visiting! Have a wonderful, sweet day! If you need anything else, feel free to ask. 🍭";
-      } else if (lower.match(/ship|deliver/)) {
-        fallback = "We offer FREE express delivery across New Zealand on orders over $50 NZD! For orders under $50, shipping is a flat rate of $5 NZD. Standard delivery time is 3-5 business days. Can I help you find some sweets to qualify for free shipping? 🚚";
-      } else if (lower.match(/discount|code|promo/)) {
-        fallback = "You can use the coupon code **SWEET10** at checkout to get 10% OFF your entire order! Plus, we offer free shipping on New Zealand orders over $50. Ready to grab some treats? 🎟️";
-      } else if (lower.match(/vegan|vegetarian|halal|gelatin|gluten|allerg|dietary/)) {
-        fallback = "We have delicious options for everyone! 🌿 Many of our lollies are gluten-free or gelatin-free (like our Mayceys Sour Peaches and Spaceman Candy Sticks). You can find clear dietary badges and full ingredient lists on each product page. Are you looking for something gluten-free, gelatin-free, or vegan? 🍬";
-      } else if (lower.match(/gumm|worm|peach|sour|ring|chew/)) {
-        fallback = "We have an amazing selection of gummies! 🍬 Our Sour Neon Worms are tangy-coated bliss, and our Mayceys Sour Peaches are the gold standard of sour candy. They are available in 100g, 250g, 500g, and 1kg bags. Would you like me to recommend some specific gummies? 😋";
-      } else if (lower.match(/choc|truffle|caramel|button|fish|bar/)) {
-        fallback = "Chocolate lovers, you're in the right place! 🍫 We highly recommend our Premium Dark Truffles with Belgian ganache centres, the silkily rich Cadbury Caramilk Bar, or the iconic Pascall Chocolate Fish. Which chocolate treat would you like to add to your order? 💖";
-      } else if (lower.match(/party|kid|pick|idea|gift|wedding|birthday|baby|shower|christmas|easter|halloween|valent/)) {
-        fallback = "We love helping with parties and events! 🎉 For kid's parties, our custom pick-and-mix bulk bags are a huge hit. We also offer beautiful gift wrapping, corporate gifts, wedding favours, baby shower sweets, and seasonal collections. How many guests are you hosting, and what's your budget? 🎁";
-      } else if (lower.match(/best|popular|top|recommend|favourite|favorite/)) {
-        fallback = "I'd love to make some recommendations! Before I do, could you let me know what occasion you are shopping for, how many people it is for, and if you have a preferred flavour or budget? 🍭";
-      } else {
-        fallback = "I don't want to give you incorrect information. Please contact our support team, and they'll be happy to assist you.";
-      }
+    } catch {
+      // Rich local fallback when server is unreachable
       setMessages((prev) => [...prev, {
         id: Date.now() + 1,
         sender: 'bot',
-        text: fallback,
+        text: getLocalFallback(trimmed, timeGreeting),
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       }]);
     } finally {
@@ -148,13 +238,14 @@ export const ChatBot = () => {
     }
   };
 
+  // Each suggestion has a unique `query` that matches a specific trained response
   const suggestions = [
-    { label: '🍬 Best Gummies', query: 'What are your best gummy sweets?' },
-    { label: '🍫 Top Chocolates', query: 'Recommend your best chocolates' },
-    { label: '🎉 Party Picks', query: 'I need sweet ideas for a kids party' },
-    { label: '🚚 Shipping Info', query: 'Tell me about shipping and delivery' },
-    { label: '🎟️ Discount Code', query: 'Do you have any discount codes?' },
-    { label: '🌿 Dietary Options', query: 'Do you have vegan or gluten free options?' },
+    { label: '🍬 Best Gummies',      query: 'Show me your best gummy lollies and sour sweets' },
+    { label: '🍫 Top Chocolates',    query: 'What are your top chocolate products I should try?' },
+    { label: '🎉 Party Picks',       query: 'I need candy ideas for a kids birthday party and events' },
+    { label: '🚚 Shipping Info',     query: 'Tell me about your shipping and delivery options' },
+    { label: '🎟️ Discount Code',    query: 'Do you have any discount codes or special deals?' },
+    { label: '🌿 Dietary Options',   query: 'Do you have vegan gluten-free or gelatin-free lolly options?' },
   ];
 
   return (

@@ -61,6 +61,18 @@ export const Checkout = () => {
   const [shippingError, setShippingError] = useState('');
   const [isHamilton, setIsHamilton] = useState(false);
 
+  // All Hamilton NZ postcodes (32xx range)
+  const HAMILTON_POSTCODES = [
+    '3200','3201','3202','3203','3204','3205','3206','3207','3208','3209',
+    '3210','3211','3212','3213','3214','3215','3216','3217','3218','3219',
+    '3220','3240','3241','3242','3243','3244','3245','3246','3247','3248',
+    '3249','3250','3251','3252','3253','3254','3255','3256','3257','3258',
+    '3259','3260','3281','3282','3283','3284','3285','3286','3287','3288',
+    '3289','3290','3291','3292','3293','3294','3295','3296','3297','3298','3299'
+  ];
+
+  const isHamiltonPostcode = (zip) => HAMILTON_POSTCODES.includes((zip || '').trim());
+
   // Fetch Shipping Rates from backend
   const fetchShippingRates = async (address, city, zip) => {
     setLoadingShipping(true);
@@ -104,14 +116,43 @@ export const Checkout = () => {
     }
   };
 
-  // Automatically recalculate shipping when form details are complete
+  // ─── Instant Hamilton postcode detection ──────────────────────────────────
+  // Fires as soon as a 4-digit Hamilton postcode (32xx) is typed —
+  // no need for the rest of the form to be valid.
   useEffect(() => {
-    if (isShippingValid()) {
+    if (shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip)) {
+      setIsHamilton(true);
+      setShippingFee(0);
+      setShippingOptions([{
+        id: 'hamilton_free_delivery',
+        name: 'Free Delivery — Hamilton, NZ 🎉',
+        price: 0,
+        eta: '1-2 business days'
+      }]);
+      setSelectedOption({
+        id: 'hamilton_free_delivery',
+        name: 'Free Delivery — Hamilton, NZ 🎉',
+        price: 0,
+        eta: '1-2 business days'
+      });
+      setShippingError('');
+    } else if (shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip)) {
+      // Non-Hamilton postcode — reset to default
+      setIsHamilton(false);
+      setShippingFee(19.00);
+      setShippingOptions([]);
+      setSelectedOption(null);
+    }
+  }, [shippingForm.zip]);
+
+  // Automatically recalculate shipping when full form is complete (non-Hamilton)
+  useEffect(() => {
+    if (isShippingValid() && !isHamiltonPostcode(shippingForm.zip)) {
       const delayDebounce = setTimeout(() => {
         fetchShippingRates(shippingForm.address, shippingForm.city, shippingForm.zip);
       }, 600);
       return () => clearTimeout(delayDebounce);
-    } else {
+    } else if (!isHamiltonPostcode(shippingForm.zip)) {
       setShippingOptions([]);
       setSelectedOption(null);
       setShippingFee(19.00);
@@ -342,10 +383,51 @@ export const Checkout = () => {
                       type="text"
                       placeholder="1021"
                       value={shippingForm.zip}
-                      onChange={(e) => setShippingForm({ ...shippingForm, zip: e.target.value.replace(/[^0-9]/g, '') })}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        setShippingForm(prev => ({
+                          ...prev,
+                          zip: val,
+                          // Auto-fill city to Hamilton when a Hamilton postcode is typed
+                          city: isHamiltonPostcode(val) ? 'Hamilton' : prev.city
+                        }));
+                      }}
                       maxLength="4"
                       required
+                      style={{
+                        borderColor: shippingForm.zip.length === 4
+                          ? isHamiltonPostcode(shippingForm.zip) ? '#10b981' : 'inherit'
+                          : 'inherit'
+                      }}
                     />
+                    {/* Instant Hamilton free delivery badge */}
+                    {shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip) && (
+                      <div style={{
+                        marginTop: '8px',
+                        padding: '10px 14px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        color: '#fff',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        boxShadow: '0 4px 12px rgba(16,185,129,0.25)',
+                        animation: 'fadeIn 0.3s ease'
+                      }}>
+                        🎉 Hamilton postcode detected — <strong>FREE Delivery!</strong>
+                      </div>
+                    )}
+                    {shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip) && (
+                      <div style={{
+                        marginTop: '6px',
+                        fontSize: '11px',
+                        color: '#8d879e'
+                      }}>
+                        💡 Hamilton postcodes (32xx) get FREE delivery!
+                      </div>
+                    )}
                   </div>
                 </div>
 

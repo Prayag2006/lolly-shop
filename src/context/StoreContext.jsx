@@ -9,7 +9,7 @@ export const StoreProvider = ({ children }) => {
   const [brands, setBrands] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
-    marqueeText: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50! | 🍭 GET 10% OFF YOUR FIRST ORDER WITH CODE: SWEET10",
+    marqueeText: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50!",
     popupOffer: {
       enabled: true,
       delay: 3000,

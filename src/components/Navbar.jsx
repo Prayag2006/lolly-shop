@@ -187,15 +187,18 @@ export const Navbar = ({ onCartOpen }) => {
               <button 
                 className="icon-btn user-logged-btn" 
                 onClick={(e) => handleDropdownToggle('userMenu', e)}
-                title={currentUser.name}
+                title={currentUser.name || currentUser.email || 'User'}
               >
-                <span className="user-initial">{currentUser.name.charAt(0)}</span>
+                {currentUser.name && currentUser.name.trim().length > 0
+                  ? <span className="user-initial">{currentUser.name.trim().charAt(0).toUpperCase()}</span>
+                  : <User size={18} />
+                }
               </button>
               
               {activeDropdown === 'userMenu' && (
                 <div className="dropdown-panel user-dropdown animate-fade-in">
                   <div className="user-dropdown-header">
-                    <strong>{currentUser.name}</strong>
+                    <strong>{currentUser.name || currentUser.email || 'User'}</strong>
                     <small>{currentUser.email}</small>
                   </div>
                   {currentUser.role === 'admin' ? (
@@ -373,7 +376,7 @@ export const Navbar = ({ onCartOpen }) => {
               onClick={() => { logout(); setMobileMenuOpen(false); }}
               style={{ background: 'none', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit' }}
             >
-              🚪 Log Out ({currentUser.name})
+              🚪 Log Out{currentUser.name ? ` (${currentUser.name})` : ''}
             </button>
           ) : (
             <Link

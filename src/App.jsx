@@ -185,41 +185,6 @@ const ThemeInjector = () => {
   };
   const fontFamily = settings?.fonts || 'Outfit, sans-serif';
 
-  // Dynamic favicon injection
-  React.useEffect(() => {
-    if (settings?.websiteFavicon) {
-      let link = document.querySelector("link[rel~='icon']");
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.head.appendChild(link);
-      }
-      link.href = settings.websiteFavicon;
-    }
-    if (settings?.websiteName) {
-      // Update only if not a product/specific page
-      const base = settings.websiteName;
-      if (document.title === 'Best Lolly Shop' || document.title === base) {
-        document.title = base;
-      }
-    }
-    // Google Analytics
-    if (settings?.googleAnalytics && !document.getElementById('ga-script')) {
-      const s = document.createElement('script');
-      s.id = 'ga-script';
-      s.async = true;
-      s.src = `https://www.googletagmanager.com/gtag/js?id=${settings.googleAnalytics}`;
-      document.head.appendChild(s);
-    }
-    // Facebook Pixel
-    if (settings?.facebookPixel && !document.getElementById('fb-pixel')) {
-      const s = document.createElement('script');
-      s.id = 'fb-pixel';
-      s.innerHTML = `!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${settings.facebookPixel}');fbq('track','PageView');`;
-      document.head.appendChild(s);
-    }
-  }, [settings?.websiteFavicon, settings?.websiteName, settings?.googleAnalytics, settings?.facebookPixel]);
-
   return (
     <style>{`
       :root {
@@ -237,6 +202,5 @@ const ThemeInjector = () => {
     `}</style>
   );
 };
-
 
 export default App;

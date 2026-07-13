@@ -9,7 +9,7 @@
   bottom: 28px;
   right: 28px;
   z-index: 9999;
-  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Inter', 'Segoe UI', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', system-ui, sans-serif;
 }
 
 .chatbot-toggle {

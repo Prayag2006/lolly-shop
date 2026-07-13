@@ -171,7 +171,7 @@ export const Home = ({ onProductClick }) => {
   const faqs = [
     {
       q: 'What are your delivery charges?',
-      a: 'We offer free delivery on all orders above $50 NZD. For orders below $50 NZD, a minimal delivery charge of $5 applies. We deliver across New Zealand within 3-5 business days.'
+      a: 'We offer FREE delivery in Hamilton, New Zealand! For other NZ locations, free delivery applies on all orders above $50 NZD. For orders below $50 NZD, a minimal delivery charge of $5 applies. We deliver across New Zealand within 3-5 business days.'
     },
     {
       q: 'How do you ensure product freshness?',
@@ -364,8 +364,8 @@ export const Home = ({ onProductClick }) => {
             </div>
             <div className="feature-card glass-card">
               <div className="feature-icon"><Truck size={28} /></div>
-              <h3>Express Delivery</h3>
-              <p>Fast temperature-controlled shipping to preserve candy shape and freshness.</p>
+              <h3>Free Hamilton Delivery</h3>
+              <p>FREE delivery in Hamilton, New Zealand! Fast temperature-controlled shipping NZ-wide.</p>
             </div>
             <div className="feature-card glass-card">
               <div className="feature-icon"><ShieldCheck size={28} /></div>

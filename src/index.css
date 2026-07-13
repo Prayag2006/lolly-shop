@@ -2,9 +2,9 @@
 
 :root {
   /* Fonts matching lollyshop.co.nz */
-  --font-heading: 'Nunito', sans-serif;
-  --font-body: 'Poppins', sans-serif;
-  --font-nav: 'Quicksand', sans-serif;
+  --font-heading: 'Nunito', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+  --font-body: 'Poppins', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+  --font-nav: 'Quicksand', 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
 
   /* Colors - LollyShop NZ Theme */
   --primary-gradient: linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%);
