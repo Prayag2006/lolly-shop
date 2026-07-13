@@ -104,24 +104,46 @@ export const About = () => {
             
             <div className="about-story-visual">
               {aboutSettings.images && aboutSettings.images[0] && aboutSettings.images[0] !== '/about_showcase1.png' ? (
-                <div className="about-visual-box-image-container" style={{ width: '100%', height: '340px', borderRadius: '24px', overflow: 'hidden', boxShadow: 'var(--card-shadow)' }}>
+                <div className="about-visual-box-image-container">
                   <img src={aboutSettings.images[0]} alt="Showcase" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 </div>
               ) : (
-                <div className="about-story-visual">
-                  <div className="about-visual-box glass-card animate-float">
-                    <div className="about-candy-circle">
-                      <CandyVisual emoji="🍭" size={72} />
-                    </div>
-                    <div className="about-decor-circle">
-                      <CandyVisual emoji="🍩" size={48} />
-                    </div>
-                    <div className="about-floating-card glass-card">
-                      <Heart size={20} className="glow-icon" />
-                      <div>
-                        <h4>100% Sweet</h4>
-                        <p>NZ Owned</p>
+                <div className="about-story-visual-mockup glass-card animate-float">
+                  <div className="mockup-header">
+                    <span className="mockup-badge">✨ 100% Kiwi Owned</span>
+                    <span className="mockup-verified">Premium Confections</span>
+                  </div>
+                  <div className="mockup-body">
+                    <div className="mockup-stat-row">
+                      <div className="mockup-stat-circle">
+                        <span className="mockup-stat-number">10k+</span>
+                        <span className="mockup-stat-label">Happy Customers</span>
                       </div>
+                      <div className="mockup-features">
+                        <div className="mockup-feature-item">
+                          <span className="feature-icon">🚚</span>
+                          <div>
+                            <h5>Express Delivery</h5>
+                            <p>Fast NZ-wide shipping</p>
+                          </div>
+                        </div>
+                        <div className="mockup-feature-item">
+                          <span className="feature-icon">🍬</span>
+                          <div>
+                            <h5>Fresh Guarantee</h5>
+                            <p>Hand-packed with love</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="mockup-testimonial-card glass-card">
+                      <div className="testimonial-header">
+                        <span className="stars">⭐⭐⭐⭐⭐</span>
+                        <span className="time">Auckland</span>
+                      </div>
+                      <p className="testimonial-quote">"The best sour lollies in New Zealand! Incredibly fresh and fast shipping."</p>
+                      <h6 className="testimonial-author">— James T.</h6>
                     </div>
                   </div>
                 </div>
