@@ -406,32 +406,40 @@ export const Checkout = () => {
                 {/* Instant Hamilton free delivery badge (moved to span full width below input fields) */}
                 {shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip) && (
                   <div className="hamilton-alert-glass" style={{
-                    marginTop: '12px',
-                    padding: '12px 16px',
-                    background: 'rgba(16, 185, 129, 0.06)',
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    borderRadius: '12px',
+                    marginTop: '15px',
+                    padding: '14px 20px',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                    border: '1.5px dashed #10b981',
+                    borderRadius: '14px',
                     color: '#065f46',
-                    fontSize: '13.5px',
+                    fontSize: '14px',
                     fontWeight: '600',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
-                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.08)',
-                    animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    boxShadow: '0 8px 32px 0 rgba(16, 185, 129, 0.08)',
+                    backdropFilter: 'blur(4px)',
+                    animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
                   }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '20px' }}>📍</span>
+                      <span>Hamilton Postcode Detected</span>
+                    </div>
                     <span style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: '8px',
-                      height: '8px',
+                      padding: '4px 10px',
                       background: '#10b981',
-                      borderRadius: '50%',
-                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)',
+                      color: '#ffffff',
+                      borderRadius: '20px',
+                      fontSize: '11px',
+                      fontWeight: '800',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)',
                       animation: 'pulse 1.5s infinite'
-                    }}></span>
-                    <span>🎉 Hamilton postcode detected — <strong>FREE Delivery Applied!</strong></span>
+                    }}>
+                      Free Delivery Applied!
+                    </span>
                   </div>
                 )}
                 {shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip) && (
@@ -474,25 +482,43 @@ export const Checkout = () => {
                           <div 
                             className="hamilton-free-shipping-banner" 
                             style={{
-                              padding: '16px 20px',
-                              background: 'rgba(16, 185, 129, 0.06)',
-                              border: '1px solid rgba(16, 185, 129, 0.25)',
-                              borderRadius: '14px',
+                              padding: '18px 24px',
+                              background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.03) 100%)',
+                              border: '1px solid rgba(16, 185, 129, 0.3)',
+                              borderRadius: '16px',
                               color: '#065f46',
                               fontSize: '14px',
-                              fontWeight: '600',
+                              fontWeight: '500',
+                              lineHeight: '1.5',
                               textAlign: 'left',
-                              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.05)',
+                              boxShadow: '0 10px 30px rgba(16, 185, 129, 0.04)',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '12px',
+                              gap: '16px',
                               animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                             }}
                           >
-                            <span style={{ fontSize: '20px' }}>🎁</span>
-                            <span>
-                              Great news! Your address is in <strong>Hamilton</strong>, qualifying you for <strong>FREE Delivery</strong>.
-                            </span>
+                            <div style={{
+                              width: '40px',
+                              height: '40px',
+                              borderRadius: '50%',
+                              background: 'rgba(16, 185, 129, 0.1)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '20px',
+                              flexShrink: 0
+                            }}>
+                              🎉
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: '700', fontSize: '15px', color: '#047857', marginBottom: '2px' }}>
+                                Free Shipping Applied!
+                              </div>
+                              <div style={{ color: '#065f46', opacity: 0.9 }}>
+                                Your delivery address is in Hamilton, so shipping is completely free.
+                              </div>
+                            </div>
                           </div>
                         )}
                         {shippingOptions.map((option) => (
