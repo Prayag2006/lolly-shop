@@ -400,36 +400,50 @@ export const Checkout = () => {
                           : 'inherit'
                       }}
                     />
-                    {/* Instant Hamilton free delivery badge */}
-                    {shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip) && (
-                      <div style={{
-                        marginTop: '8px',
-                        padding: '10px 14px',
-                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                        color: '#fff',
-                        borderRadius: '10px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        boxShadow: '0 4px 12px rgba(16,185,129,0.25)',
-                        animation: 'fadeIn 0.3s ease'
-                      }}>
-                        🎉 Hamilton postcode detected — <strong>FREE Delivery!</strong>
-                      </div>
-                    )}
-                    {shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip) && (
-                      <div style={{
-                        marginTop: '6px',
-                        fontSize: '11px',
-                        color: '#8d879e'
-                      }}>
-                        💡 Hamilton postcodes (32xx) get FREE delivery!
-                      </div>
-                    )}
                   </div>
                 </div>
+
+                {/* Instant Hamilton free delivery badge (moved to span full width below input fields) */}
+                {shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip) && (
+                  <div className="hamilton-alert-glass" style={{
+                    marginTop: '12px',
+                    padding: '12px 16px',
+                    background: 'rgba(16, 185, 129, 0.06)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '12px',
+                    color: '#065f46',
+                    fontSize: '13.5px',
+                    fontWeight: '600',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 4px 20px rgba(16, 185, 129, 0.08)',
+                    animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+                  }}>
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '8px',
+                      height: '8px',
+                      background: '#10b981',
+                      borderRadius: '50%',
+                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.2)',
+                      animation: 'pulse 1.5s infinite'
+                    }}></span>
+                    <span>🎉 Hamilton postcode detected — <strong>FREE Delivery Applied!</strong></span>
+                  </div>
+                )}
+                {shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip) && (
+                  <div style={{
+                    marginTop: '8px',
+                    fontSize: '12px',
+                    color: '#8d879e',
+                    paddingLeft: '4px'
+                  }}>
+                    💡 Hamilton postcodes (32xx) get FREE delivery!
+                  </div>
+                )}
 
                 {/* NZ Post Shipping Method Selector */}
                 {isShippingValid() && (
@@ -460,20 +474,25 @@ export const Checkout = () => {
                           <div 
                             className="hamilton-free-shipping-banner" 
                             style={{
-                              padding: '14px 18px',
-                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                              color: '#ffffff',
-                              borderRadius: '12px',
+                              padding: '16px 20px',
+                              background: 'rgba(16, 185, 129, 0.06)',
+                              border: '1px solid rgba(16, 185, 129, 0.25)',
+                              borderRadius: '14px',
+                              color: '#065f46',
                               fontSize: '14px',
-                              fontWeight: '700',
+                              fontWeight: '600',
                               textAlign: 'left',
-                              boxShadow: '0 4px 15px rgba(16, 185, 129, 0.2)',
+                              boxShadow: '0 4px 20px rgba(16, 185, 129, 0.05)',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '8px'
+                              gap: '12px',
+                              animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
                             }}
                           >
-                            <span>🎉 Great news! Your delivery address is in Hamilton, so you qualify for FREE delivery.</span>
+                            <span style={{ fontSize: '20px' }}>🎁</span>
+                            <span>
+                              Great news! Your address is in <strong>Hamilton</strong>, qualifying you for <strong>FREE Delivery</strong>.
+                            </span>
                           </div>
                         )}
                         {shippingOptions.map((option) => (
