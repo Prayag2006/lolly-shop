@@ -74,7 +74,7 @@ function App() {
       const slowTypes = ['slow-2g', '2g', '3g'];
       if (slowTypes.includes(conn.effectiveType)) return false;
     }
-    return !sessionStorage.getItem('lolly_shop_splash_shown');
+    return true; // Show on full page load
   });
   const [cartOpen, setCartOpen] = useState(false);
   const [activeModalProduct, setActiveModalProduct] = useState(null);

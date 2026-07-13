@@ -13,7 +13,7 @@ export function VideoSplash({ onComplete }) {
         console.warn("Video load timed out. Bypassing video splash for performance.");
         handleEnter();
       }
-    }, 2500);
+    }, 10000);
 
     return () => clearTimeout(timer);
   }, [isLoaded]);
