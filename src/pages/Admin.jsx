@@ -2076,25 +2076,262 @@ export const Admin = () => {
 
               <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 {/* Marquee Settings */}
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '20px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📢 Marquee Banner Announcements</h3>
-                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Announcements Text</label>
-                    <textarea
-                      rows="3"
-                      value={tempSettings.marqueeText}
-                      onChange={(e) => setTempSettings(prev => ({ ...prev, marqueeText: e.target.value }))}
-                      placeholder="Use | to separate multiple announcements. e.g. Announcement 1 | Announcement 2"
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '28px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-primary)', margin: 0 }}>
+                      📢 Marquee Banner Announcements
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setTempSettings(prev => ({
+                        ...prev,
+                        marquees: [...(prev.marquees || []), {
+                          text: 'New announcement text here',
+                          enabled: true,
+                          icon: '🍬',
+                          color: '#ffffff',
+                          bgColor: '#e72c83',
+                          speed: 40,
+                          pauseOnHover: true,
+                          startDate: '',
+                          endDate: ''
+                        }]
+                      }))}
                       style={{
-                        width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1px solid var(--color-border)',
-                        background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none'
+                        background: 'var(--color-primary)', color: '#fff', border: 'none',
+                        borderRadius: '10px', padding: '8px 18px', cursor: 'pointer',
+                        fontSize: '13px', fontWeight: '700'
                       }}
-                    />
-                    <small style={{ color: 'var(--color-text-muted)', fontSize: '12px' }}>
-                      Tip: Separate announcements with a vertical bar symbol (<code>|</code>) to render multiple scrolling messages.
-                    </small>
+                    >
+                      + Add Row
+                    </button>
+                  </div>
+
+                  {/* Live Preview Strip */}
+                  {(tempSettings.marquees || []).some(m => m.enabled) && (
+                    <div style={{ marginBottom: '20px' }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '8px', color: 'var(--color-text-muted)' }}>
+                        Live Preview
+                      </label>
+                      <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                        {(tempSettings.marquees || []).filter(m => m.enabled).map((m, i) => (
+                          <div key={i} style={{
+                            backgroundColor: m.bgColor || '#e72c83',
+                            color: m.color || '#fff',
+                            padding: '10px 20px',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            letterSpacing: '0.5px',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis'
+                          }}>
+                            {m.icon ? `${m.icon}  ` : ''}{m.text || 'Announcement preview...'}
+                            <span style={{ opacity: 0.6, marginLeft: '40px' }}>
+                              {m.icon ? `${m.icon}  ` : ''}{m.text || 'Announcement preview...'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Marquee Rows */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    {(tempSettings.marquees || []).length === 0 && (
+                      <p style={{ color: 'var(--color-text-muted)', fontSize: '13px', textAlign: 'center', padding: '24px 0', border: '2px dashed var(--color-border)', borderRadius: '12px' }}>
+                        No marquee rows yet. Click "+ Add Row" to create your first announcement banner.
+                      </p>
+                    )}
+                    {(tempSettings.marquees || []).map((m, idx) => (
+                      <div key={idx} style={{
+                        border: `2px solid ${m.enabled ? (m.bgColor || '#e72c83') : 'var(--color-border)'}`,
+                        borderRadius: '14px', padding: '18px',
+                        background: 'var(--color-card)',
+                        opacity: m.enabled ? 1 : 0.6
+                      }}>
+                        {/* Row Header */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontWeight: '800', fontSize: '13px', color: 'var(--color-text)' }}>Banner #{idx + 1}</span>
+                            <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '600', color: m.enabled ? '#16a34a' : '#dc2626' }}>
+                              <input
+                                type="checkbox"
+                                checked={!!m.enabled}
+                                onChange={e => {
+                                  const updated = [...(tempSettings.marquees || [])];
+                                  updated[idx] = { ...updated[idx], enabled: e.target.checked };
+                                  setTempSettings(prev => ({ ...prev, marquees: updated }));
+                                }}
+                              />
+                              {m.enabled ? '✅ Enabled' : '⬜ Disabled'}
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (tempSettings.marquees || []).filter((_, i) => i !== idx);
+                              setTempSettings(prev => ({ ...prev, marquees: updated }));
+                            }}
+                            style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontSize: '12px', fontWeight: '700', display: 'flex', alignItems: 'center', gap: '4px' }}
+                          >
+                            🗑 Remove
+                          </button>
+                        </div>
+
+                        {/* Announcement Text */}
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '6px' }}>
+                            Announcement Text *
+                          </label>
+                          <input
+                            type="text"
+                            value={m.text || ''}
+                            onChange={e => {
+                              const updated = [...(tempSettings.marquees || [])];
+                              updated[idx] = { ...updated[idx], text: e.target.value };
+                              setTempSettings(prev => ({ ...prev, marquees: updated }));
+                            }}
+                            placeholder="e.g. FREE SHIPPING ON ORDERS OVER $50!"
+                            style={{
+                              width: '100%', padding: '10px 14px', borderRadius: '10px',
+                              border: '1px solid var(--color-border)', background: 'var(--color-background)',
+                              color: 'var(--color-text)', fontSize: '14px', boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+
+                        {/* Color + Speed controls */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 2fr', gap: '14px', alignItems: 'end', marginBottom: '14px' }}>
+                          {/* Icon */}
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Icon</label>
+                            <input
+                              type="text"
+                              value={m.icon || ''}
+                              onChange={e => {
+                                const updated = [...(tempSettings.marquees || [])];
+                                updated[idx] = { ...updated[idx], icon: e.target.value };
+                                setTempSettings(prev => ({ ...prev, marquees: updated }));
+                              }}
+                              placeholder="🍬"
+                              style={{ width: '56px', padding: '10px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', fontSize: '20px', textAlign: 'center' }}
+                            />
+                          </div>
+                          {/* BG Color */}
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Background Color</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <input
+                                type="color"
+                                value={m.bgColor || '#e72c83'}
+                                onChange={e => {
+                                  const updated = [...(tempSettings.marquees || [])];
+                                  updated[idx] = { ...updated[idx], bgColor: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, marquees: updated }));
+                                }}
+                                style={{ width: '44px', height: '42px', borderRadius: '8px', border: 'none', cursor: 'pointer', padding: '2px' }}
+                              />
+                              <input
+                                type="text"
+                                value={m.bgColor || '#e72c83'}
+                                onChange={e => {
+                                  const updated = [...(tempSettings.marquees || [])];
+                                  updated[idx] = { ...updated[idx], bgColor: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, marquees: updated }));
+                                }}
+                                style={{ flex: 1, padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+                          </div>
+                          {/* Text Color */}
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>Text Color</label>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <input
+                                type="color"
+                                value={m.color || '#ffffff'}
+                                onChange={e => {
+                                  const updated = [...(tempSettings.marquees || [])];
+                                  updated[idx] = { ...updated[idx], color: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, marquees: updated }));
+                                }}
+                                style={{ width: '44px', height: '42px', borderRadius: '8px', border: 'none', cursor: 'pointer', padding: '2px' }}
+                              />
+                              <input
+                                type="text"
+                                value={m.color || '#ffffff'}
+                                onChange={e => {
+                                  const updated = [...(tempSettings.marquees || [])];
+                                  updated[idx] = { ...updated[idx], color: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, marquees: updated }));
+                                }}
+                                style={{ flex: 1, padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+                          </div>
+                          {/* Speed */}
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
+                              Scroll Speed: {m.speed || 40} <span style={{ fontWeight: '400', color: 'var(--color-text-muted)' }}>(higher = faster)</span>
+                            </label>
+                            <input
+                              type="range" min="10" max="90"
+                              value={m.speed || 40}
+                              onChange={e => {
+                                const updated = [...(tempSettings.marquees || [])];
+                                updated[idx] = { ...updated[idx], speed: Number(e.target.value) };
+                                setTempSettings(prev => ({ ...prev, marquees: updated }));
+                              }}
+                              style={{ width: '100%', accentColor: m.bgColor || 'var(--color-primary)' }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Pause on Hover + Schedule */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr', gap: '14px', alignItems: 'center' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                            <input
+                              type="checkbox"
+                              checked={!!m.pauseOnHover}
+                              onChange={e => {
+                                const updated = [...(tempSettings.marquees || [])];
+                                updated[idx] = { ...updated[idx], pauseOnHover: e.target.checked };
+                                setTempSettings(prev => ({ ...prev, marquees: updated }));
+                              }}
+                            />
+                            Pause on Hover
+                          </label>
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>Start Date (optional)</label>
+                            <input
+                              type="date" value={m.startDate || ''}
+                              onChange={e => {
+                                const updated = [...(tempSettings.marquees || [])];
+                                updated[idx] = { ...updated[idx], startDate: e.target.value };
+                                setTempSettings(prev => ({ ...prev, marquees: updated }));
+                              }}
+                              style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>End Date (optional)</label>
+                            <input
+                              type="date" value={m.endDate || ''}
+                              onChange={e => {
+                                const updated = [...(tempSettings.marquees || [])];
+                                updated[idx] = { ...updated[idx], endDate: e.target.value };
+                                setTempSettings(prev => ({ ...prev, marquees: updated }));
+                              }}
+                              style={{ width: '100%', padding: '8px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
 
                 {/* Pop Up Offers Settings */}
                 <div>
