@@ -4,6 +4,7 @@ import { Product } from './models/Product.js';
 import { User } from './models/User.js';
 import { Brand } from './models/Brand.js';
 import { Testimonial } from './models/Testimonial.js';
+import { Settings } from './models/Settings.js';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 import dns from 'dns';
 
@@ -69,6 +70,11 @@ async function seed() {
     await Testimonial.deleteMany({});
     await Testimonial.insertMany(defaultTestimonials);
     console.log(`Seeded ${defaultTestimonials.length} testimonials.`);
+
+    // Clear settings to trigger recreation with new NZ default settings
+    console.log('Clearing existing settings collection...');
+    await Settings.deleteMany({});
+    console.log('Settings collection cleared.');
 
     console.log('Database seeding completed successfully.');
   } catch (error) {

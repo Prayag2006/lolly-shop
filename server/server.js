@@ -206,10 +206,10 @@ const seededTestimonials = defaultTestimonials.map((t, idx) => ({
 }));
 
 const defaultSettings = {
-  marqueeText: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50! | 🍭 GET 10% OFF YOUR FIRST ORDER WITH CODE: SWEET10",
+  marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING NATIONWIDE! | 🍭 GET 10% OFF YOUR FIRST ORDER WITH CODE: SWEET10",
   marquees: [
     {
-      text: "🍬 NZ'S FAVORITE CANDY STORE — FREE SHIPPING ON ORDERS OVER $50!",
+      text: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING NATIONWIDE!",
       enabled: true,
       color: '#ffffff',
       bgColor: '#e72c83',
