@@ -148,7 +148,7 @@ export const Navbar = ({ onCartOpen }) => {
               Personalised <ChevronDown size={12} className="chevron-icon" />
             </span>
             {activeDropdown === 'personalised' && (
-              <div className="dropdown-panel animate-fade-in">
+              <div className="dropdown-panel animate-fade-in" onClick={(e) => e.stopPropagation()}>
                 <Link to="/contact?topic=Custom+Gift+Boxes" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🎁 Custom Gift Boxes</Link>
                 <Link to="/contact?topic=Build+a+Sweet+Jar" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🍯 Build a Sweet Jar</Link>
                 <Link to="/contact?topic=Event+Platters" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🍽️ Event Platters</Link>
@@ -166,7 +166,7 @@ export const Navbar = ({ onCartOpen }) => {
               Business & Promotional <ChevronDown size={12} className="chevron-icon" />
             </span>
             {activeDropdown === 'business' && (
-              <div className="dropdown-panel animate-fade-in">
+              <div className="dropdown-panel animate-fade-in" onClick={(e) => e.stopPropagation()}>
                 <Link to="/contact?topic=Wholesale+Lollies" className="dropdown-item" onClick={() => setActiveDropdown(null)}>📦 Wholesale Lollies</Link>
                 <Link to="/contact?topic=Custom+Branded+Bags" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🏷️ Custom Branded Bags</Link>
                 <Link to="/contact?topic=Corporate+Gifting" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🏢 Corporate Gifting</Link>
@@ -196,7 +196,7 @@ export const Navbar = ({ onCartOpen }) => {
               </button>
               
               {activeDropdown === 'userMenu' && (
-                <div className="dropdown-panel user-dropdown animate-fade-in">
+                <div className="dropdown-panel user-dropdown animate-fade-in" onClick={(e) => e.stopPropagation()}>
                   <div className="user-dropdown-header">
                     <strong>{currentUser.name || currentUser.email || 'User'}</strong>
                     <small>{currentUser.email}</small>
@@ -240,7 +240,7 @@ export const Navbar = ({ onCartOpen }) => {
         </div>
 
         {activeDropdown === 'category' && (
-          <div className="mega-menu-panel animate-fade-in">
+          <div className="mega-menu-panel animate-fade-in" onClick={(e) => e.stopPropagation()}>
             {activeMegaMenuData.map((group) => {
               const getGroupIcon = (title) => {
                 const lower = title.toLowerCase();
