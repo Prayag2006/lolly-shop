@@ -920,112 +920,75 @@ export const Admin = () => {
                                 
                                 <div style={{
                                   marginTop: '8px',
-                                  padding: '10px 12px',
-                                  background: 'linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(243,244,246,0.7) 100%)',
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '10px',
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
-                                  fontSize: '11.5px',
-                                  color: '#374151',
+                                  padding: '8px 12px',
+                                  background: 'rgba(2, 132, 199, 0.02)',
+                                  border: '1px solid rgba(2, 132, 199, 0.08)',
+                                  borderRadius: '8px',
+                                  fontSize: '11px',
+                                  color: '#4b5563',
                                   display: 'flex',
                                   flexDirection: 'column',
-                                  gap: '8px',
-                                  maxWidth: '240px'
+                                  gap: '5px',
+                                  width: '100%',
+                                  maxWidth: '240px',
+                                  boxSizing: 'border-box'
                                 }}>
-                                  {/* Delivery Company Header */}
-                                  <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    fontWeight: '700',
-                                    color: '#1f2937',
-                                    borderBottom: '1px solid #e5e7eb',
-                                    paddingBottom: '6px',
-                                    fontSize: '11px',
-                                    textTransform: 'uppercase',
-                                    letterSpacing: '0.3px'
-                                  }}>
-                                    <span>🚚</span>
-                                    <span>{ord.deliveryCompany || 'NZ Post Courier'}</span>
+                                  {/* Delivery Company */}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed rgba(2, 132, 199, 0.1)', paddingBottom: '4px', marginBottom: '2px', gap: '8px' }}>
+                                    <span style={{ fontWeight: '700', color: '#0369a1', whiteSpace: 'nowrap' }}>🚚 Delivery</span>
+                                    <span style={{ fontWeight: '700', color: '#0369a1', textAlign: 'right', wordBreak: 'break-word' }}>{ord.deliveryCompany || 'NZ Post Courier'}</span>
                                   </div>
 
-                                  {/* Stats Grid */}
-                                  <div style={{
-                                    display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr',
-                                    gap: '6px 12px'
-                                  }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span style={{ color: '#6b7280', fontSize: '9.5px', textTransform: 'uppercase', fontWeight: '600' }}>Charged</span>
-                                      <span style={{ fontWeight: '700', color: '#111827', marginTop: '1px' }}>
-                                        ${Number(ord.shipping !== undefined ? ord.shipping : 19).toFixed(2)}
-                                      </span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                      <span style={{ color: '#6b7280', fontSize: '9.5px', textTransform: 'uppercase', fontWeight: '600' }}>Actual Cost</span>
-                                      <span style={{ fontWeight: '700', color: '#111827', marginTop: '1px' }}>
-                                        ${Number(ord.actualShipping !== undefined ? ord.actualShipping : (ord.shipping !== undefined ? ord.shipping : 19)).toFixed(2)}
-                                      </span>
-                                    </div>
+                                  {/* Charged */}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ whiteSpace: 'nowrap' }}>Charged Shipping:</span>
+                                    <span style={{ fontWeight: '700', color: '#111827' }}>${Number(ord.shipping !== undefined ? ord.shipping : 19).toFixed(2)}</span>
+                                  </div>
+
+                                  {/* Actual Cost */}
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ whiteSpace: 'nowrap' }}>Actual Cost:</span>
+                                    <span style={{ fontWeight: '700', color: '#111827' }}>${Number(ord.actualShipping !== undefined ? ord.actualShipping : (ord.shipping !== undefined ? ord.shipping : 19)).toFixed(2)}</span>
                                   </div>
 
                                   {/* Free Shipping Badge */}
-                                  {ord.freeShippingApplied ? (
+                                  {ord.freeShippingApplied && (
                                     <div style={{
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      gap: '3px',
+                                      marginTop: '4px',
                                       background: 'rgba(16, 185, 129, 0.06)',
-                                      border: '1px solid rgba(16, 185, 129, 0.2)',
-                                      borderRadius: '6px',
-                                      padding: '6px 8px',
-                                      marginTop: '2px'
+                                      border: '1px solid rgba(16, 185, 129, 0.15)',
+                                      borderRadius: '4px',
+                                      padding: '4px 6px',
+                                      fontSize: '10.5px'
                                     }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', color: '#065f46', fontWeight: '700', fontSize: '10.5px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#065f46', fontWeight: '700' }}>
                                         <span>🎁</span>
                                         <span>Free Shipping Applied</span>
                                       </div>
-                                      <span style={{ color: '#047857', fontSize: '9.5px', fontStyle: 'italic' }}>
+                                      <div style={{ color: '#047857', fontSize: '9.5px', fontStyle: 'italic', marginTop: '1px' }}>
                                         Rule: {ord.freeShippingReason || 'Hamilton Free Delivery'}
-                                      </span>
-                                    </div>
-                                  ) : (
-                                    <div style={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: '5px',
-                                      color: '#6b7280',
-                                      fontWeight: '600',
-                                      fontSize: '10.5px',
-                                      background: '#f9fafb',
-                                      border: '1px solid #e5e7eb',
-                                      borderRadius: '6px',
-                                      padding: '4px 6px',
-                                      width: 'fit-content'
-                                    }}>
-                                      <span>🎁</span>
-                                      <span>Standard Shipping</span>
+                                      </div>
                                     </div>
                                   )}
 
-                                  {/* Business Absorbed Banner */}
+                                  {/* Business Absorbed */}
                                   {ord.actualShipping !== undefined && ord.actualShipping > ord.shipping && (
                                     <div style={{
+                                      marginTop: '2px',
                                       background: 'rgba(239, 68, 68, 0.06)',
-                                      border: '1px solid rgba(239, 68, 68, 0.2)',
-                                      borderRadius: '6px',
-                                      padding: '4px 8px',
+                                      border: '1px solid rgba(239, 68, 68, 0.15)',
+                                      borderRadius: '4px',
+                                      padding: '4px 6px',
                                       color: '#b91c1c',
                                       fontWeight: '700',
-                                      fontSize: '9.5px',
-                                      textAlign: 'center',
+                                      fontSize: '10px',
                                       display: 'flex',
+                                      justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      justifyContent: 'center',
                                       gap: '4px'
                                     }}>
-                                      <span>💸</span>
-                                      <span>Absorbed: ${(ord.actualShipping - ord.shipping).toFixed(2)} NZD</span>
+                                      <span style={{ whiteSpace: 'nowrap' }}>💸 Absorbed:</span>
+                                      <span style={{ whiteSpace: 'nowrap' }}>${(ord.actualShipping - ord.shipping).toFixed(2)} NZD</span>
                                     </div>
                                   )}
                                 </div>
