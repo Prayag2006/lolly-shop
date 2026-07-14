@@ -102,6 +102,7 @@ export const Admin = () => {
     addBrand, deleteBrand, updateBrand, testimonials, 
     deleteProductReview, deleteTestimonial,
     settings, updateSettings, updateProductQuantity, updateOrderDelivery, removeOrderItem,
+    deleteOrder, clearAllOrders,
     mediaList, uploadMedia, deleteMedia
   } = useStore();
 
@@ -879,7 +880,38 @@ export const Admin = () => {
 
           {activeTab === 'orders' && (
             <div className="admin-tab-content">
-              <h2>Customer Order Sheets</h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                <h2 style={{ margin: 0 }}>Customer Order Sheets</h2>
+                {safeOrders.length > 0 && (
+                  <button
+                    id="clear-all-orders-btn"
+                    onClick={() => {
+                      if (window.confirm(`⚠️ Delete ALL ${safeOrders.length} order(s)? This cannot be undone.`)) {
+                        clearAllOrders();
+                      }
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '9px 20px',
+                      fontWeight: '700',
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '7px',
+                      boxShadow: '0 4px 12px rgba(239,68,68,0.3)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-1px)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                  >
+                    🗑 Clear All Orders
+                  </button>
+                )}
+              </div>
               {safeOrders.length === 0 ? (
                 <div className="admin-empty-state glass-card">
                   <div className="empty-state-icon">🛒</div>
@@ -1147,19 +1179,48 @@ export const Admin = () => {
                                <CourierTrackingCell ord={ord} updateOrderDelivery={updateOrderDelivery} />
                              </td>
                             <td className="nowrap" style={{ textAlign: 'center' }}>
-                              {ord.status === 'Completed' ? (
-                                <span className="completed-check-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: '700', fontSize: '13px' }}>
-                                  <CheckCircle2 size={16} /> Delivered
-                                </span>
-                              ) : ord.status === 'Cancelled' ? (
-                                <span className="cancelled-tag" style={{ color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
-                                  Cancelled
-                                </span>
-                              ) : (
-                                <span className="in-progress-tag" style={{ color: 'var(--color-primary)', fontWeight: '700', fontSize: '13px' }}>
-                                  Active
-                                </span>
-                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                                {ord.status === 'Completed' ? (
+                                  <span className="completed-check-tag" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#10b981', fontWeight: '700', fontSize: '13px' }}>
+                                    <CheckCircle2 size={16} /> Delivered
+                                  </span>
+                                ) : ord.status === 'Cancelled' ? (
+                                  <span className="cancelled-tag" style={{ color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
+                                    Cancelled
+                                  </span>
+                                ) : (
+                                  <span className="in-progress-tag" style={{ color: 'var(--color-primary)', fontWeight: '700', fontSize: '13px' }}>
+                                    Active
+                                  </span>
+                                )}
+                                <button
+                                  title="Delete this order"
+                                  onClick={() => {
+                                    if (window.confirm(`Delete order ${ord.id}? This cannot be undone.`)) {
+                                      deleteOrder(ord.id);
+                                    }
+                                  }}
+                                  style={{
+                                    background: 'none',
+                                    border: '1.5px solid #fca5a5',
+                                    borderRadius: '8px',
+                                    color: '#ef4444',
+                                    width: '30px',
+                                    height: '30px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: 'pointer',
+                                    fontSize: '14px',
+                                    transition: 'all 0.2s ease',
+                                    flexShrink: 0
+                                  }}
+                                  onMouseEnter={e => { e.currentTarget.style.background = '#ef4444'; e.currentTarget.style.color = '#fff'; }}
+                                  onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = '#ef4444'; }}
+                                >
+                                  🗑
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );

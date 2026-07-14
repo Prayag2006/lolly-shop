@@ -794,6 +794,47 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// DELETE a single order (admin only)
+app.delete('/api/orders/:id', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    if (sqlAvailable()) {
+      const deleted = await Order.findOneAndDelete({ id: req.params.id });
+      if (!deleted) return res.status(404).json({ message: 'Order not found' });
+      return res.json({ message: 'Order deleted', id: req.params.id });
+    } else {
+      let orders = readLocalData('orders.json', []);
+      const idx = orders.findIndex(o => o.id === req.params.id);
+      if (idx === -1) return res.status(404).json({ message: 'Order not found' });
+      orders.splice(idx, 1);
+      writeLocalData('orders.json', orders);
+      return res.json({ message: 'Order deleted', id: req.params.id });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting order', error: error.message });
+  }
+});
+
+// DELETE all orders (admin only)
+app.delete('/api/orders', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (!isAdmin) return res.status(403).json({ message: 'Admin access required' });
+
+    if (sqlAvailable()) {
+      await Order.deleteMany({});
+      return res.json({ message: 'All orders deleted' });
+    } else {
+      writeLocalData('orders.json', []);
+      return res.json({ message: 'All orders deleted' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting orders', error: error.message });
+  }
+});
+
 // ── CENTRALIZED RESPONSIVE HTML EMAIL WRAPPER ──
 const getResponsiveEmailTemplate = ({ previewText, headerEmoji, headerTitle, headerSubtitle, headerGradient, bodyHtml }) => {
   return `<!DOCTYPE html>

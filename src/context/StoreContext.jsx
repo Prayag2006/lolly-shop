@@ -517,6 +517,31 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  const deleteOrder = async (orderId) => {
+    try {
+      const headers = { 'Content-Type': 'application/json', 'X-User-Role': 'admin' };
+      const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE', headers });
+      if (!res.ok) throw new Error('Failed to delete order');
+      setOrders(prev => prev.filter(ord => ord.id !== orderId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      return false;
+    }
+  };
+
+  const clearAllOrders = async () => {
+    try {
+      const headers = { 'Content-Type': 'application/json', 'X-User-Role': 'admin' };
+      const res = await fetch('/api/orders', { method: 'DELETE', headers });
+      if (!res.ok) throw new Error('Failed to clear orders');
+      setOrders([]);
+      return true;
+    } catch (error) {
+      console.error('Error clearing all orders:', error);
+      return false;
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -827,7 +852,9 @@ export const StoreProvider = ({ children }) => {
         updateSettings,
         updateProductQuantity,
         updateOrderDelivery,
-        removeOrderItem
+        removeOrderItem,
+        deleteOrder,
+        clearAllOrders
       }}
     >
       {children}
