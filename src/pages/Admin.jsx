@@ -1032,23 +1032,38 @@ export const Admin = () => {
                                       style={{ 
                                         display: 'inline-flex', 
                                         alignItems: 'center', 
-                                        gap: '6px',
-                                        background: 'rgba(231, 44, 131, 0.05)',
-                                        border: '1px solid rgba(231, 44, 131, 0.15)',
-                                        padding: '4px 10px',
-                                        borderRadius: '20px',
-                                        fontSize: '12px'
+                                        gap: '8px',
+                                        background: 'rgba(255, 255, 255, 0.8)',
+                                        border: '1px solid rgba(231, 44, 131, 0.12)',
+                                        padding: '4px 8px 4px 6px',
+                                        borderRadius: '24px',
+                                        fontSize: '11px',
+                                        boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                                        color: '#4b5563',
+                                        transition: 'all 0.2s ease',
+                                        cursor: 'default'
                                       }}
                                     >
                                       {item.image && (
                                         <img 
                                           src={item.image} 
                                           alt={item.name || ''} 
-                                          style={{ width: '16px', height: '16px', borderRadius: '50%', objectFit: 'cover' }}
+                                          style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.05)' }}
                                         />
                                       )}
-                                      <span style={{ fontWeight: '700' }}>x{item.quantity || 1}</span>
-                                      <small style={{ color: 'var(--color-primary)', fontWeight: '800' }}>({item.selectedWeight || ''})</small>
+                                      <span style={{ 
+                                        fontWeight: '700', 
+                                        color: '#1f2937',
+                                        background: 'rgba(231, 44, 131, 0.06)',
+                                        padding: '2px 6px',
+                                        borderRadius: '12px',
+                                        fontSize: '10.5px'
+                                      }}>
+                                        x{item.quantity || 1}
+                                      </span>
+                                      <small style={{ color: 'var(--color-primary)', fontWeight: '800', fontSize: '9.5px', textTransform: 'uppercase' }}>
+                                        {item.selectedWeight || ''}
+                                      </small>
                                       <button
                                         onClick={() => {
                                           if (window.confirm(`Are you sure you want to cancel "${item.name}" (${item.selectedWeight}) from this order?`)) {
@@ -1056,19 +1071,31 @@ export const Admin = () => {
                                           }
                                         }}
                                         style={{
-                                          background: 'none',
+                                          width: '16px',
+                                          height: '16px',
+                                          borderRadius: '50%',
+                                          background: 'rgba(239, 68, 68, 0.1)',
                                           border: 'none',
                                           color: '#ef4444',
-                                          fontWeight: '900',
+                                          fontWeight: '800',
                                           cursor: 'pointer',
-                                          padding: '0 0 0 4px',
-                                          fontSize: '14px',
-                                          lineHeight: 1,
                                           display: 'inline-flex',
                                           alignItems: 'center',
-                                          justifyContent: 'center'
+                                          justifyContent: 'center',
+                                          fontSize: '10px',
+                                          lineHeight: 1,
+                                          transition: 'all 0.15s ease',
+                                          padding: 0
                                         }}
                                         title={`Cancel ${item.name} (${item.selectedWeight})`}
+                                        onMouseEnter={(e) => {
+                                          e.target.style.background = '#ef4444';
+                                          e.target.style.color = '#ffffff';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          e.target.style.background = 'rgba(239, 68, 68, 0.1)';
+                                          e.target.style.color = '#ef4444';
+                                        }}
                                       >
                                         ×
                                       </button>
