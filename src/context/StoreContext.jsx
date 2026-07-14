@@ -488,7 +488,7 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       setOrders(prev =>
-        prev.map(ord => (ord.id === orderId ? { ...ord, deliveryCompany: data.deliveryCompany, deliveryReference: data.deliveryReference } : ord))
+        prev.map(ord => (ord.id === orderId ? { ...ord, ...data } : ord))
       );
       return data;
     } catch (error) {

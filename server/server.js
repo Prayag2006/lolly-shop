@@ -809,16 +809,15 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
 
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
 
-    // Format invoice items
-    const itemsHtml = order.items.map(item => `
+    const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
         <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
-          ${item.name} <br/>
-          <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Weight: ${item.selectedWeight}</span>
+          ${item.name || ''} <br/>
+          <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Weight: ${item.selectedWeight || ''}</span>
         </td>
-        <td style="padding: 12px 5px; color: #615a75; text-align: center;">${item.quantity}</td>
-        <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(item.price).toFixed(2)}</td>
-        <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(item.price * item.quantity).toFixed(2)}</td>
+        <td style="padding: 12px 5px; color: #615a75; text-align: center;">${item.quantity || 1}</td>
+        <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(item.price || 0).toFixed(2)}</td>
+        <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
       </tr>
     `).join('');
 
@@ -1520,7 +1519,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
       let updatedOrder = null;
 
       if (sqlAvailable()) {
-        const order = await Order.findById(orderId);
+        const order = await Order.findOne({ id: orderId });
         if (!order) {
           return res.status(404).json({ message: 'Order not found' });
         }
@@ -1873,6 +1872,8 @@ app.put('/api/orders/:id/status', async (req, res) => {
       if (!updated) return res.status(404).json({ message: 'Order not found' });
       if (status === 'Completed') {
         sendDeliveryCompleteEmail(updated);
+      } else if (status === 'Out for Delivery') {
+        sendOrderDispatchedEmail(updated);
       }
       res.json(isAdmin ? updated : sanitizeOrder(updated));
     } else {
@@ -1884,6 +1885,8 @@ app.put('/api/orders/:id/status', async (req, res) => {
       writeLocalData('orders.json', orders);
       if (status === 'Completed') {
         sendDeliveryCompleteEmail(orders[index]);
+      } else if (status === 'Out for Delivery') {
+        sendOrderDispatchedEmail(orders[index]);
       }
       res.json(isAdmin ? orders[index] : sanitizeOrder(orders[index]));
     }
