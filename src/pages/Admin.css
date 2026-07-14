@@ -564,12 +564,15 @@
 }
 
 .p-delete-btn {
-  color: var(--color-text-light);
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
 }
 
 .p-delete-btn:hover {
   background: #fee2e2;
-  color: #ef4444;
+  color: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .p-edit-btn {
