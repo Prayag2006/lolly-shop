@@ -794,6 +794,116 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// ── CENTRALIZED RESPONSIVE HTML EMAIL WRAPPER ──
+const getResponsiveEmailTemplate = ({ previewText, headerEmoji, headerTitle, headerSubtitle, headerGradient, bodyHtml }) => {
+  return `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${headerTitle}</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: #faf9fc;
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      table, td {
+        border-collapse: collapse;
+        mso-table-lspace: 0pt;
+        mso-table-rspace: 0pt;
+      }
+      img {
+        border: 0;
+        height: auto;
+        line-height: 100%;
+        outline: none;
+        text-decoration: none;
+      }
+      @media only screen and (max-width: 600px) {
+        .email-wrapper {
+          padding: 12px 8px !important;
+        }
+        .email-card {
+          border-radius: 16px !important;
+        }
+        .email-header {
+          padding: 28px 16px !important;
+        }
+        .email-header h1 {
+          font-size: 22px !important;
+        }
+        .email-body {
+          padding: 28px 16px !important;
+        }
+        .email-body h2 {
+          font-size: 18px !important;
+          margin-bottom: 12px !important;
+        }
+        .email-metadata, .email-address, .email-tracking-card, .email-feedback-card {
+          padding: 16px 12px !important;
+          border-radius: 10px !important;
+          margin-bottom: 24px !important;
+        }
+        .item-table th {
+          font-size: 11px !important;
+          padding: 8px 4px !important;
+        }
+        .item-table td {
+          font-size: 13px !important;
+          padding: 8px 4px !important;
+        }
+        .item-table td span {
+          font-size: 10px !important;
+        }
+        .grand-total-label {
+          font-size: 13px !important;
+        }
+        .grand-total-val {
+          font-size: 15px !important;
+        }
+        .stars-container a {
+          font-size: 24px !important;
+          margin: 0 2px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div style="display: none; max-height: 0px; overflow: hidden;">
+      ${previewText}
+    </div>
+    <div class="email-wrapper" style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
+      <div class="email-card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5; width: 100%;">
+        <!-- Brand Banner Header -->
+        <div class="email-header" style="background: ${headerGradient}; padding: 35px 20px; text-align: center;">
+          <span style="font-size: 40px; display: block; margin-bottom: 10px;">${headerEmoji}</span>
+          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">${headerTitle}</h1>
+          <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${headerSubtitle}</p>
+        </div>
+        
+        <!-- Email Body Content -->
+        <div class="email-body" style="padding: 45px 35px;">
+          ${bodyHtml}
+        </div>
+        
+        <!-- Email Footer -->
+        <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
+          <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
+            Need help with your order? Reply directly to this email or contact us at <a href="mailto:BestLollyShop@gmail.com" style="color: #e72c83; text-decoration: none; font-weight: 600;">BestLollyShop@gmail.com</a>.
+          </p>
+          <p style="font-size: 11px; color: #b4afc4; margin: 0;">
+            © 2026 Lolly Shop New Zealand. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>`;
+};
+
 // helper to send order confirmation email with receipt, invoice, and tracking link
 const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
   try {
@@ -835,111 +945,94 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
       text: isUpdate 
         ? `Your order ${order.id} has been updated. Track your live delivery here: ${trackingLink}` 
         : `Thank you for your order, ${order.customer.name}! Order ID: ${order.id}. Track your live delivery here: ${trackingLink}`,
-      html: `
-        <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
-            <!-- Brand Banner Header -->
-            <div style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); padding: 35px 20px; text-align: center;">
-              <span style="font-size: 40px; display: block; margin-bottom: 10px;">🍬</span>
-              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Lolly Shop</h1>
-              <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">
-                ${isUpdate ? 'Order Updated & Revised Invoice' : 'Order Confirmation & Invoice'}
-              </p>
-            </div>
-            
-            <!-- Email Body Content -->
-            <div style="padding: 45px 35px;">
-              <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
-                ${isUpdate ? 'Your Order Has Been Updated!' : 'Thank You for Your Order!'}
-              </h2>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                Hi <strong>${order.customer.name}</strong>,
-              </p>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
-                ${isUpdate 
-                  ? 'We have adjusted your order contents as requested or based on stock availability. Please find your revised order details below:' 
-                  : 'Your order has been confirmed and is currently being prepared by our sweet experts. Below is your detailed receipt and invoice:'
-                }
-              </p>
-              
-              <!-- Order Info Metadata Grid -->
-              <div style="background-color: #faf9fc; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #f1eff5;">
-                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order ID:</span><span style="color: #2d2645; font-weight: 700; font-family: monospace;">${order.id}</span></div>
-                <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order Date:</span><span style="color: #2d2645; font-weight: 600;">${order.date || new Date().toLocaleDateString('en-NZ')}</span></div>
-                <div style="display: flex; justify-content: space-between; font-size: 14px;"><span style="color: #8c859d; font-weight: 600;">Delivery Status:</span><span style="color: #e72c83; font-weight: 700; text-transform: uppercase; font-size: 12px;">${order.status || 'Processing'}</span></div>
-              </div>
-              
-              <!-- Shipping Address Box -->
-              <div style="background-color: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 35px; border: 1px solid #f1eff5; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
-                <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #faf9fc; padding-bottom: 8px;">📍 Shipping Address</h3>
-                <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
-                  <strong>${order.customer.name}</strong><br/>
-                  ${order.customer.address}<br/>
-                  ${order.customer.city}, ${order.customer.postalCode}<br/>
-                  📞 ${order.customer.phone}
-                </p>
-              </div>
-
-              <!-- Invoice Items Table -->
-              <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
-              <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
-                <thead>
-                  <tr style="border-bottom: 2px solid #f1eff5;">
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                  <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
-                      Flat Shipping Fee <br/>
-                      <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
-                    </td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                  </tr>
-                  <tr style="border-top: 2px solid #f1eff5;">
-                    <td colspan="2"></td>
-                    <td style="padding: 15px 5px; font-size: 15px; color: #2d2645; font-weight: 700; text-align: right;">Grand Total:</td>
-                    <td style="padding: 15px 5px; font-size: 18px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total).toFixed(2)}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <!-- Realtime Delivery Locator Button -->
-              <div style="background-color: #f7f6f9; border-radius: 16px; padding: 25px 20px; text-align: center; border: 1.5px dashed #e1dde6; margin-bottom: 30px;">
-                <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 15px; font-weight: 700;">🚚 Live Delivery Tracking</h4>
-                <p style="margin: 0 0 20px 0; color: #615a75; font-size: 13px; line-height: 1.4;">Track your sweet package in real-time as the driver routes to your location!</p>
-                <a href="${trackingLink}" style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #ffffff; padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 6px 18px rgba(79, 172, 254, 0.35); text-transform: uppercase; letter-spacing: 0.8px;">
-                  Locate Delivery Live ➔
-                </a>
-              </div>
-
-              <!-- Fallback Direct URL -->
-              <p style="font-size: 11px; color: #8c859d; text-align: center; margin: 0;">
-                Or copy and paste this link into your browser:<br/>
-                <a href="${trackingLink}" style="color: #00b4d8; text-decoration: none; font-weight: 600;">${trackingLink}</a>
-              </p>
-            </div>
-            
-            <!-- Email Footer -->
-            <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
-              <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
-                Need help with your order? Reply directly to this email or contact us at <a href="mailto:BestLollyShop@gmail.com" style="color: #e72c83; text-decoration: none; font-weight: 600;">BestLollyShop@gmail.com</a>.
-              </p>
-              <p style="font-size: 11px; color: #b4afc4; margin: 0;">
-                © 2026 Lolly Shop New Zealand. All rights reserved.
-              </p>
-            </div>
+      html: getResponsiveEmailTemplate({
+        previewText: isUpdate 
+          ? `Your Lolly Shop order ORD-${order.id} has been updated.` 
+          : `Thank you for your order, ${order.customer.name}! Details for ORD-${order.id} inside.`,
+        headerEmoji: '🍬',
+        headerTitle: 'Lolly Shop',
+        headerSubtitle: isUpdate ? 'Order Updated & Revised Invoice' : 'Order Confirmation & Invoice',
+        headerGradient: 'linear-gradient(135deg, #e72c83 0%, #9013fe 100%)',
+        bodyHtml: `
+          <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">
+            ${isUpdate ? 'Your Order Has Been Updated!' : 'Thank You for Your Order!'}
+          </h2>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+            Hi <strong>${order.customer.name}</strong>,
+          </p>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+            ${isUpdate 
+              ? 'We have adjusted your order contents as requested or based on stock availability. Please find your revised order details below:' 
+              : 'Your order has been confirmed and is currently being prepared by our sweet experts. Below is your detailed receipt and invoice:'
+            }
+          </p>
+          
+          <!-- Order Info Metadata Grid -->
+          <div class="email-metadata" style="background-color: #faf9fc; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #f1eff5;">
+            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order ID:</span><span style="color: #2d2645; font-weight: 700; font-family: monospace;">${order.id}</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 8px;"><span style="color: #8c859d; font-weight: 600;">Order Date:</span><span style="color: #2d2645; font-weight: 600;">${order.date || new Date().toLocaleDateString('en-NZ')}</span></div>
+            <div style="display: flex; justify-content: space-between; font-size: 14px;"><span style="color: #8c859d; font-weight: 600;">Delivery Status:</span><span style="color: #e72c83; font-weight: 700; text-transform: uppercase; font-size: 12px;">${order.status || 'Processing'}</span></div>
           </div>
-        </div>
-      `
+          
+          <!-- Shipping Address Box -->
+          <div class="email-address" style="background-color: #ffffff; border-radius: 12px; padding: 20px; margin-bottom: 35px; border: 1px solid #f1eff5; box-shadow: 0 4px 12px rgba(0,0,0,0.02);">
+            <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1.5px solid #faf9fc; padding-bottom: 8px;">📍 Shipping Address</h3>
+            <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
+              <strong>${order.customer.name}</strong><br/>
+              ${order.customer.address}<br/>
+              ${order.customer.city}, ${order.customer.postalCode}<br/>
+              📞 ${order.customer.phone}
+            </p>
+          </div>
+
+          <!-- Invoice Items Table -->
+          <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
+          <table class="item-table" style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #f1eff5;">
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
+                  Flat Shipping Fee <br/>
+                  <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
+                </td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+              </tr>
+              <tr style="border-top: 2px solid #f1eff5;">
+                <td colspan="2"></td>
+                <td class="grand-total-label" style="padding: 15px 5px; font-size: 15px; color: #2d2645; font-weight: 700; text-align: right;">Grand Total:</td>
+                <td class="grand-total-val" style="padding: 15px 5px; font-size: 18px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Realtime Delivery Locator Button -->
+          <div class="email-tracking-card" style="background-color: #f7f6f9; border-radius: 16px; padding: 25px 20px; text-align: center; border: 1.5px dashed #e1dde6; margin-bottom: 30px;">
+            <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 15px; font-weight: 700;">🚚 Live Delivery Tracking</h4>
+            <p style="margin: 0 0 20px 0; color: #615a75; font-size: 13px; line-height: 1.4;">Track your sweet package in real-time as the driver routes to your location!</p>
+            <a href="${trackingLink}" style="background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%); color: #ffffff; padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 6px 18px rgba(79, 172, 254, 0.35); text-transform: uppercase; letter-spacing: 0.8px;">
+              Locate Delivery Live ➔
+            </a>
+          </div>
+
+          <!-- Fallback Direct URL -->
+          <p style="font-size: 11px; color: #8c859d; text-align: center; margin: 0; word-break: break-all;">
+            Or copy and paste this link into your browser:<br/>
+            <a href="${trackingLink}" style="color: #00b4d8; text-decoration: none; font-weight: 600;">${trackingLink}</a>
+          </p>
+        `
+      })
     });
     console.log(`[Order Confirmation] Email successfully sent to ${order.customer.email}. MessageID: ${info.messageId}`);
   } catch (err) {
@@ -1604,7 +1697,6 @@ const sendOrderDispatchedEmail = async (order) => {
 
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
 
-    // Format invoice items
     const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
         <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
@@ -1622,105 +1714,92 @@ const sendOrderDispatchedEmail = async (order) => {
       to: order.customer.email,
       subject: `Lolly Shop - Package Dispatched! ORD-${order.id}`,
       text: `Your Lolly Shop order ${order.id} has been dispatched via ${order.deliveryCompany}! Tracking Reference: ${order.deliveryReference}. Track your live delivery here: ${trackingLink}`,
-      html: `
-        <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
-            <!-- Brand Banner Header -->
-            <div style="background: linear-gradient(135deg, #10b981 0%, #0284c7 100%); padding: 35px 20px; text-align: center;">
-              <span style="font-size: 40px; display: block; margin-bottom: 10px;">🚚</span>
-              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Package Dispatched!</h1>
-              <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">On Its Way to You</p>
-            </div>
-            
-            <!-- Email Body Content -->
-            <div style="padding: 45px 35px;">
-              <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Your Sweets are Shipped!</h2>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                Hi <strong>${order.customer.name}</strong>,
-              </p>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
-                Great news! Your handpicked candy treasures have been handed over to our local delivery partner <strong>${order.deliveryCompany}</strong> for fast courier delivery.
-              </p>
+      html: getResponsiveEmailTemplate({
+        previewText: `Great news! Your handpicked candy treasures are on their way to you!`,
+        headerEmoji: '🚚',
+        headerTitle: 'Package Dispatched!',
+        headerSubtitle: 'On Its Way to You',
+        headerGradient: 'linear-gradient(135deg, #10b981 0%, #0284c7 100%)',
+        bodyHtml: `
+          <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Your Sweets are Shipped!</h2>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+            Hi <strong>${order.customer.name}</strong>,
+          </p>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+            Great news! Your handpicked candy treasures have been handed over to our local delivery partner <strong>${order.deliveryCompany}</strong> for fast courier delivery.
+          </p>
 
-              <!-- Tracking Reference Card -->
-              <div style="background: #faf9fc; border: 1.5px solid #e1dde6; padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
-                <span style="display: block; font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
-                  Delivery Company
-                </span>
-                <strong style="display: block; font-size: 18px; color: #2d2645; margin-bottom: 16px;">
-                  ${order.deliveryCompany}
-                </strong>
-                <span style="display: block; font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
-                  Tracking Reference ID
-                </span>
-                <strong style="display: block; font-size: 20px; font-family: monospace; color: #2d2645; background: #ffffff; padding: 8px 15px; border-radius: 8px; border: 1px solid #f1eff5; display: inline-block;">
-                  ${order.deliveryReference}
-                </strong>
-              </div>
-
-              <!-- Tracking Action Button -->
-              <div style="text-align: center; margin-bottom: 35px;">
-                <a href="${trackingLink}" style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 10px 20px rgba(231, 44, 131, 0.25);">
-                  Track Delivery Live ➔
-                </a>
-              </div>
-              
-              <!-- Customer Details Column -->
-              <div style="background-color: #faf9fc; border-radius: 16px; padding: 25px; border: 1px solid #f1eff5; margin-bottom: 35px;">
-                <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Shipping Address</h4>
-                <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
-                  <strong>${order.customer.name}</strong><br/>
-                  ${order.customer.address}<br/>
-                  ${order.customer.city}, ${order.customer.postalCode}<br/>
-                  📞 ${order.customer.phone}
-                </p>
-              </div>
-
-              <!-- Order Summary Items Table -->
-              <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
-              <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
-                <thead>
-                  <tr style="border-bottom: 2px solid #f1eff5;">
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                  <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
-                      Flat Shipping Fee <br/>
-                      <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
-                    </td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                  </tr>
-                  <tr style="font-size: 16px;">
-                    <td colspan="3" style="padding: 20px 5px 10px 5px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Grand Total:</td>
-                    <td style="padding: 20px 5px 10px 5px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total || 0).toFixed(2)} NZD</td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              <p style="font-size: 11px; color: #8c859d; margin: 0; text-align: center;">
-                If you have any questions or need to make changes to your delivery, please contact our support team.
-              </p>
-            </div>
-            
-            <!-- Email Footer -->
-            <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
-              <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
-                © 2026 Lolly Shop New Zealand. All rights reserved.
-              </p>
-            </div>
+          <!-- Tracking Reference Card -->
+          <div class="email-tracking-card" style="background: #faf9fc; border: 1.5px solid #e1dde6; padding: 20px; border-radius: 12px; margin-bottom: 30px; text-align: center;">
+            <span style="display: block; font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+              Delivery Company
+            </span>
+            <strong style="display: block; font-size: 18px; color: #2d2645; margin-bottom: 16px;">
+              ${order.deliveryCompany}
+            </strong>
+            <span style="display: block; font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">
+              Tracking Reference ID
+            </span>
+            <strong style="display: block; font-size: 20px; font-family: monospace; color: #2d2645; background: #ffffff; padding: 8px 15px; border-radius: 8px; border: 1px solid #f1eff5; display: inline-block; word-break: break-all;">
+              ${order.deliveryReference}
+            </strong>
           </div>
-        </div>
-      `
+
+          <!-- Tracking Action Button -->
+          <div style="text-align: center; margin-bottom: 35px;">
+            <a href="${trackingLink}" style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; padding: 14px 32px; border-radius: 50px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 10px 20px rgba(231, 44, 131, 0.25);">
+              Track Delivery Live ➔
+            </a>
+          </div>
+          
+          <!-- Customer Details Column -->
+          <div class="email-address" style="background-color: #faf9fc; border-radius: 16px; padding: 25px; border: 1px solid #f1eff5; margin-bottom: 35px;">
+            <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Shipping Address</h4>
+            <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
+              <strong>${order.customer.name}</strong><br/>
+              ${order.customer.address}<br/>
+              ${order.customer.city}, ${order.customer.postalCode}<br/>
+              📞 ${order.customer.phone}
+            </p>
+          </div>
+
+          <!-- Order Summary Items Table -->
+          <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
+          <table class="item-table" style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #f1eff5;">
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
+                  Flat Shipping Fee <br/>
+                  <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
+                </td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+              </tr>
+              <tr style="border-top: 2px solid #f1eff5;">
+                <td colspan="2"></td>
+                <td class="grand-total-label" style="padding: 15px 5px; font-size: 15px; color: #2d2645; font-weight: 700; text-align: right;">Grand Total:</td>
+                <td class="grand-total-val" style="padding: 15px 5px; font-size: 18px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total || 0).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p style="font-size: 11px; color: #8c859d; margin: 0; text-align: center; word-break: break-all;">
+            If you have any questions or need to make changes to your delivery, please contact our support team.
+          </p>
+        `
+      })
     });
     console.log(`[Order Dispatched] Email successfully sent to ${order.customer.email}. MessageID: ${info.messageId}`);
   } catch (err) {
@@ -1744,7 +1823,6 @@ const sendDeliveryCompleteEmail = async (order) => {
     const ratingLink = (stars) => `http://localhost:5173/track-order/${order.id}?rating=${stars}`;
     const trackingLink = `http://localhost:5173/track-order/${order.id}`;
 
-    // Format invoice items
     const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
         <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
@@ -1762,100 +1840,87 @@ const sendDeliveryCompleteEmail = async (order) => {
       to: order.customer.email,
       subject: `Lolly Shop - Package Delivered! ORD-${order.id}`,
       text: `Your Lolly Shop order ${order.id} has been delivered successfully! Please rate your confections here: ${ratingLink(5)}`,
-      html: `
-        <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
-            <!-- Brand Banner Header -->
-            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 35px 20px; text-align: center;">
-              <span style="font-size: 40px; display: block; margin-bottom: 10px;">🎁</span>
-              <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Delivered!</h1>
-              <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Your Sweet Package Has Arrived</p>
+      html: getResponsiveEmailTemplate({
+        previewText: `Your Lolly Shop order ${order.id} has arrived! We hope you love your sweet treats 🍬`,
+        headerEmoji: '🎁',
+        headerTitle: 'Delivered!',
+        headerSubtitle: 'Your Sweet Package Has Arrived',
+        headerGradient: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+        bodyHtml: `
+          <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px; text-align: center;">We Hope You Love Your Treats!</h2>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+            Hi <strong>${order.customer.name}</strong>,
+          </p>
+          
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
+            Your confections order <strong>${order.id}</strong> has been successfully hand-delivered by ${order.deliveryCompany || 'our courier'} to your shipping address.
+          </p>
+
+          <!-- Feedback / Star Ratings Container -->
+          <div class="email-feedback-card" style="background-color: #faf9fc; border-radius: 16px; padding: 30px 20px; border: 1.5px dashed #e1dde6; margin-bottom: 35px; text-align: center;">
+            <h4 style="margin: 0 0 8px 0; color: #2d2645; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">⭐ Rate Your Candies ⭐</h4>
+            <p style="margin: 0 0 20px 0; color: #615a75; font-size: 13px; line-height: 1.4;">How delicious were your confections? Click a star to submit your rating:</p>
+            
+            <div class="stars-container" style="margin-bottom: 20px;">
+              <a href="${ratingLink(1)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
+              <a href="${ratingLink(2)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
+              <a href="${ratingLink(3)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
+              <a href="${ratingLink(4)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
+              <a href="${ratingLink(5)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
             </div>
             
-            <!-- Email Body Content -->
-            <div style="padding: 45px 35px;">
-              <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px; text-align: center;">We Hope You Love Your Treats!</h2>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                Hi <strong>${order.customer.name}</strong>,
-              </p>
-              
-              <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
-                Your confections order <strong>${order.id}</strong> has been successfully hand-delivered by ${order.deliveryCompany || 'Charlie'} to your shipping address.
-              </p>
-
-              <!-- Feedback / Star Ratings Container -->
-              <div style="background-color: #faf9fc; border-radius: 16px; padding: 30px 20px; border: 1.5px dashed #e1dde6; margin-bottom: 35px; text-align: center;">
-                <h4 style="margin: 0 0 8px 0; color: #2d2645; font-size: 16px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">⭐ Rate Your Candies ⭐</h4>
-                <p style="margin: 0 0 20px 0; color: #615a75; font-size: 13px; line-height: 1.4;">How delicious were your confections? Click a star to submit your rating:</p>
-                
-                <div style="margin-bottom: 20px;">
-                  <a href="${ratingLink(1)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
-                  <a href="${ratingLink(2)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
-                  <a href="${ratingLink(3)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
-                  <a href="${ratingLink(4)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
-                  <a href="${ratingLink(5)}" style="text-decoration: none; font-size: 32px; margin: 0 4px;">⭐</a>
-                </div>
-                
-                <a href="${ratingLink(5)}" style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 13px; text-decoration: none; display: inline-block; box-shadow: 0 6px 15px rgba(231, 44, 131, 0.3);">
-                  Write A Comment ➔
-                </a>
-              </div>
-
-              <!-- Customer Shipping Details -->
-              <div style="background-color: #faf9fc; border-radius: 16px; padding: 25px; border: 1px solid #f1eff5; margin-bottom: 35px;">
-                <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Shipping Address</h4>
-                <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
-                  <strong>${order.customer.name}</strong><br/>
-                  ${order.customer.address}<br/>
-                  ${order.customer.city}, ${order.customer.postalCode}<br/>
-                  📞 ${order.customer.phone}
-                </p>
-              </div>
-
-              <!-- Order Summary Items Table -->
-              <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
-              <table style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
-                <thead>
-                  <tr style="border-bottom: 2px solid #f1eff5;">
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
-                    <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${itemsHtml}
-                  <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
-                      Flat Shipping Fee <br/>
-                      <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
-                    </td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
-                    <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                    <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
-                  </tr>
-                  <tr style="font-size: 16px;">
-                    <td colspan="3" style="padding: 20px 5px 10px 5px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Grand Total:</td>
-                    <td style="padding: 20px 5px 10px 5px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total || 0).toFixed(2)} NZD</td>
-                  </tr>
-                </tbody>
-              </table>
-              
-              <p style="font-size: 11px; color: #8c859d; margin: 0; text-align: center;">
-                If you have any feedback or concerns regarding your delivery, please reply directly to this email or track details on <a href="${trackingLink}">your tracking page</a>.
-              </p>
-            </div>
-            
-            <!-- Email Footer -->
-            <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
-              <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
-                © 2026 Lolly Shop New Zealand. All rights reserved.
-              </p>
-            </div>
+            <a href="${ratingLink(5)}" style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 13px; text-decoration: none; display: inline-block; box-shadow: 0 6px 15px rgba(231, 44, 131, 0.3);">
+              Write A Comment ➔
+            </a>
           </div>
-        </div>
-      `
+
+          <!-- Customer Shipping Details -->
+          <div class="email-address" style="background-color: #faf9fc; border-radius: 16px; padding: 25px; border: 1px solid #f1eff5; margin-bottom: 35px;">
+            <h4 style="margin: 0 0 10px 0; color: #2d2645; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;">Shipping Address</h4>
+            <p style="color: #615a75; font-size: 14px; line-height: 1.5; margin: 0;">
+              <strong>${order.customer.name}</strong><br/>
+              ${order.customer.address}<br/>
+              ${order.customer.city}, ${order.customer.postalCode}<br/>
+              📞 ${order.customer.phone}
+            </p>
+          </div>
+
+          <!-- Order Summary Items Table -->
+          <h3 style="color: #2d2645; font-size: 14px; font-weight: 700; margin: 0 0 15px 0; text-transform: uppercase; letter-spacing: 0.5px;">📋 Order Summary</h3>
+          <table class="item-table" style="width: 100%; border-collapse: collapse; text-align: left; margin-bottom: 30px;">
+            <thead>
+              <tr style="border-bottom: 2px solid #f1eff5;">
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase;">Item / Weight</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: center;">Qty</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Price</th>
+                <th style="padding: 10px 5px; font-size: 13px; color: #8c859d; font-weight: 700; text-transform: uppercase; text-align: right;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+              <tr style="border-bottom: 1.5px solid #f1eff5; font-size: 14px;">
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 600;">
+                  Flat Shipping Fee <br/>
+                  <span style="font-size: 11px; color: #8c859d; font-weight: 500; text-transform: uppercase;">Courier Delivery</span>
+                </td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: center;">1</td>
+                <td style="padding: 12px 5px; color: #615a75; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+                <td style="padding: 12px 5px; color: #2d2645; font-weight: 700; text-align: right;">$${Number(order.shipping !== undefined ? order.shipping : 19).toFixed(2)}</td>
+              </tr>
+              <tr style="border-top: 2px solid #f1eff5;">
+                <td colspan="2"></td>
+                <td class="grand-total-label" style="padding: 15px 5px; font-size: 15px; color: #2d2645; font-weight: 700; text-align: right;">Grand Total:</td>
+                <td class="grand-total-val" style="padding: 15px 5px; font-size: 18px; color: #e72c83; font-weight: 800; text-align: right;">$${Number(order.total || 0).toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p style="font-size: 11px; color: #8c859d; margin: 0; text-align: center;">
+            If you have any feedback or concerns regarding your delivery, please reply directly to this email or track details on <a href="${trackingLink}" style="color: #00b4d8; text-decoration: none; font-weight: 600;">your tracking page</a>.
+          </p>
+        `
+      })
     });
     console.log(`[Delivery Completed] Email successfully sent to ${order.customer.email}. MessageID: ${info.messageId}`);
   } catch (err) {
