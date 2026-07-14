@@ -851,21 +851,23 @@ export const Admin = () => {
                             <span>{p.inStock ? 'In Stock' : 'Out of Stock'}</span>
                           </button>
                         </td>
-                        <td style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
-                          <button
-                            className="p-edit-btn"
-                            onClick={() => handleEditProduct(p)}
-                            title="Edit Product"
-                          >
-                            <Edit3 size={16} />
-                          </button>
-                          <button 
-                            className="p-delete-btn"
-                            onClick={() => deleteProduct(p.id)}
-                            title="Delete Product"
-                          >
-                            <Trash2 size={16} />
-                          </button>
+                        <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
+                            <button
+                              className="p-edit-btn"
+                              onClick={() => handleEditProduct(p)}
+                              title="Edit Product"
+                            >
+                              <Edit3 size={16} />
+                            </button>
+                            <button 
+                              className="p-delete-btn"
+                              onClick={() => deleteProduct(p.id)}
+                              title="Delete Product"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
