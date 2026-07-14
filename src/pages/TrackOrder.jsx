@@ -53,13 +53,13 @@ export const TrackOrder = () => {
   // Real-time polling order details from backend every 3 seconds to react to Admin status updates
   useEffect(() => {
     const fetchOrder = () => {
-      fetch(`/api/orders`)
-        .then(res => res.json())
+      fetch(`/api/orders/${id}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Order not found');
+          return res.json();
+        })
         .then(data => {
-          const matched = data.find(o => o.id === id);
-          if (matched) {
-            setOrder(matched);
-          }
+          setOrder(data);
           setLoading(false);
         })
         .catch(err => {

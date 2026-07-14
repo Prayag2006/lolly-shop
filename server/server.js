@@ -794,6 +794,25 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
+// GET a single order by ID (used by TrackOrder page)
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const isAdmin = req.headers['x-user-role'] === 'admin';
+    if (sqlAvailable()) {
+      const order = await Order.findOne({ id: req.params.id });
+      if (!order) return res.status(404).json({ message: 'Order not found' });
+      return res.json(isAdmin ? order : sanitizeOrder(order));
+    } else {
+      const orders = readLocalData('orders.json', []);
+      const order = orders.find(o => o.id === req.params.id);
+      if (!order) return res.status(404).json({ message: 'Order not found' });
+      return res.json(isAdmin ? order : sanitizeOrder(order));
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching order', error: error.message });
+  }
+});
+
 // DELETE a single order (admin only)
 app.delete('/api/orders/:id', async (req, res) => {
   try {
@@ -958,7 +977,8 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
 
     const { transporter, smtpUser } = mailConfig;
 
-    const trackingLink = `http://localhost:5173/track-order/${order.id}`;
+    const siteUrl = process.env.SITE_URL || 'https://bestlollyshop.co.nz';
+    const trackingLink = `${siteUrl}/track-order/${order.id}`;
 
     const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
@@ -1736,7 +1756,8 @@ const sendOrderDispatchedEmail = async (order) => {
 
     const { transporter, smtpUser } = mailConfig;
 
-    const trackingLink = `http://localhost:5173/track-order/${order.id}`;
+    const siteUrl = process.env.SITE_URL || 'https://bestlollyshop.co.nz';
+    const trackingLink = `${siteUrl}/track-order/${order.id}`;
 
     const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
@@ -1861,8 +1882,9 @@ const sendDeliveryCompleteEmail = async (order) => {
 
     const { transporter, smtpUser } = mailConfig;
 
-    const ratingLink = (stars) => `http://localhost:5173/track-order/${order.id}?rating=${stars}`;
-    const trackingLink = `http://localhost:5173/track-order/${order.id}`;
+    const siteUrl = process.env.SITE_URL || 'https://bestlollyshop.co.nz';
+    const ratingLink = (stars) => `${siteUrl}/track-order/${order.id}?rating=${stars}`;
+    const trackingLink = `${siteUrl}/track-order/${order.id}`;
 
     const itemsHtml = (order.items || []).map(item => `
       <tr style="border-bottom: 1px solid #f1eff5; font-size: 14px;">
