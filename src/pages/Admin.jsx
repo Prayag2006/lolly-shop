@@ -40,7 +40,15 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '160px' }}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+      width: '100%',
+      minWidth: '150px',
+      maxWidth: '220px',
+      boxSizing: 'border-box'
+    }}>
       <input
         type="text"
         placeholder="Courier (e.g. NZ Post)"
@@ -48,14 +56,17 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
         onChange={(e) => setCompany(e.target.value)}
         onBlur={handleBlur}
         style={{
-          padding: '6px 8px',
+          width: '100%',
+          boxSizing: 'border-box',
+          padding: '8px 10px',
           borderRadius: '6px',
           border: '1px solid var(--color-border)',
           fontSize: '12px',
           outline: 'none',
           background: 'var(--color-surface)',
           color: 'var(--color-text)',
-          fontWeight: '600'
+          fontWeight: '600',
+          transition: 'all 0.2s ease'
         }}
       />
       <input
@@ -65,7 +76,9 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
         onChange={(e) => setReference(e.target.value)}
         onBlur={handleBlur}
         style={{
-          padding: '6px 8px',
+          width: '100%',
+          boxSizing: 'border-box',
+          padding: '8px 10px',
           borderRadius: '6px',
           border: '1px solid var(--color-border)',
           fontSize: '12px',
@@ -73,7 +86,8 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
           background: 'var(--color-surface)',
           color: 'var(--color-text)',
           fontFamily: 'monospace',
-          fontWeight: '700'
+          fontWeight: '700',
+          transition: 'all 0.2s ease'
         }}
       />
     </div>
