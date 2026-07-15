@@ -299,7 +299,7 @@ const defaultSettings = {
     }
   ],
   websiteName: 'Best Lolly Shop',
-  websiteLogo: '',
+  websiteLogo: '/logo.png',
   websiteFavicon: '',
   themeColors: {
     primary: '#e72c83',

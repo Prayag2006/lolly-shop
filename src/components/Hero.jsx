@@ -22,9 +22,9 @@ export const Hero = () => {
   }, []);
 
   const heroSettings = settings?.hero || {
-    heading: 'SWEETEN YOUR | EVERYDAY LIFE!',
-    subheading: "NZ's Favourite Online Lolly Shop & Candy Store",
-    description: "Indulge in our exquisite gourmet selection of hand-picked imported lollies, luxury chocolates, and sour straps. Freshly packed and delivered straight to your door across NZ.",
+    heading: 'BEST LOLLY SHOP | NZ ONLINE STORE',
+    subheading: "Buy Lollies Online NZ — New Zealand's Favourite Candy Store",
+    description: "Indulge in our exquisite selection of bulk lollies, retro kiwi sweets, party pick & mix, and luxury chocolates. Freshly packed in Auckland and delivered straight to your door across NZ.",
     buttonText: 'Explore Sweet Shop',
     buttonLink: '/shop',
     secondaryButtonText: 'Best Sellers',
@@ -32,7 +32,7 @@ export const Hero = () => {
     heroImage: '/hero_candy_display.png',
     backgroundImage: '',
     floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
-    badgeText: 'Premium New Zealand Confections'
+    badgeText: '100% NZ Owned & Operated'
   };
 
   const containerVariants = {
@@ -132,15 +132,15 @@ export const Hero = () => {
           <motion.div className="hero-features-row" variants={itemVariants}>
             <div className="hero-feature-item">
               <Award size={16} />
-              <span>Gourmet Quality</span>
+              <span>100% Kiwi Owned</span>
             </div>
             <div className="hero-feature-item">
               <ShoppingBag size={16} />
-              <span>Bulk Weight Options</span>
+              <span>Bulk & Pick 'n' Mix</span>
             </div>
             <div className="hero-feature-item">
               <ShieldCheck size={16} />
-              <span>Free Hamilton Delivery</span>
+              <span>Fast NZ-Wide Delivery</span>
             </div>
           </motion.div>
         </motion.div>

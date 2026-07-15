@@ -94,89 +94,135 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- Product Details Pages -->
+  <!-- Product Details Pages (SEO Optimized Slugs) -->
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-1</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-pineapple-lumps-p-1</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-jet-planes-p-2</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-milk-bottles-p-3</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-2</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/mayceys-sour-peaches-p-4</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-jaffas-p-5</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-3</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/chocolate-fish-pascall-p-6</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-4</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-minties-p-7</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-5</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/mayceys-sour-apples-p-8</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-6</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/spaceman-candy-sticks-p-9</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-7</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/cadbury-caramilk-bar-p-10</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/pascall-wine-gums-p-11</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/buzz-bar-cadbury-p-12</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-8</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/product/raspberry-sherbet-bombs-p-13</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/product/toffee-milks-p-14</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <!-- Blog & Content Strategy Hubs -->
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-9</loc>
-    <lastmod>2026-07-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <loc>https://www.bestlollyshop.co.nz/blog</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-10</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/blog/buying-lollies-online-nz</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-11</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/blog/best-retro-kiwi-lollies</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-12</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/blog/perfect-lolly-buffet-guide</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-13</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/blog/lolly-gift-ideas-nz</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://www.bestlollyshop.co.nz/product/p-14</loc>
-    <lastmod>2026-07-13</lastmod>
+    <loc>https://www.bestlollyshop.co.nz/blog/bulk-lollies-nz-guide</loc>
+    <lastmod>2026-07-14</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Help & Support -->
+  <url>
+    <loc>https://www.bestlollyshop.co.nz/faq</loc>
+    <lastmod>2026-07-14</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
   </url>
 </urlset>

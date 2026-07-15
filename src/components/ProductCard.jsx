@@ -19,10 +19,18 @@ export const ProductCard = ({ product, onProductClick }) => {
     setTimeout(() => btn.classList.remove('pop-active'), 300);
   };
 
+  const getProductSlugUrl = (prod) => {
+    const cleanName = prod.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `/product/${cleanName}-${prod.id}`;
+  };
+
   return (
     <div 
       className={`product-card glass-card animate-slide-up ${!product.inStock ? 'out-of-stock' : ''}`}
-      onClick={() => navigate(`/product/${product.id}`)}
+      onClick={() => navigate(getProductSlugUrl(product))}
     >
       {/* Badges */}
       <div className="card-badges">

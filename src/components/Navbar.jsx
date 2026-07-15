@@ -97,6 +97,8 @@ export const Navbar = ({ onCartOpen }) => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop All', path: '/shop' },
+    { name: 'Blog', path: '/blog' },
+    { name: 'FAQ', path: '/faq' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact Us', path: '/contact' }
   ];
@@ -176,8 +178,10 @@ export const Navbar = ({ onCartOpen }) => {
             )}
           </div>
           
-          <Link to="/about" className="nav-link">About Us</Link>
-          <Link to="/contact" className="nav-link">Contact Us</Link>
+          <Link to="/blog" className={`nav-link ${location.pathname.startsWith('/blog') ? 'active' : ''}`}>Blog</Link>
+          <Link to="/faq" className={`nav-link ${location.pathname === '/faq' ? 'active' : ''}`}>FAQ</Link>
+          <Link to="/about" className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}>About Us</Link>
+          <Link to="/contact" className={`nav-link ${location.pathname === '/contact' ? 'active' : ''}`}>Contact Us</Link>
         </div>
 
         {/* Nav Actions */}

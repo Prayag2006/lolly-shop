@@ -340,6 +340,14 @@ export const Shop = ({ onProductClick }) => {
   const seoInfo = getActiveSeoInfo();
   const domain = typeof window !== 'undefined' ? window.location.origin : 'https://www.bestlollyshop.co.nz';
 
+  const getProductSlugUrl = (prod) => {
+    const cleanName = prod.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `/product/${cleanName}-${prod.id}`;
+  };
+
   const itemListSchema = {
     "@context": "https://schema.org",
     "@type": "ItemList",
@@ -350,7 +358,7 @@ export const Shop = ({ onProductClick }) => {
     "itemListElement": filteredProducts.slice(0, 20).map((product, idx) => ({
       "@type": "ListItem",
       "position": idx + 1,
-      "url": `${domain}/product/${product.id}`,
+      "url": `${domain}${getProductSlugUrl(product)}`,
       "name": product.name
     }))
   };

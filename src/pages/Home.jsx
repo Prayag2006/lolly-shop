@@ -310,8 +310,8 @@ export const Home = ({ onProductClick }) => {
   ];
 
   const seoHome = settings?.seoOverrides?.home || settings?.seoOverrides?.['/'] || {
-    title: "Online Lolly Shop NZ | Buy Bulk Lollies & Candy Online",
-    description: "Order delicious sweets from New Zealand's favourite online lolly shop. Bulk lollies, sour gummies, imported chocolates & pick and mix. Fast NZ-wide delivery!"
+    title: "Buy Lollies Online NZ | Best Lolly Shop | bestlollyshop.co.nz",
+    description: "Shop New Zealand's best online lolly shop! Buy bulk lollies, retro kiwi candy, pick & mix sweets, and chocolates online. Fast delivery NZ-wide."
   };
 
   return (

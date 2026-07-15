@@ -7,5 +7,7 @@
     "description": "Get 15% off on all sour gummies this weekend. Use code at checkout!",
     "code": "SOUR15",
     "image": ""
-  }
+  },
+  "websiteName": "Best Lolly Shop",
+  "websiteLogo": "/logo.png"
 }

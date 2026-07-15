@@ -73,6 +73,8 @@ export const Footer = () => {
             <h3>Quick Shop</h3>
             <ul className="footer-links">
               <li><Link to="/shop">Shop All Sweets</Link></li>
+              <li><Link to="/blog">Blog & Candy Guides</Link></li>
+              <li><Link to="/faq">Frequently Asked Questions</Link></li>
               {footerCategories.map((cat, idx) => (
                 <li key={`foot-cat-${idx}`}>
                   <Link to={`/shop?category=${encodeURIComponent(cat.name || cat)}`}>

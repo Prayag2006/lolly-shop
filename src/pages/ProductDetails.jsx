@@ -11,8 +11,33 @@ export const ProductDetails = () => {
   const navigate = useNavigate();
   const { products, addToCart, addProductReview, currentUser } = useStore();
 
+  // Extract ID from slug format (e.g. pascall-pineapple-lumps-p-1 -> p-1)
+  const getProductIdFromSlug = (slugOrId) => {
+    if (!slugOrId) return '';
+    if (slugOrId.startsWith('p-')) return slugOrId;
+    const parts = slugOrId.split('-');
+    if (parts.length >= 2) {
+      const pIdx = parts.lastIndexOf('p');
+      if (pIdx !== -1 && pIdx < parts.length - 1) {
+        return `p-${parts[pIdx + 1]}`;
+      }
+    }
+    return slugOrId;
+  };
+
+  const realId = getProductIdFromSlug(id);
+
   // Find product by id
-  const product = products.find(p => String(p.id) === String(id));
+  const product = products.find(p => String(p.id) === String(realId));
+
+  const getProductSlugUrl = (prod) => {
+    if (!prod) return '';
+    const cleanName = prod.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+    return `/product/${cleanName}-${prod.id}`;
+  };
 
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(() => {
@@ -138,7 +163,7 @@ export const ProductDetails = () => {
     },
     "offers": {
       "@type": "Offer",
-      "url": typeof window !== 'undefined' ? window.location.href : `${domain}/product/${product.id}`,
+      "url": typeof window !== 'undefined' ? window.location.href : `${domain}${getProductSlugUrl(product)}`,
       "priceCurrency": "NZD",
       "price": currentPrice.toFixed(2),
       "priceValidUntil": "2027-12-31",
@@ -198,7 +223,7 @@ export const ProductDetails = () => {
         "@type": "ListItem",
         "position": 3,
         "name": product.name,
-        "item": `${domain}/product/${product.id}`
+        "item": `${domain}${getProductSlugUrl(product)}`
       }
     ]
   };
@@ -585,7 +610,7 @@ export const ProductDetails = () => {
           
           <div className="recommendations-grid">
             {recommendations.map(p => (
-              <div key={p.id} className="rec-card glass-card" onClick={() => navigate(`/product/${p.id}`)}>
+              <div key={p.id} className="rec-card glass-card" onClick={() => navigate(getProductSlugUrl(p))}>
                 <div className="rec-image-wrapper">
                   <img 
                     src={p.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 

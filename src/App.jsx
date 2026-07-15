@@ -25,6 +25,9 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ de
 const TrackOrder = lazy(() => import('./pages/TrackOrder').then(m => ({ default: m.TrackOrder })));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
+const Blog = lazy(() => import('./pages/Blog').then(m => ({ default: m.Blog })));
+const BlogPost = lazy(() => import('./pages/BlogPost').then(m => ({ default: m.BlogPost })));
+const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
 
 // Lightweight fallback loader for lazy-loaded pages
 const PageLoadingFallback = () => (
@@ -157,6 +160,18 @@ function App() {
               <Route 
                 path="/terms" 
                 element={<TermsOfService />} 
+              />
+              <Route 
+                path="/blog" 
+                element={<Blog />} 
+              />
+              <Route 
+                path="/blog/:slug" 
+                element={<BlogPost />} 
+              />
+              <Route 
+                path="/faq" 
+                element={<FAQ />} 
               />
             </Routes>
           </Suspense>
