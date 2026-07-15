@@ -110,10 +110,7 @@ export const Navbar = ({ onCartOpen }) => {
       <div className="container nav-container">
         {/* Logo */}
         <Link to="/" className="logo-link">
-          <img src="/logo.png" alt="Best Lolly Shop Logo" className="logo-image" style={{ maxHeight: '38px', marginRight: '10px', objectFit: 'contain' }} />
-          <div className="logo-text">
-            Best <span>Lolly Shop</span>
-          </div>
+          <img src="/logo.png" alt="Best Lolly Shop" className="logo-image" style={{ maxHeight: '55px', objectFit: 'contain' }} />
         </Link>
 
         {/* Desktop Nav Links */}
