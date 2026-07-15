@@ -51,7 +51,16 @@ export const Footer = () => {
           {/* Brand Info */}
           <div className="footer-brand-side">
             <Link to="/" className="logo-link footer-logo">
-              <img src="/logo.png" alt="Best Lolly Shop" className="logo-image" style={{ maxHeight: '45px', objectFit: 'contain' }} />
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                poster="/logo.png"
+                style={{ maxHeight: '45px', width: 'auto', objectFit: 'contain' }}
+              >
+                <source src="/logo%20video.webm" type="video/webm" />
+              </video>
             </Link>
             <p className="footer-desc">
               {footerSettings.description}
