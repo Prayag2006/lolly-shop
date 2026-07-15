@@ -115,7 +115,7 @@ export const Navbar = ({ onCartOpen }) => {
             loop
             muted
             playsInline
-            style={{ maxHeight: '55px', width: 'auto', objectFit: 'contain' }}
+            style={{ maxHeight: '75px', width: 'auto', objectFit: 'contain', marginLeft: '40px' }}
           >
             <source src="/logovideo.webm" type="video/webm" />
           </video>

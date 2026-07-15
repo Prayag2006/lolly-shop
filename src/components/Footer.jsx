@@ -56,7 +56,7 @@ export const Footer = () => {
                 loop
                 muted
                 playsInline
-                style={{ maxHeight: '45px', width: 'auto', objectFit: 'contain' }}
+                style={{ maxHeight: '60px', width: 'auto', objectFit: 'contain', marginLeft: '20px' }}
               >
                 <source src="/logovideo.webm" type="video/webm" />
               </video>
