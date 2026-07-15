@@ -56,10 +56,9 @@ export const Footer = () => {
                 loop
                 muted
                 playsInline
-                poster="/logo.png"
                 style={{ maxHeight: '45px', width: 'auto', objectFit: 'contain' }}
               >
-                <source src="/logo%20video.webm" type="video/webm" />
+                <source src="/logovideo.webm" type="video/webm" />
               </video>
             </Link>
             <p className="footer-desc">
