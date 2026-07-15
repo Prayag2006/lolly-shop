@@ -7,13 +7,18 @@ export function VideoSplash({ onComplete }) {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    // Safety fallback: if video data hasn't loaded within 2.5s (due to slow connection), skip to homepage
+    // Safety fallback: if video data hasn't loaded within 3s (due to slow connection), skip to homepage
     const timer = setTimeout(() => {
       if (!isLoaded) {
         console.warn("Video load timed out. Bypassing video splash for performance.");
         handleEnter();
       }
-    }, 10000);
+    }, 3000);
+
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.defaultMuted = true;
+    }
 
     return () => clearTimeout(timer);
   }, [isLoaded]);
@@ -31,8 +36,10 @@ export function VideoSplash({ onComplete }) {
     console.log("Video loaded successfully.");
     setIsLoaded(true);
     if (videoRef.current) {
+      videoRef.current.muted = true;
       videoRef.current.play().catch(err => {
-        console.warn("Autoplay blocked or failed, wait for click to play or skip", err);
+        console.warn("Autoplay blocked or failed, bypassing video splash.", err);
+        handleEnter();
       });
     }
   };
@@ -54,9 +61,10 @@ export function VideoSplash({ onComplete }) {
         className={`splash-video-bg ${isLoaded ? 'loaded' : 'loading'}`}
         src="/video.mp4"
         type="video/mp4"
-        muted
-        playsInline
-        autoPlay
+        muted={true}
+        defaultMuted={true}
+        playsInline={true}
+        autoPlay={true}
         onLoadedData={handleVideoLoaded}
         onEnded={handleEnter}
         onError={handleEnter} // Go directly to site if video fails to load
