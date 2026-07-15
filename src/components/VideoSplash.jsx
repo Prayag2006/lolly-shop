@@ -59,8 +59,6 @@ export function VideoSplash({ onComplete }) {
       <video
         ref={videoRef}
         className={`splash-video-bg ${isLoaded ? 'loaded' : 'loading'}`}
-        src="/video.mp4"
-        type="video/mp4"
         muted={true}
         defaultMuted={true}
         playsInline={true}
@@ -68,7 +66,9 @@ export function VideoSplash({ onComplete }) {
         onLoadedData={handleVideoLoaded}
         onEnded={handleEnter}
         onError={handleEnter} // Go directly to site if video fails to load
-      />
+      >
+        <source src="/video.mp4" type="video/mp4" />
+      </video>
       
       {/* Skip Intro button positioned in bottom-left */}
       <button 
