@@ -110,19 +110,10 @@ export const Navbar = ({ onCartOpen }) => {
       <div className="container nav-container">
         {/* Logo */}
         <Link to="/" className="logo-link">
-          {settings?.websiteLogo ? (
-            <img src={settings.websiteLogo} alt={settings.websiteName || 'Best Lolly Shop'} className="logo-image" style={{ maxHeight: '40px', objectFit: 'contain' }} />
-          ) : (
-            <div className="logo-text">
-              {settings?.header?.logoText ? (
-                <>
-                  {settings.header.logoText.split(' ').slice(0, -1).join(' ')} <span>{settings.header.logoText.split(' ').slice(-1)[0]}</span>
-                </>
-              ) : (
-                <>Best <span>Lolly Shop</span></>
-              )}
-            </div>
-          )}
+          <img src="/logo.png" alt="Best Lolly Shop Logo" className="logo-image" style={{ maxHeight: '38px', marginRight: '10px', objectFit: 'contain' }} />
+          <div className="logo-text">
+            Best <span>Lolly Shop</span>
+          </div>
         </Link>
 
         {/* Desktop Nav Links */}

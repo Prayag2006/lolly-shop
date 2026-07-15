@@ -51,13 +51,10 @@ export const Footer = () => {
           {/* Brand Info */}
           <div className="footer-brand-side">
             <Link to="/" className="logo-link footer-logo">
-              {settings?.websiteLogo ? (
-                <img src={settings.websiteLogo} alt={settings.websiteName || 'Best Lolly Shop'} style={{ maxHeight: '35px', objectFit: 'contain' }} />
-              ) : (
-                <div className="logo-text">
-                  Best <span>Lolly Shop</span>
-                </div>
-              )}
+              <img src="/logo.png" alt="Best Lolly Shop Logo" className="logo-image" style={{ maxHeight: '32px', marginRight: '8px', objectFit: 'contain' }} />
+              <div className="logo-text">
+                Best <span>Lolly Shop</span>
+              </div>
             </Link>
             <p className="footer-desc">
               {footerSettings.description}
