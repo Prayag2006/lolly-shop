@@ -24,8 +24,8 @@ export const Footer = () => {
   const contactSettings = settings?.contactUs || {
     email: 'bestlollyshopnz@gmail.com',
     phone: '021 123 4567',
-    address: 'Grey Lynn, Auckland 1021, New Zealand',
-    googleMap: 'https://maps.app.goo.gl/m27LjumNacLhLiaZ7?g_st=iw'
+    address: '17 Braid Road, St Andrews, Hamilton 3200, New Zealand',
+    googleMap: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed'
   };
 
   const handleSubmit = (e) => {

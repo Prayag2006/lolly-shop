@@ -156,11 +156,11 @@ const settingsSchema = new mongoose.Schema({
 
   // Contact Us Page
   contactUs: {
-    address: { type: String, default: 'Grey Lynn, Auckland 1021, New Zealand' },
+    address: { type: String, default: '17 Braid Road, St Andrews, Hamilton 3200, New Zealand' },
     phone: { type: String, default: '021 123 4567' },
     email: { type: String, default: 'bestlollyshopnz@gmail.com' },
     businessHours: { type: String, default: 'Monday - Saturday: 9:00 AM - 6:00 PM' },
-    googleMap: { type: String, default: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3192.3664790382346!2d174.7408713!3d-36.8576402!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6d0d47f9f0f9797f%3A0xe54ef92ad04cb310!2sGrey%20Lynn%2C%20Auckland!5e0!3m2!1sen!2snz!4v1700000000000' },
+    googleMap: { type: String, default: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed' },
     facebookLink: { type: String, default: 'https://facebook.com' },
     instagramLink: { type: String, default: 'https://instagram.com' },
     tiktokLink: { type: String, default: 'https://tiktok.com' },

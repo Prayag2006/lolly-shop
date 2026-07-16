@@ -35,7 +35,7 @@ export const FAQ = () => {
     },
     {
       q: "Where is the Best Lolly Shop physical presence?",
-      a: "We operate primarily as an online candy store NZ-wide. Our storage and packaging depot is located in Grey Lynn, Auckland 1021, where we maintain strict temperature-controlled standards to guarantee sweet freshness.",
+      a: "We operate primarily as an online candy store NZ-wide. Our storage and packaging depot is located at 17 Braid Road, St Andrews, Hamilton 3200, where we maintain strict temperature-controlled standards to guarantee sweet freshness.",
       category: "About Us"
     }
   ];

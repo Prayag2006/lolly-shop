@@ -230,9 +230,9 @@ export const Home = ({ onProductClick }) => {
       },
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Grey Lynn",
-        "addressLocality": "Auckland",
-        "postalCode": "1021",
+        "streetAddress": "17 Braid Road, St Andrews",
+        "addressLocality": "Hamilton",
+        "postalCode": "3200",
         "addressCountry": "NZ"
       }
     },
@@ -248,15 +248,15 @@ export const Home = ({ onProductClick }) => {
       "priceRange": "$$",
       "address": {
         "@type": "PostalAddress",
-        "streetAddress": "Grey Lynn",
-        "addressLocality": "Auckland",
-        "postalCode": "1021",
+        "streetAddress": "17 Braid Road, St Andrews",
+        "addressLocality": "Hamilton",
+        "postalCode": "3200",
         "addressCountry": "NZ"
       },
       "geo": {
         "@type": "GeoCoordinates",
-        "latitude": -36.8576402,
-        "longitude": 174.7408713
+        "latitude": -37.7476837,
+        "longitude": 175.2427845
       },
       "openingHoursSpecification": {
         "@type": "OpeningHoursSpecification",
