@@ -1,11 +1,27 @@
 import React, { useEffect } from 'react';
+import { useStore } from '../context/StoreContext';
 import { SEO } from '../components/SEO';
 import './TermsOfService.css';
 
 export const TermsOfService = () => {
+  const { customPages } = useStore();
+  const termsPage = customPages?.find(p => (p.slug === 'terms' || p.slug === 'terms-of-service') && p.enabled);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  if (termsPage) {
+    return (
+      <div className="terms-page container">
+        <SEO title={termsPage.seoTitle || termsPage.title} description={termsPage.seoDescription} />
+        <div className="glass-card terms-card">
+          <h1>{termsPage.title}</h1>
+          <div className="custom-page-content-wrapper" dangerouslySetInnerHTML={{ __html: termsPage.content }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="terms-page container">

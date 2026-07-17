@@ -22,6 +22,12 @@ import { Testimonial as MongoTestimonial } from './models/Testimonial.js';
 import { Settings as MongoSettings } from './models/Settings.js';
 import { Category as MongoCategory } from './models/Category.js';
 import { Media as MongoMedia } from './models/Media.js';
+import { Offer as MongoOffer } from './models/Offer.js';
+import { AuditLog as MongoAuditLog } from './models/AuditLog.js';
+import { BlogPost as MongoBlogPost } from './models/BlogPost.js';
+import { Redirect as MongoRedirect } from './models/Redirect.js';
+import { NewsletterSubscriber as MongoNewsletterSubscriber } from './models/NewsletterSubscriber.js';
+import { CustomPage as MongoCustomPage } from './models/CustomPage.js';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
 // Synchronously load environment variables before checking database config
@@ -172,6 +178,48 @@ const initTables = () => {
   )`).run();
 
   db.prepare(`CREATE TABLE IF NOT EXISTS media (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS offers (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS auditlogs (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS blogposts (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS redirects (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS newslettersubscribers (
+    id TEXT PRIMARY KEY,
+    data TEXT NOT NULL,
+    createdAt TEXT NOT NULL,
+    updatedAt TEXT NOT NULL
+  )`).run();
+
+  db.prepare(`CREATE TABLE IF NOT EXISTS custompages (
     id TEXT PRIMARY KEY,
     data TEXT NOT NULL,
     createdAt TEXT NOT NULL,
@@ -545,6 +593,12 @@ const SqlTestimonial = makeModelClass('testimonials');
 const SqlSettings = makeModelClass('settings', 'key');
 const SqlCategory = makeModelClass('categories');
 const SqlMedia = makeModelClass('media');
+const SqlOffer = makeModelClass('offers');
+const SqlAuditLog = makeModelClass('auditlogs');
+const SqlBlogPost = makeModelClass('blogposts');
+const SqlRedirect = makeModelClass('redirects');
+const SqlNewsletterSubscriber = makeModelClass('newslettersubscribers');
+const SqlCustomPage = makeModelClass('custompages');
 
 const getActiveModel = (mongoModel, sqlModel) => {
   return (useMongo && mongoose.connection.readyState === 1) ? mongoModel : sqlModel;
@@ -576,6 +630,12 @@ export const Testimonial = makeDynamicModel(MongoTestimonial, SqlTestimonial);
 export const Settings = makeDynamicModel(MongoSettings, SqlSettings);
 export const Category = makeDynamicModel(MongoCategory, SqlCategory);
 export const Media = makeDynamicModel(MongoMedia, SqlMedia);
+export const Offer = makeDynamicModel(MongoOffer, SqlOffer);
+export const AuditLog = makeDynamicModel(MongoAuditLog, SqlAuditLog);
+export const BlogPost = makeDynamicModel(MongoBlogPost, SqlBlogPost);
+export const Redirect = makeDynamicModel(MongoRedirect, SqlRedirect);
+export const NewsletterSubscriber = makeDynamicModel(MongoNewsletterSubscriber, SqlNewsletterSubscriber);
+export const CustomPage = makeDynamicModel(MongoCustomPage, SqlCustomPage);
 
 export const getUsersByEmail = async (email) => {
   if (useMongo && mongoose.connection.readyState === 1) {

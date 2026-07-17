@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Sparkles, HelpCircle, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { useStore } from '../context/StoreContext';
 import { SEO } from '../components/SEO';
 import './FAQ.css';
 
 export const FAQ = () => {
+  const { settings } = useStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeIndex, setActiveIndex] = useState(null);
 
-  const faqsingsings = [
+  const defaultFaqs = [
     {
       q: "Do you deliver lollies NZ-wide?",
       a: "Yes! We offer fast courier lollies delivery NZ-wide. All our orders are dispatched from Auckland via reliable couriers. Standard shipping takes 3-5 business days for metropolitan areas like Wellington, Christchurch, and Tauranga. Rural delivery may take an additional 1-2 business days.",
@@ -40,11 +42,13 @@ export const FAQ = () => {
     }
   ];
 
+  const activeFaqs = settings?.faqs && settings.faqs.length > 0 ? settings.faqs : defaultFaqs;
+
   const handleToggle = (idx) => {
     setActiveIndex(activeIndex === idx ? null : idx);
   };
 
-  const filteredFaqs = faqsingsings.filter(faq => 
+  const filteredFaqs = activeFaqs.filter(faq => 
     faq.q.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.a.toLowerCase().includes(searchQuery.toLowerCase()) ||
     faq.category.toLowerCase().includes(searchQuery.toLowerCase())
@@ -54,7 +58,7 @@ export const FAQ = () => {
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    "mainEntity": faqsingsings.map(faq => ({
+    "mainEntity": activeFaqs.map(faq => ({
       "@type": "Question",
       "name": faq.q,
       "acceptedAnswer": {
@@ -127,7 +131,7 @@ export const FAQ = () => {
           {filteredFaqs.length > 0 ? (
             <div className="faq-list">
               {filteredFaqs.map((faq, idx) => {
-                const globalIdx = faqsingsings.findIndex(f => f.q === faq.q);
+                const globalIdx = activeFaqs.findIndex(f => f.q === faq.q);
                 const isOpen = activeIndex === globalIdx;
                 
                 return (

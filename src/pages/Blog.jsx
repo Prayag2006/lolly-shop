@@ -2,10 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Calendar, User, Clock, ArrowRight } from 'lucide-react';
 import { blogPosts } from './BlogPostsData';
+import { useStore } from '../context/StoreContext';
 import { SEO } from '../components/SEO';
 import './Blog.css';
 
 export const Blog = () => {
+  const { blogPosts: dbBlogPosts } = useStore();
+  const activeBlogPosts = dbBlogPosts && dbBlogPosts.length > 0 ? dbBlogPosts : blogPosts;
   const domain = typeof window !== 'undefined' ? window.location.origin : 'https://www.bestlollyshop.co.nz';
   
   const blogListSchema = {
@@ -18,11 +21,11 @@ export const Blog = () => {
       "name": "Best Lolly Shop",
       "logo": `${domain}/logo.png`
     },
-    "blogPost": blogPosts.map(post => ({
+    "blogPost": activeBlogPosts.map(post => ({
       "@type": "BlogPosting",
       "headline": post.title,
       "description": post.excerpt,
-      "datePublished": "2026-07-01", // Default base date or parsed
+      "datePublished": post.date || "2026-07-01", // Default base date or parsed
       "author": {
         "@type": "Person",
         "name": post.author
@@ -89,7 +92,7 @@ export const Blog = () => {
       <section className="blog-grid-section section-padding">
         <div className="container">
           <div className="blog-grid">
-            {blogPosts.map((post, idx) => (
+            {activeBlogPosts.map((post, idx) => (
               <article key={post.slug} className="blog-card glass-card">
                 {/* Visual Header */}
                 <div className="blog-card-visual" style={{ background: cardGradients[idx % cardGradients.length] }}>

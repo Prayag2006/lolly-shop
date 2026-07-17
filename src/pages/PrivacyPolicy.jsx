@@ -1,11 +1,27 @@
 import React, { useEffect } from 'react';
+import { useStore } from '../context/StoreContext';
 import { SEO } from '../components/SEO';
 import './PrivacyPolicy.css';
 
 export const PrivacyPolicy = () => {
+  const { customPages } = useStore();
+  const privacyPage = customPages?.find(p => (p.slug === 'privacy' || p.slug === 'privacy-policy') && p.enabled);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
+
+  if (privacyPage) {
+    return (
+      <div className="privacy-page container">
+        <SEO title={privacyPage.seoTitle || privacyPage.title} description={privacyPage.seoDescription} />
+        <div className="glass-card privacy-card">
+          <h1>{privacyPage.title}</h1>
+          <div className="custom-page-content-wrapper" dangerouslySetInnerHTML={{ __html: privacyPage.content }} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="privacy-page container">

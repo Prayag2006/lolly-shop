@@ -35,7 +35,20 @@ export const StoreProvider = ({ children }) => {
     return [];
   });
 
-  const [theme] = useState('light');
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('hc_theme') || 'light';
+  });
+
+  const [offers, setOffers] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [redirects, setRedirects] = useState([]);
+  const [newsletterSubscribers, setNewsletterSubscribers] = useState([]);
+  const [customPages, setCustomPages] = useState([]);
+  const [staffUsers, setStaffUsers] = useState([]);
+  const [systemStatus, setSystemStatus] = useState({ dbStatus: 'Connected', uptime: '0s', memoryUsage: '0 MB', apiStatus: 'Operational' });
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
 
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('hc_currentUser');
@@ -52,11 +65,21 @@ export const StoreProvider = ({ children }) => {
     fetchSettings();
     fetchCategories();
     fetchMediaList();
+    fetchOffers();
+    fetchAuditLogs();
+    fetchBlogPosts();
+    fetchRedirects();
+    fetchNewsletterSubscribers();
+    fetchCustomPages();
+    fetchStaffUsers();
+    fetchSystemStatus();
 
-    // Poll for new orders and contacts in real-time
+    // Poll for new orders, contacts, and logs in real-time
     const pollInterval = setInterval(() => {
       fetchOrders();
       fetchContacts();
+      fetchAuditLogs();
+      fetchSystemStatus();
     }, 5000);
 
     return () => clearInterval(pollInterval);
@@ -167,9 +190,13 @@ export const StoreProvider = ({ children }) => {
   }, [categories]);
 
   useEffect(() => {
-    localStorage.setItem('hc_theme', 'light');
-    document.documentElement.setAttribute('data-theme', 'light');
-  }, []);
+    localStorage.setItem('hc_theme', theme);
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   useEffect(() => {
     if (currentUser) {
@@ -802,6 +829,480 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // ── ENTERPRISE OFFERS CRUD ──
+  const fetchOffers = async () => {
+    try {
+      const res = await fetch('/api/offers');
+      const data = await res.json();
+      if (Array.isArray(data)) setOffers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addOffer = async (offerData) => {
+    try {
+      const res = await fetch('/api/offers', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(offerData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOffers(prev => [data, ...prev]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateOffer = async (id, updates) => {
+    try {
+      const res = await fetch(`/api/offers/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setOffers(prev => prev.map(o => o.id === id ? data : o));
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteOffer = async (id) => {
+    try {
+      const res = await fetch(`/api/offers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setOffers(prev => prev.filter(o => o.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── AUDIT LOGS ──
+  const fetchAuditLogs = async () => {
+    try {
+      const res = await fetch('/api/audit-logs');
+      const data = await res.json();
+      if (Array.isArray(data)) setAuditLogs(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── BLOG POSTS CRUD ──
+  const fetchBlogPosts = async () => {
+    try {
+      const res = await fetch('/api/blogposts');
+      const data = await res.json();
+      if (Array.isArray(data)) setBlogPosts(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addBlogPost = async (postData) => {
+    try {
+      const res = await fetch('/api/blogposts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(postData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBlogPosts(prev => [data, ...prev]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateBlogPost = async (id, updates) => {
+    try {
+      const res = await fetch(`/api/blogposts/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setBlogPosts(prev => prev.map(p => p.id === id ? data : p));
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteBlogPost = async (id) => {
+    try {
+      const res = await fetch(`/api/blogposts/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setBlogPosts(prev => prev.filter(p => p.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── REDIRECTS CRUD ──
+  const fetchRedirects = async () => {
+    try {
+      const res = await fetch('/api/redirects');
+      const data = await res.json();
+      if (Array.isArray(data)) setRedirects(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addRedirect = async (redirectData) => {
+    try {
+      const res = await fetch('/api/redirects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(redirectData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRedirects(prev => [data, ...prev]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteRedirect = async (id) => {
+    try {
+      const res = await fetch(`/api/redirects/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setRedirects(prev => prev.filter(r => r.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── NEWSLETTER SUBSCRIBERS ──
+  const fetchNewsletterSubscribers = async () => {
+    try {
+      const res = await fetch('/api/newsletter-subscribers');
+      const data = await res.json();
+      if (Array.isArray(data)) setNewsletterSubscribers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addNewsletterSubscriber = async (email) => {
+    try {
+      const res = await fetch('/api/newsletter-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewsletterSubscribers(prev => [data, ...prev]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteNewsletterSubscriber = async (id) => {
+    try {
+      const res = await fetch(`/api/newsletter-subscribers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setNewsletterSubscribers(prev => prev.filter(s => s.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── CUSTOM PAGES CRUD ──
+  const fetchCustomPages = async () => {
+    try {
+      const res = await fetch('/api/custom-pages');
+      const data = await res.json();
+      if (Array.isArray(data)) setCustomPages(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addCustomPage = async (pageData) => {
+    try {
+      const res = await fetch('/api/custom-pages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(pageData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCustomPages(prev => [data, ...prev]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateCustomPage = async (id, updates) => {
+    try {
+      const res = await fetch(`/api/custom-pages/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCustomPages(prev => prev.map(p => p.id === id ? data : p));
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteCustomPage = async (id) => {
+    try {
+      const res = await fetch(`/api/custom-pages/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setCustomPages(prev => prev.filter(p => p.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── STAFF USERS CRUD ──
+  const fetchStaffUsers = async () => {
+    try {
+      const res = await fetch('/api/users/staff', {
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin'
+        }
+      });
+      const data = await res.json();
+      if (Array.isArray(data)) setStaffUsers(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const addStaffUser = async (staffData) => {
+    try {
+      const res = await fetch('/api/users/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(staffData)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStaffUsers(prev => [...prev, data]);
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const updateStaffUser = async (id, updates) => {
+    try {
+      const res = await fetch(`/api/users/staff/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStaffUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
+        return data;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const deleteStaffUser = async (id) => {
+    try {
+      const res = await fetch(`/api/users/staff/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      if (res.ok) {
+        setStaffUsers(prev => prev.filter(u => u.id !== id));
+        return true;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── METRICS & BACKUPS ──
+  const fetchSystemStatus = async () => {
+    try {
+      const res = await fetch('/api/system-status');
+      const data = await res.json();
+      if (data && data.success) setSystemStatus(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const backupDatabase = async () => {
+    try {
+      const res = await fetch('/api/database-backup', {
+        method: 'POST',
+        headers: {
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        }
+      });
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const restoreDatabase = async (backupPayload) => {
+    try {
+      const res = await fetch('/api/database-restore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
+        },
+        body: JSON.stringify({ backup: backupPayload })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        fetchProducts();
+        fetchBrands();
+        fetchOrders();
+        fetchCategories();
+        fetchOffers();
+        fetchCustomPages();
+        fetchBlogPosts();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  // ── UNDO / REDO UTIL ──
+  const pushToUndo = (snapshot) => {
+    setUndoStack(prev => [...prev, snapshot]);
+    setRedoStack([]);
+  };
+
   return (
     <StoreContext.Provider
       value={{
@@ -854,7 +1355,40 @@ export const StoreProvider = ({ children }) => {
         updateOrderDelivery,
         removeOrderItem,
         deleteOrder,
-        clearAllOrders
+        clearAllOrders,
+        // Enterprise features
+        toggleTheme,
+        offers,
+        addOffer,
+        updateOffer,
+        deleteOffer,
+        auditLogs,
+        blogPosts,
+        addBlogPost,
+        updateBlogPost,
+        deleteBlogPost,
+        redirects,
+        addRedirect,
+        deleteRedirect,
+        newsletterSubscribers,
+        addNewsletterSubscriber,
+        deleteNewsletterSubscriber,
+        customPages,
+        addCustomPage,
+        updateCustomPage,
+        deleteCustomPage,
+        staffUsers,
+        addStaffUser,
+        updateStaffUser,
+        deleteStaffUser,
+        systemStatus,
+        backupDatabase,
+        restoreDatabase,
+        undoStack,
+        pushToUndo,
+        redoStack,
+        setUndoStack,
+        setRedoStack
       }}
     >
       {children}

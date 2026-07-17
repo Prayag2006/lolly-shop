@@ -6,7 +6,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { fileURLToPath } from 'url';
-import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media } from './db.js';
+import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media, Offer, AuditLog, BlogPost, Redirect, NewsletterSubscriber, CustomPage } from './db.js';
 import Stripe from 'stripe';
 
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
@@ -3491,6 +3491,595 @@ app.put('/api/settings', async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({ message: 'Error updating settings', error: error.message });
+  }
+});
+
+// ── ROLE PERMISSIONS & AUDIT LOGGING SERVICES ──
+const ROLE_PERMISSIONS = {
+  admin: ['*'],
+  manager: ['*'],
+  product_manager: ['products', 'categories', 'brands', 'media'],
+  order_manager: ['orders', 'customers'],
+  marketing_manager: ['offers', 'settings', 'testimonials', 'reviews', 'newsletter'],
+  customer_support: ['orders', 'customers', 'contacts', 'reviews'],
+  content_editor: ['cms', 'blogs', 'media', 'settings']
+};
+
+const checkPermission = (actionArea) => {
+  return (req, res, next) => {
+    const userRole = req.headers['x-user-role'] || 'user';
+    if (userRole === 'admin') return next();
+    const allowed = ROLE_PERMISSIONS[userRole] || [];
+    if (allowed.includes('*') || allowed.includes(actionArea)) {
+      return next();
+    }
+    return res.status(403).json({ message: `Forbidden: Role '${userRole}' does not have permission for '${actionArea}'` });
+  };
+};
+
+const logAudit = async (req, action, details) => {
+  try {
+    const userEmail = req.headers['x-user-email'] || 'admin@lollyshop.co.nz';
+    const userName = req.headers['x-user-name'] || 'Administrator';
+    const userRole = req.headers['x-user-role'] || 'admin';
+    const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+    
+    const logEntry = {
+      userId: userRole,
+      userName,
+      userEmail,
+      action,
+      details,
+      ipAddress,
+      timestamp: new Date()
+    };
+    
+    if (sqlAvailable()) {
+      const entry = new AuditLog(logEntry);
+      await entry.save();
+    } else {
+      const logs = readLocalData('auditlogs.json', []);
+      logs.unshift({ id: `log-${Date.now()}`, ...logEntry });
+      writeLocalData('auditlogs.json', logs.slice(0, 1000));
+    }
+  } catch (error) {
+    console.error('Error writing audit log:', error);
+  }
+};
+
+// ── AUDIT LOGS ENDPOINT ──
+app.get('/api/audit-logs', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(100);
+      res.json(logs);
+    } else {
+      const logs = readLocalData('auditlogs.json', []);
+      res.json(logs.slice(0, 100));
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving audit logs', error: error.message });
+  }
+});
+
+// ── OFFERS CRUD ENDPOINTS ──
+app.get('/api/offers', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const offers = await Offer.find().sort({ priority: -1 });
+      res.json(offers);
+    } else {
+      const offers = readLocalData('offers.json', []);
+      res.json(offers);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving offers', error: error.message });
+  }
+});
+
+app.post('/api/offers', checkPermission('offers'), async (req, res) => {
+  try {
+    let newOffer;
+    if (sqlAvailable()) {
+      newOffer = new Offer(req.body);
+      await newOffer.save();
+    } else {
+      const offers = readLocalData('offers.json', []);
+      newOffer = { id: `off-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
+      offers.push(newOffer);
+      writeLocalData('offers.json', offers);
+    }
+    await logAudit(req, 'CREATE_OFFER', `Created offer code "${newOffer.code}" (${newOffer.title})`);
+    res.status(201).json(newOffer);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating offer', error: error.message });
+  }
+});
+
+app.put('/api/offers/:id', checkPermission('offers'), async (req, res) => {
+  try {
+    let updated;
+    if (sqlAvailable()) {
+      updated = await Offer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    } else {
+      const offers = readLocalData('offers.json', []);
+      const idx = offers.findIndex(o => o.id === req.params.id);
+      if (idx !== -1) {
+        offers[idx] = { ...offers[idx], ...req.body, updatedAt: new Date().toISOString() };
+        updated = offers[idx];
+        writeLocalData('offers.json', offers);
+      }
+    }
+    if (!updated) return res.status(404).json({ message: 'Offer not found' });
+    await logAudit(req, 'UPDATE_OFFER', `Updated offer code "${updated.code}" (${updated.title})`);
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating offer', error: error.message });
+  }
+});
+
+app.delete('/api/offers/:id', checkPermission('offers'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await Offer.findByIdAndDelete(req.params.id);
+    } else {
+      const offers = readLocalData('offers.json', []);
+      const idx = offers.findIndex(o => o.id === req.params.id);
+      if (idx !== -1) {
+        deleted = offers[idx];
+        offers.splice(idx, 1);
+        writeLocalData('offers.json', offers);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Offer not found' });
+    await logAudit(req, 'DELETE_OFFER', `Deleted offer code "${deleted.code}"`);
+    res.json({ success: true, message: 'Offer deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting offer', error: error.message });
+  }
+});
+
+// ── CUSTOM PAGES CRUD ENDPOINTS ──
+app.get('/api/custom-pages', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const pages = await CustomPage.find().sort({ title: 1 });
+      res.json(pages);
+    } else {
+      const pages = readLocalData('custompages.json', []);
+      res.json(pages);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving custom pages', error: error.message });
+  }
+});
+
+app.post('/api/custom-pages', checkPermission('cms'), async (req, res) => {
+  try {
+    let page;
+    if (sqlAvailable()) {
+      page = new CustomPage(req.body);
+      await page.save();
+    } else {
+      const pages = readLocalData('custompages.json', []);
+      page = { id: `page-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
+      pages.push(page);
+      writeLocalData('custompages.json', pages);
+    }
+    await logAudit(req, 'CREATE_PAGE', `Created custom page "${page.title}" at /${page.slug}`);
+    res.status(201).json(page);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating page', error: error.message });
+  }
+});
+
+app.put('/api/custom-pages/:id', checkPermission('cms'), async (req, res) => {
+  try {
+    let updated;
+    if (sqlAvailable()) {
+      updated = await CustomPage.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    } else {
+      const pages = readLocalData('custompages.json', []);
+      const idx = pages.findIndex(p => p.id === req.params.id);
+      if (idx !== -1) {
+        pages[idx] = { ...pages[idx], ...req.body, updatedAt: new Date().toISOString() };
+        updated = pages[idx];
+        writeLocalData('custompages.json', pages);
+      }
+    }
+    if (!updated) return res.status(404).json({ message: 'Page not found' });
+    await logAudit(req, 'UPDATE_PAGE', `Updated custom page "${updated.title}"`);
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating page', error: error.message });
+  }
+});
+
+app.delete('/api/custom-pages/:id', checkPermission('cms'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await CustomPage.findByIdAndDelete(req.params.id);
+    } else {
+      const pages = readLocalData('custompages.json', []);
+      const idx = pages.findIndex(p => p.id === req.params.id);
+      if (idx !== -1) {
+        deleted = pages[idx];
+        pages.splice(idx, 1);
+        writeLocalData('custompages.json', pages);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Page not found' });
+    await logAudit(req, 'DELETE_PAGE', `Deleted custom page "${deleted.title}"`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting page', error: error.message });
+  }
+});
+
+// ── BLOG POSTS CRUD ENDPOINTS ──
+app.get('/api/blogposts', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const posts = await BlogPost.find().sort({ createdAt: -1 });
+      res.json(posts);
+    } else {
+      const posts = readLocalData('blogposts.json', []);
+      res.json(posts);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving blog posts', error: error.message });
+  }
+});
+
+app.post('/api/blogposts', checkPermission('blogs'), async (req, res) => {
+  try {
+    let post;
+    if (sqlAvailable()) {
+      post = new BlogPost(req.body);
+      await post.save();
+    } else {
+      const posts = readLocalData('blogposts.json', []);
+      post = { id: `blog-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
+      posts.push(post);
+      writeLocalData('blogposts.json', posts);
+    }
+    await logAudit(req, 'CREATE_BLOG', `Created blog post "${post.title}"`);
+    res.status(201).json(post);
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating blog post', error: error.message });
+  }
+});
+
+app.put('/api/blogposts/:id', checkPermission('blogs'), async (req, res) => {
+  try {
+    let updated;
+    if (sqlAvailable()) {
+      updated = await BlogPost.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    } else {
+      const posts = readLocalData('blogposts.json', []);
+      const idx = posts.findIndex(p => p.id === req.params.id);
+      if (idx !== -1) {
+        posts[idx] = { ...posts[idx], ...req.body, updatedAt: new Date().toISOString() };
+        updated = posts[idx];
+        writeLocalData('blogposts.json', posts);
+      }
+    }
+    if (!updated) return res.status(404).json({ message: 'Blog post not found' });
+    await logAudit(req, 'UPDATE_BLOG', `Updated blog post "${updated.title}"`);
+    res.json(updated);
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating blog post', error: error.message });
+  }
+});
+
+app.delete('/api/blogposts/:id', checkPermission('blogs'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await BlogPost.findByIdAndDelete(req.params.id);
+    } else {
+      const posts = readLocalData('blogposts.json', []);
+      const idx = posts.findIndex(p => p.id === req.params.id);
+      if (idx !== -1) {
+        deleted = posts[idx];
+        posts.splice(idx, 1);
+        writeLocalData('blogposts.json', posts);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Blog post not found' });
+    await logAudit(req, 'DELETE_BLOG', `Deleted blog post "${deleted.title}"`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting blog post', error: error.message });
+  }
+});
+
+// ── REDIRECTS ENDPOINTS ──
+app.get('/api/redirects', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const redirects = await Redirect.find().sort({ createdAt: -1 });
+      res.json(redirects);
+    } else {
+      const redirects = readLocalData('redirects.json', []);
+      res.json(redirects);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving redirects', error: error.message });
+  }
+});
+
+app.post('/api/redirects', checkPermission('seo'), async (req, res) => {
+  try {
+    let rule;
+    if (sqlAvailable()) {
+      rule = new Redirect(req.body);
+      await rule.save();
+    } else {
+      const redirects = readLocalData('redirects.json', []);
+      rule = { id: `red-${Date.now()}`, ...req.body, createdAt: new Date().toISOString() };
+      redirects.push(rule);
+      writeLocalData('redirects.json', redirects);
+    }
+    await logAudit(req, 'CREATE_REDIRECT', `Added redirect from "${rule.fromPath}" to "${rule.toPath}"`);
+    res.status(201).json(rule);
+  } catch (error) {
+    res.status(400).json({ message: 'Error adding redirect', error: error.message });
+  }
+});
+
+app.delete('/api/redirects/:id', checkPermission('seo'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await Redirect.findByIdAndDelete(req.params.id);
+    } else {
+      const redirects = readLocalData('redirects.json', []);
+      const idx = redirects.findIndex(r => r.id === req.params.id);
+      if (idx !== -1) {
+        deleted = redirects[idx];
+        redirects.splice(idx, 1);
+        writeLocalData('redirects.json', redirects);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Redirect not found' });
+    await logAudit(req, 'DELETE_REDIRECT', `Deleted redirect from "${deleted.fromPath}"`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting redirect', error: error.message });
+  }
+});
+
+// ── NEWSLETTER SUBSCRIBERS ENDPOINTS ──
+app.get('/api/newsletter-subscribers', async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const subs = await NewsletterSubscriber.find().sort({ createdAt: -1 });
+      res.json(subs);
+    } else {
+      const subs = readLocalData('subscribers.json', []);
+      res.json(subs);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error retrieving subscribers', error: error.message });
+  }
+});
+
+app.post('/api/newsletter-subscribers', async (req, res) => {
+  try {
+    const { email } = req.body;
+    let sub;
+    if (sqlAvailable()) {
+      const existing = await NewsletterSubscriber.findOne({ email });
+      if (existing) return res.json(existing);
+      sub = new NewsletterSubscriber({ email });
+      await sub.save();
+    } else {
+      const subs = readLocalData('subscribers.json', []);
+      const existing = subs.find(s => s.email === email);
+      if (existing) return res.json(existing);
+      sub = { id: `sub-${Date.now()}`, email, active: true, createdAt: new Date().toISOString() };
+      subs.push(sub);
+      writeLocalData('subscribers.json', subs);
+    }
+    res.status(201).json(sub);
+  } catch (error) {
+    res.status(400).json({ message: 'Error subscribing', error: error.message });
+  }
+});
+
+app.delete('/api/newsletter-subscribers/:id', checkPermission('newsletter'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await NewsletterSubscriber.findByIdAndDelete(req.params.id);
+    } else {
+      const subs = readLocalData('subscribers.json', []);
+      const idx = subs.findIndex(s => s.id === req.params.id);
+      if (idx !== -1) {
+        deleted = subs[idx];
+        subs.splice(idx, 1);
+        writeLocalData('subscribers.json', subs);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Subscriber not found' });
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error removing subscriber', error: error.message });
+  }
+});
+
+// ── STAFF USERS ENDPOINTS ──
+app.get('/api/users/staff', checkPermission('settings'), async (req, res) => {
+  try {
+    if (sqlAvailable()) {
+      const staff = await User.find({ role: { $ne: 'user' } });
+      res.json(staff);
+    } else {
+      const users = readLocalData('users.json', defaultUsers);
+      const staff = users.filter(u => u.role !== 'user');
+      res.json(staff);
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching staff', error: error.message });
+  }
+});
+
+app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+    let newUser;
+    if (sqlAvailable()) {
+      const existing = await User.findOne({ email });
+      if (existing) return res.status(400).json({ message: 'User already exists' });
+      newUser = new User({ name, email, password: hashPassword(password), role });
+      await newUser.save();
+    } else {
+      const users = readLocalData('users.json', defaultUsers);
+      const existing = users.find(u => u.email === email);
+      if (existing) return res.status(400).json({ message: 'User already exists' });
+      newUser = { id: `u-${Date.now()}`, name, email, password: hashPassword(password), role, createdAt: new Date().toISOString() };
+      users.push(newUser);
+      writeLocalData('users.json', users);
+    }
+    await logAudit(req, 'CREATE_STAFF', `Added staff user "${name}" with role "${role}"`);
+    res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+  } catch (error) {
+    res.status(400).json({ message: 'Error creating staff', error: error.message });
+  }
+});
+
+app.put('/api/users/staff/:id', checkPermission('settings'), async (req, res) => {
+  try {
+    const { role } = req.body;
+    let updated;
+    if (sqlAvailable()) {
+      updated = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
+    } else {
+      const users = readLocalData('users.json', defaultUsers);
+      const idx = users.findIndex(u => u.id === req.params.id);
+      if (idx !== -1) {
+        users[idx].role = role;
+        updated = users[idx];
+        writeLocalData('users.json', users);
+      }
+    }
+    if (!updated) return res.status(404).json({ message: 'Staff member not found' });
+    await logAudit(req, 'UPDATE_STAFF', `Updated staff role for user "${updated.name}" to "${role}"`);
+    res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
+  } catch (error) {
+    res.status(400).json({ message: 'Error updating staff member', error: error.message });
+  }
+});
+
+app.delete('/api/users/staff/:id', checkPermission('settings'), async (req, res) => {
+  try {
+    let deleted;
+    if (sqlAvailable()) {
+      deleted = await User.findByIdAndDelete(req.params.id);
+    } else {
+      const users = readLocalData('users.json', defaultUsers);
+      const idx = users.findIndex(u => u.id === req.params.id);
+      if (idx !== -1) {
+        deleted = users[idx];
+        users.splice(idx, 1);
+        writeLocalData('users.json', users);
+      }
+    }
+    if (!deleted) return res.status(404).json({ message: 'Staff member not found' });
+    await logAudit(req, 'DELETE_STAFF', `Removed staff user "${deleted.name}"`);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ message: 'Error removing staff member', error: error.message });
+  }
+});
+
+// ── SYSTEM METRICS & DB CONTROLS ENDPOINTS ──
+app.get('/api/system-status', async (req, res) => {
+  try {
+    const memory = process.memoryUsage();
+    res.json({
+      success: true,
+      dbStatus: sqlAvailable() ? 'Connected' : 'Disconnected',
+      uptime: Math.floor(process.uptime()) + 's',
+      memoryUsage: (memory.heapUsed / 1024 / 1024).toFixed(2) + ' MB',
+      nodeVersion: process.version,
+      apiStatus: 'Operational'
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+app.post('/api/database-backup', checkPermission('settings'), async (req, res) => {
+  try {
+    let backupData = {};
+    if (sqlAvailable()) {
+      backupData = {
+        products: await Product.find(),
+        brands: await Brand.find(),
+        orders: await Order.find(),
+        categories: await Category.find(),
+        settings: await Settings.find(),
+        offers: await Offer.find(),
+        blogposts: await BlogPost.find(),
+        custompages: await CustomPage.find(),
+        redirects: await Redirect.find(),
+        subscribers: await NewsletterSubscriber.find()
+      };
+    }
+    await logAudit(req, 'DB_BACKUP', 'Created manual database backup file');
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      data: backupData
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error backing up database', error: error.message });
+  }
+});
+
+app.post('/api/database-restore', checkPermission('settings'), async (req, res) => {
+  try {
+    const { backup } = req.body;
+    if (!backup) return res.status(400).json({ message: 'Backup payload is missing' });
+    
+    if (sqlAvailable()) {
+      if (backup.products) {
+        await Product.deleteMany({});
+        await Product.insertMany(backup.products);
+      }
+      if (backup.brands) {
+        await Brand.deleteMany({});
+        await Brand.insertMany(backup.brands);
+      }
+      if (backup.orders) {
+        await Order.deleteMany({});
+        await Order.insertMany(backup.orders);
+      }
+      if (backup.categories) {
+        await Category.deleteMany({});
+        await Category.insertMany(backup.categories);
+      }
+      if (backup.offers) {
+        await Offer.deleteMany({});
+        await Offer.insertMany(backup.offers);
+      }
+      if (backup.blogposts) {
+        await BlogPost.deleteMany({});
+        await BlogPost.insertMany(backup.blogposts);
+      }
+      if (backup.custompages) {
+        await CustomPage.deleteMany({});
+        await CustomPage.insertMany(backup.custompages);
+      }
+    }
+    await logAudit(req, 'DB_RESTORE', 'Restored database from a backup file');
+    res.json({ success: true, message: 'Database restored successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error restoring database', error: error.message });
   }
 });
 

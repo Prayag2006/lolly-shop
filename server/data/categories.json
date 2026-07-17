@@ -1,0 +1,122 @@
+[
+  {
+    "id": "cat-0-1784188330261",
+    "name": "NZ Lollies",
+    "description": "All sweets in the NZ Lollies collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 0,
+    "enabled": true,
+    "seoTitle": "NZ Lollies - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of NZ Lollies confections at Best Lolly Shop NZ.",
+    "seoKeywords": "nz lollies, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-1-1784188330261",
+    "name": "Imported Lollies",
+    "description": "All sweets in the Imported Lollies collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 1,
+    "enabled": true,
+    "seoTitle": "Imported Lollies - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Imported Lollies confections at Best Lolly Shop NZ.",
+    "seoKeywords": "imported lollies, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-2-1784188330261",
+    "name": "Chocolates",
+    "description": "All sweets in the Chocolates collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 2,
+    "enabled": true,
+    "seoTitle": "Chocolates - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Chocolates confections at Best Lolly Shop NZ.",
+    "seoKeywords": "chocolates, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-3-1784188330261",
+    "name": "Drinks",
+    "description": "All sweets in the Drinks collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 3,
+    "enabled": true,
+    "seoTitle": "Drinks - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Drinks confections at Best Lolly Shop NZ.",
+    "seoKeywords": "drinks, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-4-1784188330261",
+    "name": "Snacks",
+    "description": "All sweets in the Snacks collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 4,
+    "enabled": true,
+    "seoTitle": "Snacks - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Snacks confections at Best Lolly Shop NZ.",
+    "seoKeywords": "snacks, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-5-1784188330261",
+    "name": "Bulk",
+    "description": "All sweets in the Bulk collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 5,
+    "enabled": true,
+    "seoTitle": "Bulk - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Bulk confections at Best Lolly Shop NZ.",
+    "seoKeywords": "bulk, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-6-1784188330261",
+    "name": "TikTok Viral",
+    "description": "All sweets in the TikTok Viral collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 6,
+    "enabled": true,
+    "seoTitle": "TikTok Viral - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of TikTok Viral confections at Best Lolly Shop NZ.",
+    "seoKeywords": "tiktok viral, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-7-1784188330261",
+    "name": "Pick by Colour",
+    "description": "All sweets in the Pick by Colour collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 7,
+    "enabled": true,
+    "seoTitle": "Pick by Colour - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Pick by Colour confections at Best Lolly Shop NZ.",
+    "seoKeywords": "pick by colour, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-8-1784188330261",
+    "name": "Confectionery",
+    "description": "All sweets in the Confectionery collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 8,
+    "enabled": true,
+    "seoTitle": "Confectionery - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Confectionery confections at Best Lolly Shop NZ.",
+    "seoKeywords": "confectionery, lolly shop, sweets, nz"
+  },
+  {
+    "id": "cat-9-1784188330261",
+    "name": "Special / Clearance",
+    "description": "All sweets in the Special / Clearance collection",
+    "image": "",
+    "banner": "",
+    "displayOrder": 9,
+    "enabled": true,
+    "seoTitle": "Special / Clearance - Best Lolly Shop",
+    "seoDescription": "Shop our wide range of Special / Clearance confections at Best Lolly Shop NZ.",
+    "seoKeywords": "special / clearance, lolly shop, sweets, nz"
+  }
+]

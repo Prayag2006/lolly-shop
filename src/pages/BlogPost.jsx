@@ -2,14 +2,17 @@ import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Calendar, Clock, User, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { blogPosts } from './BlogPostsData';
+import { useStore } from '../context/StoreContext';
 import { SEO } from '../components/SEO';
 import './BlogPost.css';
 
 export const BlogPost = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { blogPosts: dbBlogPosts } = useStore();
 
-  const post = blogPosts.find(p => p.slug === slug);
+  const activeBlogPosts = dbBlogPosts && dbBlogPosts.length > 0 ? dbBlogPosts : blogPosts;
+  const post = activeBlogPosts.find(p => p.slug === slug);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -82,7 +85,7 @@ export const BlogPost = () => {
   const schemas = [articleSchema, breadcrumbSchema];
 
   // Recommend other articles
-  const otherPosts = blogPosts.filter(p => p.slug !== slug).slice(0, 3);
+  const otherPosts = activeBlogPosts.filter(p => p.slug !== slug).slice(0, 3);
 
   return (
     <div className="blog-post-page">
