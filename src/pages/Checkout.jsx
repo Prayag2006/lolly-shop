@@ -7,13 +7,14 @@ import confetti from 'canvas-confetti';
 import './Checkout.css';
 
 export const Checkout = () => {
-  const { cart, getCartTotal, placeOrder, currentUser, clearCart } = useStore();
+  const { cart, getCartTotal, placeOrder, currentUser, clearCart, offers } = useStore();
   const navigate = useNavigate();
 
   // Wizard Step: 1 = Shipping, 2 = Payment, 3 = Success
   const [step, setStep] = useState(1);
   const [couponCode, setCouponCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [flatDiscount, setFlatDiscount] = useState(0);
   const [couponError, setCouponError] = useState('');
   const [couponSuccess, setCouponSuccess] = useState('');
   const [submitError, setSubmitError] = useState('');
@@ -162,20 +163,39 @@ export const Checkout = () => {
 
   // Pricing math
   const subtotal = getCartTotal();
-  const discountAmt = (subtotal * discountPercent) / 100;
-  const finalTotal = subtotal - discountAmt + shippingFee;
+  const discountAmt = (subtotal * discountPercent) / 100 + flatDiscount;
+  const finalTotal = Math.max(0, subtotal - discountAmt) + shippingFee;
 
   // Coupon apply
   const handleApplyCoupon = (e) => {
     e.preventDefault();
     setCouponError('');
     setCouponSuccess('');
+    setDiscountPercent(0);
+    setFlatDiscount(0);
     
-    if (couponCode.toUpperCase() === 'SWEET10') {
+    // Validate against active enterprise offers
+    const validOffer = (offers || []).find(o => 
+      o.active !== false && o.code && o.code.toUpperCase() === couponCode.toUpperCase()
+    );
+
+    if (validOffer) {
+      if (validOffer.minPurchase && subtotal < validOffer.minPurchase) {
+        setCouponError(`This coupon requires a minimum purchase of $${validOffer.minPurchase.toFixed(2)}`);
+        return;
+      }
+      if (validOffer.discountType === 'flat') {
+        setFlatDiscount(validOffer.discountValue || 10);
+        setCouponSuccess(`${validOffer.code} applied! $${(validOffer.discountValue || 10).toFixed(2)} discount subtracted.`);
+      } else {
+        setDiscountPercent(validOffer.discountValue || 10);
+        setCouponSuccess(`${validOffer.code} applied! ${validOffer.discountValue || 10}% discount subtracted.`);
+      }
+    } else if (couponCode.toUpperCase() === 'SWEET10') {
       setDiscountPercent(10);
       setCouponSuccess('SWEET10 coupon applied! 10% discount subtracted.');
     } else {
-      setCouponError('Invalid coupon code. Try code: SWEET10');
+      setCouponError('Invalid coupon code. Please try again.');
     }
   };
 
