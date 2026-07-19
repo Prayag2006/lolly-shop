@@ -5,6 +5,7 @@ import { ProductCard } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { SEO } from '../components/SEO';
+import { getProductSlugUrl } from '../utils/productUtils';
 import './Shop.css';
 
 const parentGroups = {
@@ -340,13 +341,7 @@ export const Shop = ({ onProductClick }) => {
   const seoInfo = getActiveSeoInfo();
   const domain = typeof window !== 'undefined' ? window.location.origin : 'https://www.bestlollyshop.co.nz';
 
-  const getProductSlugUrl = (prod) => {
-    const cleanName = prod.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    return `/product/${cleanName}-${prod.id}`;
-  };
+
 
   const itemListSchema = {
     "@context": "https://schema.org",

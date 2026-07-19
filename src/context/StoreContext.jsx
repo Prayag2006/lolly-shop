@@ -103,7 +103,8 @@ export const StoreProvider = ({ children }) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         },
         body: JSON.stringify(newSettings)
       });
@@ -145,6 +146,7 @@ export const StoreProvider = ({ children }) => {
       const headers = {};
       if (currentUser?.role === 'admin') {
         headers['X-User-Role'] = 'admin';
+        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
       }
       const res = await fetch('/api/orders', { headers });
       const data = await res.json();
@@ -487,6 +489,7 @@ export const StoreProvider = ({ children }) => {
       const headers = { 'Content-Type': 'application/json' };
       if (currentUser?.role === 'admin') {
         headers['X-User-Role'] = 'admin';
+        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
       }
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
@@ -507,6 +510,7 @@ export const StoreProvider = ({ children }) => {
       const headers = { 'Content-Type': 'application/json' };
       if (currentUser?.role === 'admin') {
         headers['X-User-Role'] = 'admin';
+        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
       }
       const res = await fetch(`/api/orders/${orderId}/delivery`, {
         method: 'PUT',
@@ -528,6 +532,7 @@ export const StoreProvider = ({ children }) => {
       const headers = { 'Content-Type': 'application/json' };
       if (currentUser?.role === 'admin') {
         headers['X-User-Role'] = 'admin';
+        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
       }
       const res = await fetch(`/api/orders/${orderId}/remove-item`, {
         method: 'PUT',
@@ -609,7 +614,8 @@ export const StoreProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         },
         body: JSON.stringify(payload)
       });
@@ -630,7 +636,8 @@ export const StoreProvider = ({ children }) => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         },
         body: JSON.stringify(catData)
       });
@@ -650,7 +657,8 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch(`/api/categories/${id}`, {
         method: 'DELETE',
         headers: {
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         }
       });
       if (res.ok) {
@@ -670,7 +678,8 @@ export const StoreProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         },
         body: JSON.stringify({ filename, contentType, base64Data })
       });
@@ -691,7 +700,8 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch(`/api/media/${filename}`, {
         method: 'DELETE',
         headers: {
-          'X-User-Role': currentUser?.role || ''
+          'X-User-Role': currentUser?.role || '',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
         }
       });
       if (res.ok) {
@@ -765,8 +775,35 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  const updateProfile = async (profileData) => {
+    try {
+      const payload = { ...profileData };
+      if (!payload.email && currentUser?.email) {
+        payload.email = currentUser.email;
+      }
+      const res = await fetch('/api/auth/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentUser(data.user);
+        // Also update local storage if it's there
+        localStorage.setItem('user', JSON.stringify(data.user));
+        return { success: true, user: data.user };
+      }
+      return { success: false, message: data.message };
+    } catch (error) {
+      console.error('Update profile error:', error);
+      return { success: false, message: 'Server connection error during profile update' };
+    }
+  };
+
   const logout = () => {
     setCurrentUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   const register = async (name, email, password) => {
@@ -847,6 +884,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -869,6 +907,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -890,6 +929,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -932,6 +972,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -954,6 +995,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -975,6 +1017,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1006,6 +1049,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1027,6 +1071,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1074,6 +1119,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1105,6 +1151,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1127,6 +1174,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1148,6 +1196,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1183,6 +1232,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1205,6 +1255,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1226,6 +1277,7 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1256,6 +1308,7 @@ export const StoreProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         }
@@ -1274,6 +1327,7 @@ export const StoreProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
           'X-User-Email': currentUser?.email || '',
           'X-User-Name': currentUser?.name || ''
         },
@@ -1343,6 +1397,7 @@ export const StoreProvider = ({ children }) => {
         verifyResetToken,
         resetPassword,
         loginWithGoogle,
+        updateProfile,
         logout,
         addProductReview,
         testimonials,

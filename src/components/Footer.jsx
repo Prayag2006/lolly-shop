@@ -5,7 +5,7 @@ import { useStore } from '../context/StoreContext';
 import './Footer.css';
 
 export const Footer = () => {
-  const { settings, categories } = useStore();
+  const { settings, categories, addNewsletterSubscriber } = useStore();
 
   const footerSettings = settings?.footer || {
     description: "We carefully source the finest international confectioneries to spread happiness and sweeten your life, one treat at a time.",
@@ -28,10 +28,16 @@ export const Footer = () => {
     googleMap: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed'
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('Thank you for subscribing to our sweet newsletter! 🍭');
-    e.target.reset();
+    const emailInput = e.target.querySelector('input[type="email"]');
+    if (emailInput && emailInput.value) {
+      if (addNewsletterSubscriber) {
+        await addNewsletterSubscriber(emailInput.value);
+      }
+      alert('Thank you for subscribing to our sweet newsletter! 🍭');
+      e.target.reset();
+    }
   };
 
   // Get first 5 categories dynamically for footer if available
@@ -75,7 +81,6 @@ export const Footer = () => {
             <h3>Quick Shop</h3>
             <ul className="footer-links">
               <li><Link to="/shop">Shop All Sweets</Link></li>
-              <li><Link to="/blog">Blog & Candy Guides</Link></li>
               <li><Link to="/faq">Frequently Asked Questions</Link></li>
               {footerCategories.map((cat, idx) => (
                 <li key={`foot-cat-${idx}`}>
@@ -118,7 +123,7 @@ export const Footer = () => {
                     rel="noopener noreferrer"
                     style={{ textDecoration: 'none', transition: 'color var(--transition-fast)' }}
                   >
-                    {contactSettings.address.split(',')[0]} 📍
+                    {contactSettings.address} 📍
                   </a>
                 </li>
               )}

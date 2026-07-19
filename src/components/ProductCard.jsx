@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Star, ShoppingCart } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CandyVisual } from './SvgCandies';
+import { getProductSlugUrl } from '../utils/productUtils';
 import './ProductCard.css';
 
 export const ProductCard = ({ product, onProductClick }) => {
@@ -19,13 +20,7 @@ export const ProductCard = ({ product, onProductClick }) => {
     setTimeout(() => btn.classList.remove('pop-active'), 300);
   };
 
-  const getProductSlugUrl = (prod) => {
-    const cleanName = prod.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    return `/product/${cleanName}-${prod.id}`;
-  };
+
 
   return (
     <div 

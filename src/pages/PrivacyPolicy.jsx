@@ -74,7 +74,7 @@ export const PrivacyPolicy = () => {
           <h2>5. Disclosure of Information</h2>
           <p>We will not sell, rent, or lease your personal information to third parties. We only share information with trusted partners to complete your orders:</p>
           <ul>
-            <li><strong>Delivery Partners:</strong> Local New Zealand courier services (e.g., NZ Post) to deliver packages.</li>
+            <li><strong>Delivery Partners:</strong> Local New Zealand courier services to deliver packages.</li>
             <li><strong>Payment Gateways:</strong> Secure PCI-DSS compliant credit card processors (Visa, Mastercard, Apple Pay, Google Pay).</li>
           </ul>
         </section>

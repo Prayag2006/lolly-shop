@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, ArrowRight, ArrowLeft, CheckCircle2, Ticket, Lock, ShieldCheck } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import { CandyVisual } from '../components/SvgCandies';
 import confetti from 'canvas-confetti';
+
 import './Checkout.css';
 
 export const Checkout = () => {
-  const { cart, getCartTotal, placeOrder, currentUser, clearCart, offers } = useStore();
+  const { cart, getCartTotal, placeOrder, currentUser, clearCart, offers, settings } = useStore();
+  const defaultShippingFee = settings?.shipping?.flatRate ?? 19.00;
   const navigate = useNavigate();
 
   // Wizard Step: 1 = Shipping, 2 = Payment, 3 = Success
@@ -29,6 +31,65 @@ export const Checkout = () => {
     zip: ''
   });
 
+  const [isAddressVerified, setIsAddressVerified] = useState(false);
+
+  const addressInputRef = useRef(null);
+
+  // Photon API logic
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (shippingForm.address.length > 3 && !isAddressVerified) {
+        setIsSearchingAddress(true);
+        try {
+          // Bounding box for New Zealand to prioritize local results
+          const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(shippingForm.address)}&limit=5&bbox=166,-47,179,-34`);
+          const data = await res.json();
+          if (data && data.features) {
+            setAddressSuggestions(data.features);
+            setShowSuggestions(data.features.length > 0);
+          }
+        } catch (err) {
+          console.error("Address search error", err);
+        } finally {
+          setIsSearchingAddress(false);
+        }
+      } else {
+        setShowSuggestions(false);
+        setAddressSuggestions([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [shippingForm.address, isAddressVerified]);
+
+  const handleSelectSuggestion = (feature) => {
+    const { housenumber, street, name, city, postcode, state } = feature.properties;
+    
+    // Construct best address string
+    let formattedAddress = '';
+    if (housenumber && street) {
+      formattedAddress = `${housenumber} ${street}`;
+    } else if (street) {
+      formattedAddress = street;
+    } else if (name) {
+      formattedAddress = name;
+    }
+
+    setShippingForm(prev => ({
+      ...prev,
+      address: formattedAddress,
+      city: city || state || prev.city,
+      zip: postcode || prev.zip
+    }));
+    
+    setIsAddressVerified(true);
+    setShowSuggestions(false);
+  };
+
   const [placedOrderDetails, setPlacedOrderDetails] = useState(null);
   const [verifyingPayment, setVerifyingPayment] = useState(false);
   const [verificationError, setVerificationError] = useState('');
@@ -49,13 +110,13 @@ export const Checkout = () => {
       shippingForm.email.includes('@') &&
       isValidNZPhoneNumber(shippingForm.phone) &&
       shippingForm.address.trim() &&
-      shippingForm.city.trim() &&
-      shippingForm.zip.trim().length === 4
+      (!shippingForm.zip.trim() || shippingForm.zip.length >= 3) &&
+      (isAddressVerified)
     );
   };
 
   // Shipping Method States
-  const [shippingFee, setShippingFee] = useState(19.00); // Default flat rate
+  const [shippingFee, setShippingFee] = useState(defaultShippingFee); // Default flat rate
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
@@ -111,7 +172,7 @@ export const Checkout = () => {
       setIsHamilton(false);
       setShippingOptions([]);
       setSelectedOption(null);
-      setShippingFee(19.00);
+      setShippingFee(defaultShippingFee);
     } finally {
       setLoadingShipping(false);
     }
@@ -140,7 +201,7 @@ export const Checkout = () => {
     } else if (shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip)) {
       // Non-Hamilton postcode — reset to default
       setIsHamilton(false);
-      setShippingFee(19.00);
+      setShippingFee(defaultShippingFee);
       setShippingOptions([]);
       setSelectedOption(null);
     }
@@ -156,7 +217,7 @@ export const Checkout = () => {
     } else if (!isHamiltonPostcode(shippingForm.zip)) {
       setShippingOptions([]);
       setSelectedOption(null);
-      setShippingFee(19.00);
+      setShippingFee(defaultShippingFee);
       setIsHamilton(false);
     }
   }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
@@ -228,7 +289,7 @@ export const Checkout = () => {
           items: cart,
           finalTotal: finalTotal,
           shippingFee: shippingFee,
-          deliveryCompany: selectedOption ? selectedOption.name : 'NZ Post Courier'
+          deliveryCompany: selectedOption ? selectedOption.name : 'Standard Delivery'
         })
       });
       const data = await response.json();
@@ -374,15 +435,75 @@ export const Checkout = () => {
                 </div>
 
                 <div className="form-row">
-                  <div className="form-group">
+                  <div className="form-group" style={{ position: 'relative' }}>
                     <label>Street Address</label>
                     <input
+                      ref={addressInputRef}
                       type="text"
                       placeholder="24 Lollypop Lane, Grey Lynn"
                       value={shippingForm.address}
-                      onChange={(e) => setShippingForm({ ...shippingForm, address: e.target.value })}
+                      onChange={(e) => {
+                        setShippingForm({ ...shippingForm, address: e.target.value });
+                        setIsAddressVerified(false);
+                      }}
                       required
                     />
+                    
+                    {/* Address Autocomplete Dropdown */}
+                    {showSuggestions && addressSuggestions.length > 0 && (
+                      <ul style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        right: 0,
+                        background: 'var(--color-background)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: '0 0 8px 8px',
+                        zIndex: 10,
+                        listStyle: 'none',
+                        padding: 0,
+                        margin: 0,
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        maxHeight: '200px',
+                        overflowY: 'auto'
+                      }}>
+                        {addressSuggestions.map((feature, idx) => {
+                          const props = feature.properties;
+                          const label = [props.name, props.housenumber, props.street, props.city, props.postcode]
+                            .filter(Boolean).join(', ');
+                            
+                          return (
+                            <li 
+                              key={idx}
+                              onClick={() => handleSelectSuggestion(feature)}
+                              style={{
+                                padding: '10px 14px',
+                                borderBottom: '1px solid var(--color-border)',
+                                cursor: 'pointer',
+                                fontSize: '0.9em',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px'
+                              }}
+                              onMouseOver={(e) => e.currentTarget.style.background = 'rgba(231,44,131,0.05)'}
+                              onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                            >
+                              📍 {label}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+
+                    {isSearchingAddress && (
+                      <span style={{ position: 'absolute', right: '12px', top: '38px', fontSize: '12px', color: '#666' }}>Searching...</span>
+                    )}
+
+                    {!isAddressVerified && shippingForm.address.length > 0 && !showSuggestions && !isSearchingAddress && (
+                      <span className="validation-error" style={{ color: '#dc2626', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                        ⚠️ Please select a valid address from the suggestions. If your address is not listed, <button type="button" onClick={() => setIsAddressVerified(true)} style={{background: 'none', border: 'none', padding: 0, color: 'blue', textDecoration: 'underline', cursor: 'pointer', fontSize: '11px'}}>click here to enter it manually</button>.
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -473,11 +594,11 @@ export const Checkout = () => {
                   </div>
                 )}
 
-                {/* NZ Post Shipping Method Selector */}
+                {/* Shipping Method Selector */}
                 {isShippingValid() && (
                   <div className="shipping-methods-section" style={{ marginTop: '25px', marginBottom: '25px' }}>
                     <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2d2645', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚚 NZ Post Delivery Options
+                      🚚 Delivery Options
                     </h3>
                     
                     {loadingShipping ? (
@@ -490,7 +611,7 @@ export const Checkout = () => {
                           borderRadius: '50%',
                           animation: 'spin 1s linear infinite'
                         }} />
-                        <span style={{ fontSize: '13px', color: '#615a75' }}>Calculating delivery prices with NZ Post...</span>
+                        <span style={{ fontSize: '13px', color: '#615a75' }}>Calculating delivery prices...</span>
                       </div>
                     ) : shippingError ? (
                       <div className="shipping-error-msg" style={{ padding: '12px', background: 'rgba(239, 68, 68, 0.08)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', color: '#b91c1c', fontSize: '13px' }}>

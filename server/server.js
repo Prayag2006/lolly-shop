@@ -786,7 +786,7 @@ app.get('/api/orders', async (req, res) => {
     }
 
     if (!isAdmin) {
-      orders = orders.map(ord => sanitizeOrder(ord));
+      orders = await Promise.all(orders.map(async (ord) => await sanitizeOrder(ord)));
     }
     res.json(orders);
   } catch (error) {
@@ -801,12 +801,12 @@ app.get('/api/orders/:id', async (req, res) => {
     if (sqlAvailable()) {
       const order = await Order.findOne({ id: req.params.id });
       if (!order) return res.status(404).json({ message: 'Order not found' });
-      return res.json(isAdmin ? order : sanitizeOrder(order));
+      return res.json(isAdmin ? order : await sanitizeOrder(order));
     } else {
       const orders = readLocalData('orders.json', []);
       const order = orders.find(o => o.id === req.params.id);
       if (!order) return res.status(404).json({ message: 'Order not found' });
-      return res.json(isAdmin ? order : sanitizeOrder(order));
+      return res.json(isAdmin ? order : await sanitizeOrder(order));
     }
   } catch (error) {
     res.status(500).json({ message: 'Error fetching order', error: error.message });
@@ -1108,9 +1108,11 @@ app.post('/api/orders', async (req, res) => {
     }
 
     const isHamilton = isHamiltonAddress(req.body.customer?.city, req.body.customer?.postalCode || req.body.customer?.zip);
-    const cappedShipping = isHamilton ? 0.00 : (Number(req.body.shipping) === 0 ? 0 : Math.min(Number(req.body.shipping || 19), 19.00));
+    const settings = await Settings.findOne({ key: 'main_settings' });
+    const dynamicShipping = settings?.shipping?.flatRate ?? 19.00;
+    const cappedShipping = isHamilton ? 0.00 : (Number(req.body.shipping) === 0 ? 0 : Math.min(Number(req.body.shipping || dynamicShipping), dynamicShipping));
     
-    const matchingServiceForActual = isHamilton ? 'NZ Post Standard Courier' : req.body.deliveryCompany;
+    const matchingServiceForActual = isHamilton ? 'Standard Delivery' : req.body.deliveryCompany;
     const actualShipping = await calculateActualShippingCost(
       req.body.customer?.address || '',
       isHamilton ? 'Hamilton' : (req.body.customer?.city || ''),
@@ -1133,7 +1135,7 @@ app.post('/api/orders', async (req, res) => {
       shipping: cappedShipping,
       actualShipping,
       total: adjustedTotal,
-      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (req.body.deliveryCompany || 'NZ Post Courier'),
+      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (req.body.deliveryCompany || 'Standard Delivery'),
       freeShippingApplied: isHamilton,
       freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : ''
     };
@@ -1199,11 +1201,10 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Calculate live shipping rates using NZ Post API (or simulated fallback)
+// Calculate shipping rates (Flat Rate)
 app.post('/api/calculate-shipping', async (req, res) => {
   try {
-    const { address, city, zip, items } = req.body;
-    const settings = await getShippingSettings(); // Uses site-wide shipping configuration
+    const { address, city, zip } = req.body;
 
     if (!address || !city || !zip) {
       return res.status(400).json({ message: 'Address, city, and postcode are required to calculate shipping.' });
@@ -1227,316 +1228,63 @@ app.post('/api/calculate-shipping', async (req, res) => {
       });
     }
 
-    let totalWeightKg = calculateItemsWeight(items);
-    let { lengthCm, widthCm, heightCm } = estimateDimensions(totalWeightKg);
-
-    const { clientId, clientSecret, accountNumber, siteCode, env } = settings;
-
-    if (!clientId || !clientSecret || !accountNumber) {
-      const rawRates = getSimulatedRates(zip, city, totalWeightKg);
-      const cappedRates = rawRates.map(r => ({ ...r, price: Math.min(Number(r.price), 19.00) }));
-      return res.json({ mode: 'simulated', rates: cappedRates });
-    }
-
-    const oauthUrl = 'https://oauth.nzpost.co.nz/as/token.oauth2';
-    const baseShippingUrl = env === 'production' 
-      ? 'https://api.nzpost.co.nz/shippingoptions/2.0/domestic'
-      : 'https://api.uat.nzpost.co.nz/shippingoptions/2.0/domestic';
-
-    const authParams = new URLSearchParams({ grant_type: 'client_credentials', client_id: clientId, client_secret: clientSecret });
-    const tokenResponse = await fetch(oauthUrl, { method: 'POST', body: authParams });
-    const tokenData = await tokenResponse.json();
-
-    const requestBody = {
-    };
-
-    if (siteCode) {
-      requestBody.account_information.site_code = siteCode;
-    }
-
-    const shippingResponse = await fetch(baseShippingUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!shippingResponse.ok) {
-      const errorData = await shippingResponse.json().catch(() => ({}));
-      console.error('NZ Post API error details:', errorData);
-      throw new Error(errorData.message || `NZ Post ShippingOptions returned HTTP ${shippingResponse.status}`);
-    }
-
-    const shippingData = await shippingResponse.json();
-    
-    const rates = [];
-    if (shippingData && Array.isArray(shippingData.services)) {
-      shippingData.services.forEach(service => {
-        const actualPrice = Number(service.price || service.total_price || 0);
-        rates.push({
-          id: service.service_code || service.name,
-          name: service.name || 'NZ Post Courier',
-          price: Math.min(actualPrice, 19.00),
-          eta: service.estimated_delivery || '1-2 business days'
-        });
-      });
-    }
-
-    if (rates.length === 0) {
-      throw new Error('No valid shipping options returned from NZ Post API.');
-    }
+    let dynamicShipping = 19.00;
+    try {
+      const settings = await Settings.findOne({ key: 'main_settings' });
+      if (settings?.shipping?.flatRate !== undefined) dynamicShipping = settings.shipping.flatRate;
+    } catch (err) {}
 
     return res.json({
-      mode: 'live',
-      rates
+      mode: 'flat_rate',
+      rates: [
+        {
+          id: 'standard_delivery',
+          name: 'Standard Delivery',
+          price: dynamicShipping,
+          eta: '1-3 business days'
+        }
+      ],
+      message: `🚚 Flat shipping rate: NZ$${dynamicShipping} for deliveries outside Hamilton.`
     });
 
   } catch (error) {
-    console.error('Error in calculate-shipping route, falling back to simulated rates:', error.message);
-    const { zip, city } = req.body;
-    
-    let totalWeightKg = 0.1;
-    try {
-      if (Array.isArray(req.body.items)) {
-        req.body.items.forEach(item => {
-          const qty = Number(item.quantity || 1);
-          const weightStr = (item.selectedWeight || '100g').toLowerCase();
-          let itemWeightKg = 0.1;
-          if (weightStr.includes('100g')) itemWeightKg = 0.1;
-          else if (weightStr.includes('250g')) itemWeightKg = 0.25;
-          else if (weightStr.includes('500g')) itemWeightKg = 0.5;
-          else if (weightStr.includes('1kg')) itemWeightKg = 1.0;
-          totalWeightKg += itemWeightKg * qty;
-        });
-      }
-    } catch (e) {}
-
-    const fallbackRates = getSimulatedRates(zip || '1010', city || 'Auckland', totalWeightKg);
-    const cappedFallback = fallbackRates.map(r => ({
-      ...r,
-      price: Math.min(Number(r.price), 19.00)
-    }));
-
-    return res.json({
-      mode: 'simulated_fallback',
-      rates: cappedFallback,
-      warning: error.message
-    });
+    console.error('Error in calculate-shipping route:', error.message);
+    return res.status(500).json({ message: 'Failed to calculate shipping.', warning: error.message });
   }
 });
 
-// Helper for simulated NZ Post rates
-function getSimulatedRates(zip, city, weightKg) {
-  const lowercaseCity = (city || '').toLowerCase();
-  
-  const isAuckland = lowercaseCity.includes('auckland') || ['06','07','10','20','21','22'].some(p => (zip || '').startsWith(p));
-  const isRural = ['rural', 'rd', 'r.d.'].some(term => lowercaseCity.includes(term)) || (zip && ['0','3','4','7','9'].includes(zip[3]));
-
-  let basePrice = 8.50;
-  if (weightKg > 0.5 && weightKg <= 2.0) {
-    basePrice = 12.00;
-  } else if (weightKg > 2.0 && weightKg <= 5.0) {
-    basePrice = 16.50;
-  } else if (weightKg > 5.0) {
-    basePrice = 24.00;
-  }
-
-  let ruralSurcharge = isRural ? 5.50 : 0;
-  let regionalMultiplier = isAuckland ? 1.0 : 1.35;
-
-  const standardPrice = Math.round((basePrice * regionalMultiplier) * 100) / 100;
-  const signaturePrice = Math.round((standardPrice + 3.00) * 100) / 100;
-  const ruralPrice = Math.round((standardPrice + ruralSurcharge) * 100) / 100;
-
-  const rates = [
-    {
-      id: 'nzpost_courier',
-      name: 'NZ Post Standard Courier',
-      price: standardPrice,
-      eta: isAuckland ? 'Next business day' : '1-2 business days'
-    },
-    {
-      id: 'nzpost_courier_signature',
-      name: 'NZ Post Courier (Signature Required)',
-      price: signaturePrice,
-      eta: isAuckland ? 'Next business day' : '1-2 business days'
-    }
-  ];
-
-  if (isRural || ruralSurcharge > 0) {
-    rates.push({
-      id: 'nzpost_courier_rural',
-      name: 'NZ Post Courier (Rural Delivery)',
-      price: ruralPrice,
-      eta: '2-3 business days'
-    });
-  }
-
-  return rates;
-}
-
-// Helper to calculate actual uncapped shipping cost from NZ Post API or fallback simulation
+// Helper to calculate actual uncapped shipping cost
 async function calculateActualShippingCost(address, city, zip, items, deliveryCompany) {
+  let dynamicShipping = 19.00;
   try {
-    if (!address || !city || !zip) {
-      return 19.00;
-    }
-
-    // 1. Calculate weight
-    let totalWeightKg = 0;
-    if (Array.isArray(items)) {
-      items.forEach(item => {
-        const qty = Number(item.quantity || 1);
-        const weightStr = (item.selectedWeight || '100g').toLowerCase();
-        
-        let itemWeightKg = 0.1; // Default
-        if (weightStr.includes('100g')) {
-          itemWeightKg = 0.1;
-        } else if (weightStr.includes('250g')) {
-          itemWeightKg = 0.25;
-        } else if (weightStr.includes('500g')) {
-          itemWeightKg = 0.5;
-        } else if (weightStr.includes('1kg')) {
-          itemWeightKg = 1.0;
-        } else {
-          const numMatch = weightStr.match(/(\d+(?:\.\d+)?)\s*(g|kg)/);
-          if (numMatch) {
-            const val = parseFloat(numMatch[1]);
-            const unit = numMatch[2];
-            itemWeightKg = unit === 'g' ? val / 1000 : val;
-          }
-        }
-        totalWeightKg += itemWeightKg * qty;
-      });
-    }
-
-    totalWeightKg = Math.round(totalWeightKg * 1000) / 1000;
-    if (totalWeightKg <= 0) totalWeightKg = 0.1;
-
-    // 2. Estimate dimensions
-    let lengthCm = 15;
-    let widthCm = 15;
-    let heightCm = 5;
-
-    if (totalWeightKg > 0.5 && totalWeightKg <= 2.0) {
-      lengthCm = 20;
-      widthCm = 20;
-      heightCm = 10;
-    } else if (totalWeightKg > 2.0) {
-      lengthCm = 30;
-      widthCm = 30;
-      heightCm = 20;
-    }
-
-    // 3. Check credentials
-    const clientId = process.env.NZ_POST_CLIENT_ID;
-    const clientSecret = process.env.NZ_POST_CLIENT_SECRET;
-    const accountNumber = process.env.NZ_POST_ACCOUNT_NUMBER;
-    const siteCode = process.env.NZ_POST_SITE_CODE;
-    const env = (process.env.NZ_POST_ENVIRONMENT || 'sandbox').toLowerCase();
-
-    let actualCost = null;
-
-    if (clientId && clientSecret && accountNumber) {
-      const oauthUrl = 'https://oauth.nzpost.co.nz/as/token.oauth2';
-      const baseShippingUrl = env === 'production' 
-        ? 'https://api.nzpost.co.nz/shippingoptions/2.0/domestic'
-        : 'https://api.uat.nzpost.co.nz/shippingoptions/2.0/domestic';
-
-      const authParams = new URLSearchParams();
-      authParams.append('grant_type', 'client_credentials');
-      authParams.append('client_id', clientId);
-      authParams.append('client_secret', clientSecret);
-
-      const tokenResponse = await fetch(oauthUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: authParams
-      });
-
-      if (tokenResponse.ok) {
-        const tokenData = await tokenResponse.json();
-        const accessToken = tokenData.access_token;
-
-        const requestBody = {
-          account_information: { account_number: accountNumber },
-          pickup: { suburb: 'St Andrews', city: 'Hamilton', postcode: '3200', country_code: 'NZ' },
-          delivery: { address_line_1: address, city: city, postcode: zip, country_code: 'NZ' },
-          parcels: [{ weight: totalWeightKg, length: lengthCm, width: widthCm, height: heightCm }]
-        };
-
-        if (siteCode) {
-          requestBody.account_information.site_code = siteCode;
-        }
-
-        const shippingResponse = await fetch(baseShippingUrl, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        if (shippingResponse.ok) {
-          const shippingData = await shippingResponse.json();
-          if (shippingData && Array.isArray(shippingData.services)) {
-            // Find a service matching the delivery company name or service code
-            const matchedService = shippingData.services.find(service => 
-              (service.name || '').toLowerCase() === (deliveryCompany || '').toLowerCase() ||
-              (service.service_code || '').toLowerCase() === (deliveryCompany || '').toLowerCase()
-            );
-            if (matchedService) {
-              actualCost = Number(matchedService.price || matchedService.total_price || 0);
-            } else if (shippingData.services.length > 0) {
-              actualCost = Number(shippingData.services[0].price || shippingData.services[0].total_price || 0);
-            }
-          }
-        }
-      }
-    }
-
-    // If actualCost was not resolved via NZ Post API, use simulated rates
-    if (actualCost === null) {
-      const simulated = getSimulatedRates(zip, city, totalWeightKg);
-      const matched = simulated.find(r => 
-        (r.name || '').toLowerCase() === (deliveryCompany || '').toLowerCase() ||
-        (r.id || '').toLowerCase() === (deliveryCompany || '').toLowerCase()
-      );
-      if (matched) {
-        actualCost = matched.price;
-      } else if (simulated.length > 0) {
-        actualCost = simulated[0].price;
-      } else {
-        actualCost = 19.00;
-      }
-    }
-
-    return actualCost;
-  } catch (error) {
-    console.error('Error calculating actual shipping cost helper, using fallback:', error);
-    return 19.00;
-  }
+    const settings = await Settings.findOne({ key: 'main_settings' });
+    if (settings?.shipping?.flatRate !== undefined) dynamicShipping = settings.shipping.flatRate;
+  } catch (err) {}
+  return dynamicShipping;
 }
 
-// Helper to sanitize order data to prevent exposing actual shipping charges above NZ$19 to customers
-function sanitizeOrder(order) {
-  if (!order) return order;
+// Helper to sanitize order data
+const sanitizeOrder = async (order) => {
+  if (!order || typeof order !== 'object') return order;
   let obj = (typeof order.toObject === 'function') ? order.toObject() : { ...order };
   delete obj.actualShipping;
+  
+  let maxShipping = 19.00;
+  try {
+    const settings = await Settings.findOne({ key: 'main_settings' });
+    if (settings?.shipping?.flatRate !== undefined) maxShipping = settings.shipping.flatRate;
+  } catch (err) {}
+
   if (obj.freeShippingApplied === undefined) {
     const isHamilton = isHamiltonAddress(obj.customer?.city, obj.customer?.postalCode || obj.customer?.zip);
     obj.freeShippingApplied = isHamilton;
     obj.freeShippingReason = isHamilton ? 'Hamilton Free Delivery' : '';
   }
+  
   if (obj.freeShippingApplied) {
     obj.shipping = 0.00;
-  } else if (obj.shipping > 19) {
-    obj.shipping = 19;
+  } else if (obj.shipping > maxShipping) {
+    obj.shipping = maxShipping;
   }
   return obj;
 }
@@ -1571,10 +1319,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     // Recalculate actual and capped shipping costs on server for security
     const isHamilton = isHamiltonAddress(customerDetails.city, customerDetails.zip);
-    const cappedShipping = isHamilton ? 0.00 : (Number(shippingFee) === 0 ? 0 : Math.min(Number(shippingFee || 19), 19.00));
+    const settings = await Settings.findOne({ key: 'main_settings' });
+    const dynamicShipping = settings?.shipping?.flatRate ?? 19.00;
+    const cappedShipping = isHamilton ? 0.00 : (Number(shippingFee) === 0 ? 0 : Math.min(Number(shippingFee || dynamicShipping), dynamicShipping));
     
     // For actual shipping, calculate what NZ Post would charge normally (non-free)
-    const matchingServiceForActual = isHamilton ? 'NZ Post Standard Courier' : deliveryCompany;
+    const matchingServiceForActual = isHamilton ? 'Standard Delivery' : deliveryCompany;
     const actualShipping = await calculateActualShippingCost(
       customerDetails.address,
       isHamilton ? 'Hamilton' : customerDetails.city,
@@ -1595,7 +1345,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       total: Number(finalTotal),
       shipping: cappedShipping,
       actualShipping: actualShipping,
-      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (deliveryCompany || 'NZ Post Courier'),
+      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (deliveryCompany || 'Standard Delivery'),
       freeShippingApplied: isHamilton,
       freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : '',
       customer: {
@@ -2084,7 +1834,12 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
       if (itemToRemove) {
         order.items = order.items.filter(item => !(String(item.id) === String(itemId) && item.selectedWeight === selectedWeight));
         const itemsSubtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        order.total = itemsSubtotal + (order.shipping !== undefined ? order.shipping : 19);
+        let dynamicShipping = 19.00;
+        try {
+          const settings = await Settings.findOne({ key: 'main_settings' });
+          if (settings?.shipping?.flatRate !== undefined) dynamicShipping = settings.shipping.flatRate;
+        } catch (err) {}
+        order.total = itemsSubtotal + (order.shipping !== undefined ? order.shipping : dynamicShipping);
         await order.save();
         sendOrderConfirmationEmail(order, true);
       }
@@ -2099,7 +1854,11 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
       if (itemToRemove) {
         order.items = order.items.filter(item => !(String(item.id) === String(itemId) && item.selectedWeight === selectedWeight));
         const itemsSubtotal = order.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        order.total = itemsSubtotal + (order.shipping !== undefined ? order.shipping : 19);
+        let dynamicShipping = 19.00;
+        try {
+          // No db here, fallback is okay but we try to read local data if needed, leaving as 19 since it's fallback only
+        } catch (err) {}
+        order.total = itemsSubtotal + (order.shipping !== undefined ? order.shipping : dynamicShipping);
         writeLocalData('orders.json', orders);
         sendOrderConfirmationEmail(order, true);
       }
@@ -2748,7 +2507,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
       res.json({
         success: true,
-        user: { name: user.name, email: user.email, role: user.role }
+        user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
       });
     } else {
       const users = readLocalData('users.json', seededUsers);
@@ -2758,7 +2517,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
       res.json({
         success: true,
-        user: { name: user.name, email: user.email, role: user.role }
+        user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
       });
     }
   } catch (error) {
@@ -3093,6 +2852,46 @@ app.post('/api/auth/reset-password', async (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Password reset execution error', error: error.message });
+  }
+});
+
+// ── UPDATE PROFILE API ──
+app.put('/api/auth/profile', async (req, res) => {
+  try {
+    const { email, name, phone, location } = req.body;
+    
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required to identify user' });
+    }
+
+    if (sqlAvailable()) {
+      const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      
+      if (name) user.name = name;
+      if (phone !== undefined) user.phone = phone;
+      if (location !== undefined) user.location = location;
+      
+      await user.save();
+      
+      const { password, ...userWithoutPassword } = (typeof user.toObject === 'function' ? user.toObject() : user);
+      return res.json({ success: true, user: userWithoutPassword });
+    } else {
+      const users = readLocalData('users.json', seededUsers);
+      const index = users.findIndex(u => u.email.toLowerCase() === email.toLowerCase());
+      if (index === -1) return res.status(404).json({ message: 'User not found' });
+      
+      if (name) users[index].name = name;
+      if (phone !== undefined) users[index].phone = phone;
+      if (location !== undefined) users[index].location = location;
+      
+      writeLocalData('users.json', users);
+      
+      const { password, ...userWithoutPassword } = users[index];
+      return res.json({ success: true, user: userWithoutPassword });
+    }
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server error updating profile', error: error.message });
   }
 });
 
@@ -3509,7 +3308,16 @@ const checkPermission = (actionArea) => {
   return (req, res, next) => {
     const userRole = req.headers['x-user-role'] || 'user';
     if (userRole === 'admin') return next();
-    const allowed = ROLE_PERMISSIONS[userRole] || [];
+    
+    let allowed = ROLE_PERMISSIONS[userRole] || [];
+    if (userRole === 'custom') {
+      try {
+        allowed = JSON.parse(req.headers['x-user-permissions'] || '[]');
+      } catch (e) {
+        allowed = [];
+      }
+    }
+    
     if (allowed.includes('*') || allowed.includes(actionArea)) {
       return next();
     }
@@ -3929,23 +3737,23 @@ app.get('/api/users/staff', checkPermission('settings'), async (req, res) => {
 
 app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, permissions } = req.body;
     let newUser;
     if (sqlAvailable()) {
       const existing = await User.findOne({ email });
       if (existing) return res.status(400).json({ message: 'User already exists' });
-      newUser = new User({ name, email, password: hashPassword(password), role });
+      newUser = new User({ name, email, password: hashPassword(password), role, permissions: permissions || [] });
       await newUser.save();
     } else {
       const users = readLocalData('users.json', defaultUsers);
       const existing = users.find(u => u.email === email);
       if (existing) return res.status(400).json({ message: 'User already exists' });
-      newUser = { id: `u-${Date.now()}`, name, email, password: hashPassword(password), role, createdAt: new Date().toISOString() };
+      newUser = { id: `u-${Date.now()}`, name, email, password: hashPassword(password), role, permissions: permissions || [], createdAt: new Date().toISOString() };
       users.push(newUser);
       writeLocalData('users.json', users);
     }
     await logAudit(req, 'CREATE_STAFF', `Added staff user "${name}" with role "${role}"`);
-    res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role });
+    res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, permissions: newUser.permissions || [] });
   } catch (error) {
     res.status(400).json({ message: 'Error creating staff', error: error.message });
   }
@@ -3953,22 +3761,23 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
 
 app.put('/api/users/staff/:id', checkPermission('settings'), async (req, res) => {
   try {
-    const { role } = req.body;
+    const { role, permissions } = req.body;
     let updated;
     if (sqlAvailable()) {
-      updated = await User.findByIdAndUpdate(req.params.id, { role }, { new: true });
+      updated = await User.findByIdAndUpdate(req.params.id, { role, permissions: permissions || [] }, { new: true });
     } else {
       const users = readLocalData('users.json', defaultUsers);
       const idx = users.findIndex(u => u.id === req.params.id);
       if (idx !== -1) {
         users[idx].role = role;
+        if (permissions) users[idx].permissions = permissions;
         updated = users[idx];
         writeLocalData('users.json', users);
       }
     }
     if (!updated) return res.status(404).json({ message: 'Staff member not found' });
     await logAudit(req, 'UPDATE_STAFF', `Updated staff role for user "${updated.name}" to "${role}"`);
-    res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role });
+    res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role, permissions: updated.permissions || [] });
   } catch (error) {
     res.status(400).json({ message: 'Error updating staff member', error: error.message });
   }

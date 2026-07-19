@@ -97,7 +97,6 @@ export const Navbar = ({ onCartOpen }) => {
   const navLinks = [
     { name: 'Home', path: '/' },
     { name: 'Shop All', path: '/shop' },
-    { name: 'Blog', path: '/blog' },
     { name: 'FAQ', path: '/faq' },
     { name: 'About Us', path: '/about' },
     { name: 'Contact Us', path: '/contact' }
@@ -138,35 +137,25 @@ export const Navbar = ({ onCartOpen }) => {
 
 
 
-          {/* Personalised Dropdown */}
+          {/* Custom & Business Dropdown */}
           <div className="nav-item-container">
             <span 
-              className={`nav-link ${activeDropdown === 'personalised' ? 'active' : ''}`}
-              onClick={(e) => handleDropdownToggle('personalised', e)}
+              className={`nav-link ${activeDropdown === 'custom' ? 'active' : ''}`}
+              onClick={(e) => handleDropdownToggle('custom', e)}
               style={{ cursor: 'pointer' }}
             >
-              Personalised <ChevronDown size={12} className="chevron-icon" />
+              Custom & Business <ChevronDown size={12} className="chevron-icon" />
             </span>
-            {activeDropdown === 'personalised' && (
-              <div className="dropdown-panel animate-fade-in" onClick={(e) => e.stopPropagation()}>
+            {activeDropdown === 'custom' && (
+              <div className="dropdown-panel animate-fade-in" style={{ padding: '8px 0' }} onClick={(e) => e.stopPropagation()}>
+                <div style={{ padding: '4px 16px', fontSize: '11px', fontWeight: '800', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Personalised</div>
                 <Link to="/contact?topic=Custom+Gift+Boxes" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🎁 Custom Gift Boxes</Link>
                 <Link to="/contact?topic=Build+a+Sweet+Jar" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🍯 Build a Sweet Jar</Link>
                 <Link to="/contact?topic=Event+Platters" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🍽️ Event Platters</Link>
-              </div>
-            )}
-          </div>
-
-          {/* Business & Promotional Dropdown */}
-          <div className="nav-item-container">
-            <span 
-              className={`nav-link ${activeDropdown === 'business' ? 'active' : ''}`}
-              onClick={(e) => handleDropdownToggle('business', e)}
-              style={{ cursor: 'pointer' }}
-            >
-              Business & Promotional <ChevronDown size={12} className="chevron-icon" />
-            </span>
-            {activeDropdown === 'business' && (
-              <div className="dropdown-panel animate-fade-in" onClick={(e) => e.stopPropagation()}>
+                
+                <div style={{ margin: '8px 0', borderTop: '1px solid var(--color-border)' }}></div>
+                
+                <div style={{ padding: '4px 16px', fontSize: '11px', fontWeight: '800', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Business</div>
                 <Link to="/contact?topic=Wholesale+Lollies" className="dropdown-item" onClick={() => setActiveDropdown(null)}>📦 Wholesale Lollies</Link>
                 <Link to="/contact?topic=Custom+Branded+Bags" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🏷️ Custom Branded Bags</Link>
                 <Link to="/contact?topic=Corporate+Gifting" className="dropdown-item" onClick={() => setActiveDropdown(null)}>🏢 Corporate Gifting</Link>
@@ -174,7 +163,6 @@ export const Navbar = ({ onCartOpen }) => {
             )}
           </div>
           
-          <Link to="/blog" className={`nav-link ${location.pathname.startsWith('/blog') ? 'active' : ''}`}>Blog</Link>
           <Link to="/faq" className={`nav-link ${location.pathname === '/faq' ? 'active' : ''}`}>FAQ</Link>
           <Link to="/about" className={`nav-link ${location.pathname === '/about' ? 'active' : ''}`}>About Us</Link>
           <Link to="/contact" className={`nav-link ${location.pathname === '/contact' ? 'active' : ''}`}>Contact Us</Link>

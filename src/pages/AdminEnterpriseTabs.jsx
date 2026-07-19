@@ -17,7 +17,7 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
   const { 
     currentUser, orders, settings, updateSettings,
     offers, addOffer, updateOffer, deleteOffer,
-    auditLogs, blogPosts, addBlogPost, updateBlogPost, deleteBlogPost,
+    auditLogs,
     redirects, addRedirect, deleteRedirect, newsletterSubscribers,
     addNewsletterSubscriber, deleteNewsletterSubscriber, customPages,
     addCustomPage, updateCustomPage, deleteCustomPage, staffUsers,
@@ -50,22 +50,6 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
     active: true
   });
 
-  // Enterprise Blogs State
-  const [editingBlogPostId, setEditingBlogPostId] = useState(null);
-  const [newBlogPost, setNewBlogPost] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    excerpt: '',
-    author: 'Admin',
-    category: 'General',
-    tags: '',
-    featuredImage: '',
-    seoTitle: '',
-    seoDescription: '',
-    published: true,
-    scheduledDate: ''
-  });
 
   // Enterprise CMS custom pages state
   const [editingCustomPageId, setEditingCustomPageId] = useState(null);
@@ -87,7 +71,7 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
   const [campaignSuccess, setCampaignSuccess] = useState('');
 
   // Enterprise Staff users state
-  const [newStaff, setNewStaff] = useState({ name: '', email: '', password: '', role: 'manager' });
+  const [newStaff, setNewStaff] = useState({ name: '', email: '', password: '', role: 'manager', permissions: [] });
 
   // Enterprise Search synonyms state
   const [synonymText, setSynonymText] = useState('');
@@ -218,124 +202,7 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
     );
   }
 
-  if (activeTab === 'blogs') {
-    return (
-      <div className="admin-tab-content animate-fade-in">
-        <h2>Blogs & Recipes Manager</h2>
-        <p className="tab-subtitle">Draft, publish, and schedule sweet recipe guides or blogs for search engines.</p>
-        
-        {/* Blog Form */}
-        <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
-          <h3>{editingBlogPostId ? '✏️ Edit Blog Post' : '➕ Write New Article'}</h3>
-          <form onSubmit={async (e) => {
-            e.preventDefault();
-            if (editingBlogPostId) {
-              await updateBlogPost(editingBlogPostId, newBlogPost);
-              setEditingBlogPostId(null);
-              alert('Post updated successfully! ✍️');
-            } else {
-              await addBlogPost(newBlogPost);
-              alert('Blog post published! 🎉');
-            }
-            setNewBlogPost({ title: '', slug: '', content: '', excerpt: '', author: 'Admin', category: 'General', tags: '', featuredImage: '', seoTitle: '', seoDescription: '', published: true, scheduledDate: '' });
-          }} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '14px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>Title</label>
-                <input type="text" value={newBlogPost.title} onChange={(e) => {
-                  const t = e.target.value;
-                  const s = t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                  setNewBlogPost({...newBlogPost, title: t, slug: s, seoTitle: `${t} | Best Lolly Shop` });
-                }} placeholder="e.g. Best Easter Party Sweets" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>URL Slug</label>
-                <input type="text" value={newBlogPost.slug} onChange={(e) => setNewBlogPost({...newBlogPost, slug: e.target.value.toLowerCase()})} placeholder="e.g. best-easter-party-sweets" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>Category</label>
-                <input type="text" value={newBlogPost.category} onChange={(e) => setNewBlogPost({...newBlogPost, category: e.target.value})} placeholder="e.g. Recipes" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>Tags (comma separated)</label>
-                <input type="text" value={newBlogPost.tags} onChange={(e) => setNewBlogPost({...newBlogPost, tags: e.target.value})} placeholder="e.g. easter, kids, gummies" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>Featured Image URL</label>
-                <input type="text" value={newBlogPost.featuredImage} onChange={(e) => setNewBlogPost({...newBlogPost, featuredImage: e.target.value})} placeholder="e.g. https://image..." style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label>Short Summary / Excerpt</label>
-              <textarea value={newBlogPost.excerpt} onChange={(e) => setNewBlogPost({...newBlogPost, excerpt: e.target.value})} placeholder="Brief summary of what this post is about..." rows="2" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'inherit', background: 'var(--color-background)', color: 'var(--color-text)' }}></textarea>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label>Main Body Content (HTML Allowed)</label>
-              <textarea value={newBlogPost.content} onChange={(e) => setNewBlogPost({...newBlogPost, content: e.target.value})} placeholder="Write details here (supports <h2>, <p>, <strong> tags)..." rows="6" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'monospace', background: 'var(--color-background)', color: 'var(--color-text)' }}></textarea>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>SEO Title Override</label>
-                <input type="text" value={newBlogPost.seoTitle} onChange={(e) => setNewBlogPost({...newBlogPost, seoTitle: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>SEO Meta Description</label>
-                <input type="text" value={newBlogPost.seoDescription} onChange={(e) => setNewBlogPost({...newBlogPost, seoDescription: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '10px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
-                <input type="checkbox" checked={newBlogPost.published} onChange={(e) => setNewBlogPost({...newBlogPost, published: e.target.checked})} /> Publish Instantly
-              </label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '20px' }}>
-                <label>Schedule Publication date:</label>
-                <input type="date" value={newBlogPost.scheduledDate} onChange={(e) => setNewBlogPost({...newBlogPost, scheduledDate: e.target.value})} style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-              </div>
-              <button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto', padding: '10px 24px', fontWeight: 'bold' }}>
-                {editingBlogPostId ? 'Save Changes' : 'Publish Blog'}
-              </button>
-            </div>
-          </form>
-        </div>
 
-        {/* Blogs List */}
-        <div className="glass-card" style={{ overflow: 'hidden' }}>
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Title</th>
-                <th>Category</th>
-                <th>Author</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th style={{ textAlign: 'right' }}>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(blogPosts || []).map((b, idx) => (
-                <tr key={b.id || b._id || idx}>
-                  <td style={{ fontWeight: 'bold' }}>{b.title}</td>
-                  <td>{b.category}</td>
-                  <td>{b.author}</td>
-                  <td><span className={`status-badge ${b.published ? 'completed' : 'pending'}`}>{b.published ? 'Published' : 'Draft'}</span></td>
-                  <td>{new Date(b.createdAt || Date.now()).toLocaleDateString()}</td>
-                  <td style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                    <button onClick={() => { setEditingBlogPostId(b.id || b._id); setNewBlogPost(b); }} style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Edit</button>
-                    <button onClick={async () => { if (window.confirm('Delete this post?')) await deleteBlogPost(b.id || b._id); }} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Delete</button>
-                  </td>
-                </tr>
-              ))}
-              {(blogPosts || []).length === 0 && (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>No blog articles written yet.</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
-  }
 
   if (activeTab === 'custom-pages') {
     return (
@@ -616,7 +483,7 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
               e.preventDefault();
               if (!newStaff.name || !newStaff.email || !newStaff.password) return;
               await addStaffUser(newStaff);
-              setNewStaff({ name: '', email: '', password: '', role: 'manager' });
+              setNewStaff({ name: '', email: '', password: '', role: 'manager', permissions: [] });
               alert('Staff account created successfully! 👑');
             }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -640,8 +507,34 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
                   <option value="marketing_manager">Marketing Manager (Offers & Settings)</option>
                   <option value="customer_support">Customer Support (Orders, Contacts & Reviews)</option>
                   <option value="content_editor">Content Editor (CMS & Blogs)</option>
+                  <option value="custom">Custom (Select specific access)</option>
                 </select>
               </div>
+              
+              {newStaff.role === 'custom' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--color-background)', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
+                  <label style={{ fontWeight: 'bold' }}>Select Permissions:</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.9em' }}>
+                    {['dashboard', 'orders', 'products', 'categories', 'brands', 'offers', 'settings', 'testimonials', 'reviews', 'newsletter', 'customers', 'contacts', 'cms', 'faq', 'media'].map(perm => (
+                      <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                        <input 
+                          type="checkbox" 
+                          checked={newStaff.permissions.includes(perm)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewStaff({...newStaff, permissions: [...newStaff.permissions, perm]});
+                            } else {
+                              setNewStaff({...newStaff, permissions: newStaff.permissions.filter(p => p !== perm)});
+                            }
+                          }}
+                        />
+                        {perm.charAt(0).toUpperCase() + perm.slice(1)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button type="submit" className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Create Staff User</button>
             </form>
           </div>

@@ -1,11 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
-import { User, Mail, Phone, MapPin, ShoppingBag, Clock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, ShoppingBag, Clock, CheckCircle2, AlertCircle, Edit2, Save, X } from 'lucide-react';
 import './Profile.css';
 
 export const Profile = () => {
-  const { currentUser, orders, logout } = useStore();
+  const { currentUser, orders, logout, updateProfile } = useStore();
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: currentUser?.name || '',
+    phone: currentUser?.phone || '',
+    location: currentUser?.location || ''
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleEditChange = (e) => {
+    setEditForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    await updateProfile(editForm);
+    setIsSaving(false);
+    setIsEditing(false);
+  };
+  
+  const handleCancelEdit = () => {
+    setEditForm({
+      name: currentUser?.name || '',
+      phone: currentUser?.phone || '',
+      location: currentUser?.location || ''
+    });
+    setIsEditing(false);
+  };
 
   // Redirect to login if guest or admin
   if (!currentUser) {
@@ -55,7 +83,20 @@ export const Profile = () => {
         {/* Left Column: Personal details */}
         <div className="profile-sidebar-wrapper">
           <div className="glass-card profile-details-card">
-            <div className="profile-avatar-wrapper">
+            <div className="profile-avatar-wrapper" style={{ position: 'relative' }}>
+              {!isEditing && (
+                <button 
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    position: 'absolute', top: 0, right: 0, 
+                    background: 'none', border: 'none', color: 'var(--color-primary)', 
+                    cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', gap: '4px',
+                    fontSize: '13px', fontWeight: 'bold'
+                  }}
+                >
+                  <Edit2 size={14} /> Edit
+                </button>
+              )}
               <div className="profile-avatar-circle">
                 {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
               </div>
@@ -68,9 +109,19 @@ export const Profile = () => {
                 <div className="profile-detail-icon-box">
                   <User size={16} />
                 </div>
-                <div className="profile-detail-text-box">
+                <div className="profile-detail-text-box" style={{ width: '100%' }}>
                   <label>Full Name</label>
-                  <span>{currentUser.name}</span>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      name="name"
+                      value={editForm.name} 
+                      onChange={handleEditChange}
+                      style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', marginTop: '4px', fontSize: '14px' }}
+                    />
+                  ) : (
+                    <span>{currentUser.name}</span>
+                  )}
                 </div>
               </div>
               
@@ -88,9 +139,20 @@ export const Profile = () => {
                 <div className="profile-detail-icon-box">
                   <Phone size={16} />
                 </div>
-                <div className="profile-detail-text-box">
+                <div className="profile-detail-text-box" style={{ width: '100%' }}>
                   <label>Phone Number</label>
-                  <span>{currentUser.phone || 'Not provided'}</span>
+                  {isEditing ? (
+                    <input 
+                      type="text" 
+                      name="phone"
+                      value={editForm.phone} 
+                      onChange={handleEditChange}
+                      placeholder="e.g. 021 123 4567"
+                      style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', marginTop: '4px', fontSize: '14px' }}
+                    />
+                  ) : (
+                    <span>{currentUser.phone || 'Not provided'}</span>
+                  )}
                 </div>
               </div>
 
@@ -98,19 +160,57 @@ export const Profile = () => {
                 <div className="profile-detail-icon-box">
                   <MapPin size={16} />
                 </div>
-                <div className="profile-detail-text-box">
+                <div className="profile-detail-text-box" style={{ width: '100%' }}>
                   <label>Shipping Location</label>
-                  <span>{currentUser.location || 'Auckland, New Zealand'}</span>
+                  {isEditing ? (
+                    <textarea 
+                      name="location"
+                      value={editForm.location} 
+                      onChange={handleEditChange}
+                      placeholder="e.g. 17 Braid Road, St Andrews, Hamilton 3200"
+                      rows={2}
+                      style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', marginTop: '4px', fontSize: '14px', resize: 'vertical' }}
+                    />
+                  ) : (
+                    <span>{currentUser.location || 'Auckland, New Zealand'}</span>
+                  )}
                 </div>
               </div>
             </div>
 
-            <button 
-              className="profile-logout-action-btn"
-              onClick={logout}
-            >
-              🚪 Log Out Account
-            </button>
+            {isEditing ? (
+              <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+                <button 
+                  onClick={handleSaveProfile}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1, background: 'var(--color-primary)', color: 'white', border: 'none',
+                    padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  <Save size={16} /> {isSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+                <button 
+                  onClick={handleCancelEdit}
+                  disabled={isSaving}
+                  style={{
+                    flex: 1, background: '#f1f1f1', color: '#333', border: 'none',
+                    padding: '10px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer',
+                    display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px'
+                  }}
+                >
+                  <X size={16} /> Cancel
+                </button>
+              </div>
+            ) : (
+              <button 
+                className="profile-logout-action-btn"
+                onClick={logout}
+              >
+                🚪 Log Out Account
+              </button>
+            )}
           </div>
         </div>
 

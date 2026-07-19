@@ -11,7 +11,7 @@ Ensure you have [Node.js](https://nodejs.org/) installed (v20+ recommended).
 Create a `.env` file in the root directory (based on `.env.example` or copy the existing configuration) containing:
 * `PORT` (default: 5000)
 * `MONGODB_URI` (your MongoDB Atlas connection string)
-* API credentials for Firebase, SMTP, Stripe, and NZ Post.
+* API credentials for Firebase, SMTP, and Stripe.
 
 ### 3. Installation
 Install dependencies in the root directory:

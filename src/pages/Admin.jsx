@@ -20,7 +20,9 @@ import {
   Tag,
   MessageSquare,
   Star,
-  Sparkles
+  Sparkles,
+  Truck,
+  HelpCircle
 } from 'lucide-react';
 import { CandyVisual } from '../components/SvgCandies';
 import { AdminEnterpriseTabs } from './AdminEnterpriseTabs';
@@ -53,7 +55,7 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
     }}>
       <input
         type="text"
-        placeholder="Courier (e.g. NZ Post)"
+        placeholder="Courier"
         value={company}
         onChange={(e) => setCompany(e.target.value)}
         onBlur={handleBlur}
@@ -108,7 +110,7 @@ export const Admin = () => {
     mediaList, uploadMedia, deleteMedia,
     // Enterprise features
     toggleTheme, theme, offers, addOffer, updateOffer, deleteOffer,
-    auditLogs, blogPosts, addBlogPost, updateBlogPost, deleteBlogPost,
+    auditLogs,
     redirects, addRedirect, deleteRedirect, newsletterSubscribers,
     addNewsletterSubscriber, deleteNewsletterSubscriber, customPages,
     addCustomPage, updateCustomPage, deleteCustomPage, staffUsers,
@@ -194,23 +196,6 @@ export const Admin = () => {
   });
   const [offerSuccess, setOfferSuccess] = useState('');
 
-  // Enterprise Blogs State
-  const [editingBlogPostId, setEditingBlogPostId] = useState(null);
-  const [newBlogPost, setNewBlogPost] = useState({
-    title: '',
-    slug: '',
-    content: '',
-    excerpt: '',
-    author: 'Admin',
-    category: 'General',
-    tags: '',
-    featuredImage: '',
-    seoTitle: '',
-    seoDescription: '',
-    published: true,
-    scheduledDate: ''
-  });
-  const [blogSuccess, setBlogSuccess] = useState('');
 
   // Enterprise CMS custom pages state
   const [editingCustomPageId, setEditingCustomPageId] = useState(null);
@@ -467,9 +452,45 @@ export const Admin = () => {
     });
   };
 
+  const handleAddFaqRow = () => {
+    setTempSettings(prev => ({
+      ...prev,
+      faqs: [
+        ...(prev.faqs || []),
+        { q: "New Question?", a: "New Answer.", category: "General" }
+      ]
+    }));
+  };
+
+  const handleRemoveFaqRow = (index) => {
+    setTempSettings(prev => ({
+      ...prev,
+      faqs: (prev.faqs || []).filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleFaqFieldChange = (index, field, value) => {
+    setTempSettings(prev => {
+      const updatedFaqs = [...(prev.faqs || [])];
+      updatedFaqs[index] = { ...updatedFaqs[index], [field]: value };
+      return { ...prev, faqs: updatedFaqs };
+    });
+  };
+
   useEffect(() => {
     if (settings) {
-      setTempSettings(settings);
+      const defaultFaqs = [
+        { q: "Do you deliver lollies NZ-wide?", a: "Yes! We offer fast courier lollies delivery NZ-wide. All our orders are dispatched from Auckland via reliable couriers. Standard shipping takes 3-5 business days for metropolitan areas like Wellington, Christchurch, and Tauranga. Rural delivery may take an additional 1-2 business days.", category: "Delivery & Shipping" },
+        { q: "What's the best lolly mix for kids' parties?", a: "For children's parties, our Party Mix and Gummy Pick 'n' Mix collections are the most popular choices. They feature sweet and sour gummies, classic hard lollies, and soft marshmallows. If you have guests with dietary requirements, we also recommend checking out our dedicated Vegan and Sugar Free categories.", category: "Products & Variety" },
+        { q: "What is your delivery charge?", a: "We offer completely FREE delivery in Hamilton, New Zealand! For other NZ locations, standard shipping is free for all orders over $50 NZD. For orders under $50 NZD, a flat delivery fee of $5 NZD is applied at checkout.", category: "Delivery & Shipping" },
+        { q: "Do you offer bulk or wholesale pricing for events?", a: "Absolutely! We specialize in wholesale bulk lollies NZ-wide. Whether you are running a school fundraiser, planning a corporate promotion, or building a wedding lolly buffet, you can buy confections in 1kg+ bags at significant savings. Contact us at bestlollyshopnz@gmail.com for customized business accounts.", category: "Bulk & Events" },
+        { q: "Do you offer sugar-free or vegan confections?", a: "Yes, we believe everyone deserves sweet moments! We stock a premium selection of Sugar Free confections (perfect for diabetic diets) and gelatine-free Vegan lollies. You can filter these easily using the search categories on our Shop page.", category: "Dietary & Health" },
+        { q: "Where is the Best Lolly Shop physical presence?", a: "We operate primarily as an online candy store NZ-wide. Our storage and packaging depot is located at 17 Braid Road, St Andrews, Hamilton 3200, where we maintain strict temperature-controlled standards to guarantee sweet freshness.", category: "About Us" }
+      ];
+      setTempSettings({
+        ...settings,
+        faqs: settings.faqs && settings.faqs.length > 0 ? settings.faqs : defaultFaqs
+      });
     }
   }, [settings]);
 
@@ -626,6 +647,25 @@ export const Admin = () => {
     updateOrderStatus(orderId, 'Completed');
   };
 
+
+  const ROLE_PERMISSIONS = {
+    manager: ['dashboard', 'orders', 'products', 'add-product', 'categories', 'users', 'contacts', 'reports', 'settings', 'brands', 'media-library', 'testimonials', 'reviews', 'shipping', 'cms-pages', 'faq', 'cms-theme', 'offers', 'custom-pages', 'seo', 'newsletter', 'staff', 'audit-logs', 'backups', 'ai-tools'],
+    product_manager: ['dashboard', 'products', 'add-product', 'categories', 'brands', 'media-library'],
+    order_manager: ['dashboard', 'orders', 'users', 'shipping'],
+    marketing_manager: ['dashboard', 'offers', 'settings', 'reviews', 'newsletter', 'seo'],
+    customer_support: ['dashboard', 'orders', 'users', 'contacts', 'reviews', 'faq'],
+    content_editor: ['dashboard', 'cms-pages', 'custom-pages', 'faq', 'cms-theme', 'media-library', 'settings', 'seo']
+  };
+
+  const hasAccess = (tab) => {
+    if (currentUser?.role === 'admin') return true;
+    if (currentUser?.role === 'custom') {
+      return currentUser?.permissions?.includes(tab);
+    }
+    const allowed = ROLE_PERMISSIONS[currentUser?.role] || [];
+    return allowed.includes('*') || allowed.includes(tab);
+  };
+
   const gradientsList = [
     { name: 'Lolly Hot Pink', value: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)' },
     { name: 'Fuzzy Peach', value: 'linear-gradient(135deg, #FF9966 0%, #FF5E62 100%)' },
@@ -649,6 +689,7 @@ export const Admin = () => {
           </div>
 
           <nav className="admin-nav">
+            {hasAccess('dashboard') && (
             <button
               className={`admin-nav-item ${activeTab === 'dashboard' ? 'active' : ''}`}
               onClick={() => setActiveTab('dashboard')}
@@ -656,6 +697,8 @@ export const Admin = () => {
               <BarChart3 size={18} />
               <span>Dashboard</span>
             </button>
+          )}
+            {hasAccess('products') && (
             <button
               className={`admin-nav-item ${activeTab === 'products' ? 'active' : ''}`}
               onClick={() => setActiveTab('products')}
@@ -663,6 +706,8 @@ export const Admin = () => {
               <Grid size={18} />
               <span>Products ({catalogCount})</span>
             </button>
+          )}
+            {hasAccess('orders') && (
             <button
               className={`admin-nav-item ${activeTab === 'orders' ? 'active' : ''}`}
               onClick={() => setActiveTab('orders')}
@@ -670,6 +715,8 @@ export const Admin = () => {
               <FileText size={18} />
               <span>Orders ({orders.length})</span>
             </button>
+          )}
+            {hasAccess('users') && (
             <button
               className={`admin-nav-item ${activeTab === 'users' ? 'active' : ''}`}
               onClick={() => setActiveTab('users')}
@@ -677,6 +724,8 @@ export const Admin = () => {
               <Users size={18} />
               <span>Users ({consolidatedUsers.length})</span>
             </button>
+          )}
+            {hasAccess('contacts') && (
             <button
               className={`admin-nav-item ${activeTab === 'contacts' ? 'active' : ''}`}
               onClick={() => setActiveTab('contacts')}
@@ -684,6 +733,8 @@ export const Admin = () => {
               <FileText size={18} />
               <span>Contact Requests ({contactSubmissions.length})</span>
             </button>
+          )}
+            {hasAccess('add-product') && (
             <button
               className={`admin-nav-item ${activeTab === 'add-product' ? 'active' : ''}`}
               onClick={() => setActiveTab('add-product')}
@@ -691,6 +742,8 @@ export const Admin = () => {
               <PlusCircle size={18} />
               <span>Add Sweet</span>
             </button>
+          )}
+            {hasAccess('brands') && (
             <button
               className={`admin-nav-item ${activeTab === 'brands' ? 'active' : ''}`}
               onClick={() => setActiveTab('brands')}
@@ -698,6 +751,8 @@ export const Admin = () => {
               <Tag size={18} />
               <span>Brands ({brands.length})</span>
             </button>
+          )}
+            {hasAccess('reviews') && (
             <button
               className={`admin-nav-item ${activeTab === 'reviews' ? 'active' : ''}`}
               onClick={() => setActiveTab('reviews')}
@@ -705,6 +760,8 @@ export const Admin = () => {
               <MessageSquare size={18} />
               <span>Reviews ({products.reduce((acc, p) => acc + (p.reviews?.length || 0), 0) + testimonials.length})</span>
             </button>
+          )}
+            {hasAccess('settings') && (
             <button
               className={`admin-nav-item ${activeTab === 'settings' ? 'active' : ''}`}
               onClick={() => setActiveTab('settings')}
@@ -712,6 +769,17 @@ export const Admin = () => {
               <Activity size={18} />
               <span>Promotions / Settings</span>
             </button>
+          )}
+            {hasAccess('shipping') && (
+            <button
+              className={`admin-nav-item ${activeTab === 'shipping' ? 'active' : ''}`}
+              onClick={() => setActiveTab('shipping')}
+            >
+              <Truck size={18} />
+              <span>Shipping Settings</span>
+            </button>
+          )}
+            {hasAccess('cms-pages') && (
             <button
               className={`admin-nav-item ${activeTab === 'cms-pages' ? 'active' : ''}`}
               onClick={() => setActiveTab('cms-pages')}
@@ -719,6 +787,17 @@ export const Admin = () => {
               <FileText size={18} />
               <span>CMS Pages</span>
             </button>
+          )}
+            {hasAccess('faq') && (
+            <button
+              className={`admin-nav-item ${activeTab === 'faq' ? 'active' : ''}`}
+              onClick={() => setActiveTab('faq')}
+            >
+              <HelpCircle size={18} />
+              <span>FAQ Settings</span>
+            </button>
+          )}
+            {hasAccess('cms-theme') && (
             <button
               className={`admin-nav-item ${activeTab === 'cms-theme' ? 'active' : ''}`}
               onClick={() => setActiveTab('cms-theme')}
@@ -726,6 +805,8 @@ export const Admin = () => {
               <Grid size={18} />
               <span>CMS Theme & Branding</span>
             </button>
+          )}
+            {hasAccess('media-library') && (
             <button
               className={`admin-nav-item ${activeTab === 'media-library' ? 'active' : ''}`}
               onClick={() => setActiveTab('media-library')}
@@ -733,6 +814,8 @@ export const Admin = () => {
               <ShoppingBag size={18} />
               <span>Media Library ({mediaList ? mediaList.length : 0})</span>
             </button>
+          )}
+            {hasAccess('categories') && (
             <button
               className={`admin-nav-item ${activeTab === 'categories' ? 'active' : ''}`}
               onClick={() => setActiveTab('categories')}
@@ -740,6 +823,8 @@ export const Admin = () => {
               <Tag size={18} />
               <span>Categories ({categories ? categories.length : 0})</span>
             </button>
+          )}
+            {hasAccess('offers') && (
             <button
               className={`admin-nav-item ${activeTab === 'offers' ? 'active' : ''}`}
               onClick={() => setActiveTab('offers')}
@@ -747,13 +832,8 @@ export const Admin = () => {
               <Tag size={18} style={{ transform: 'rotate(90deg)' }} />
               <span>Offers & Coupons ({offers ? offers.length : 0})</span>
             </button>
-            <button
-              className={`admin-nav-item ${activeTab === 'blogs' ? 'active' : ''}`}
-              onClick={() => setActiveTab('blogs')}
-            >
-              <FileText size={18} />
-              <span>Blogs Manager ({blogPosts ? blogPosts.length : 0})</span>
-            </button>
+          )}
+            {hasAccess('custom-pages') && (
             <button
               className={`admin-nav-item ${activeTab === 'custom-pages' ? 'active' : ''}`}
               onClick={() => setActiveTab('custom-pages')}
@@ -761,6 +841,8 @@ export const Admin = () => {
               <FileText size={18} />
               <span>CMS Pages Builder ({customPages ? customPages.length : 0})</span>
             </button>
+          )}
+            {hasAccess('seo') && (
             <button
               className={`admin-nav-item ${activeTab === 'seo' ? 'active' : ''}`}
               onClick={() => setActiveTab('seo')}
@@ -768,6 +850,8 @@ export const Admin = () => {
               <TrendingUp size={18} />
               <span>SEO Redirects ({redirects ? redirects.length : 0})</span>
             </button>
+          )}
+            {hasAccess('newsletter') && (
             <button
               className={`admin-nav-item ${activeTab === 'newsletter' ? 'active' : ''}`}
               onClick={() => setActiveTab('newsletter')}
@@ -775,6 +859,8 @@ export const Admin = () => {
               <MessageSquare size={18} />
               <span>Newsletter List ({newsletterSubscribers ? newsletterSubscribers.length : 0})</span>
             </button>
+          )}
+            {hasAccess('staff') && (
             <button
               className={`admin-nav-item ${activeTab === 'staff' ? 'active' : ''}`}
               onClick={() => setActiveTab('staff')}
@@ -782,6 +868,8 @@ export const Admin = () => {
               <Users size={18} />
               <span>Staff Roles ({staffUsers ? staffUsers.length : 0})</span>
             </button>
+          )}
+            {hasAccess('audit-logs') && (
             <button
               className={`admin-nav-item ${activeTab === 'audit-logs' ? 'active' : ''}`}
               onClick={() => setActiveTab('audit-logs')}
@@ -789,6 +877,8 @@ export const Admin = () => {
               <Activity size={18} />
               <span>Audit Trails ({auditLogs ? auditLogs.length : 0})</span>
             </button>
+          )}
+            {hasAccess('backups') && (
             <button
               className={`admin-nav-item ${activeTab === 'backups' ? 'active' : ''}`}
               onClick={() => setActiveTab('backups')}
@@ -796,6 +886,8 @@ export const Admin = () => {
               <AlertTriangle size={18} />
               <span>DB Backups & Metrics</span>
             </button>
+          )}
+            {hasAccess('ai-tools') && (
             <button
               className={`admin-nav-item ${activeTab === 'ai-tools' ? 'active' : ''}`}
               onClick={() => setActiveTab('ai-tools')}
@@ -803,6 +895,8 @@ export const Admin = () => {
               <Sparkles size={18} />
               <span>AI Writing Assistants</span>
             </button>
+          )}
+            {hasAccess('reports') && (
             <button
               className={`admin-nav-item ${activeTab === 'reports' ? 'active' : ''}`}
               onClick={() => setActiveTab('reports')}
@@ -810,6 +904,7 @@ export const Admin = () => {
               <BarChart3 size={18} />
               <span>Reports & Invoices</span>
             </button>
+          )}
           </nav>
         </aside>
 
@@ -1192,7 +1287,7 @@ export const Admin = () => {
                                   {/* Delivery Company */}
                                   <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed rgba(2, 132, 199, 0.1)', paddingBottom: '4px', marginBottom: '2px', gap: '8px' }}>
                                     <span style={{ fontWeight: '700', color: '#0369a1', whiteSpace: 'nowrap' }}>🚚 Delivery</span>
-                                    <span style={{ fontWeight: '700', color: '#0369a1', textAlign: 'right', wordBreak: 'break-word' }}>{ord.deliveryCompany || 'NZ Post Courier'}</span>
+                                    <span style={{ fontWeight: '700', color: '#0369a1', textAlign: 'right', wordBreak: 'break-word' }}>{ord.deliveryCompany || 'Standard Delivery'}</span>
                                   </div>
 
                                   {/* Charged */}
@@ -1908,14 +2003,46 @@ export const Admin = () => {
                   <div className="form-row">
                     <div className="form-group">
                       <label htmlFor="pcollections">Collections / Tags</label>
+                      <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
+                        {['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'].map(tag => {
+                          const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
+                          const isSelected = currentTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => {
+                                if (isSelected) {
+                                  setNewProduct({ ...newProduct, collectionsText: currentTags.filter(t => t !== tag).join(', ') });
+                                } else {
+                                  setNewProduct({ ...newProduct, collectionsText: [...currentTags, tag].join(', ') });
+                                }
+                              }}
+                              style={{
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                background: isSelected ? 'var(--color-primary)' : 'transparent',
+                                color: isSelected ? 'white' : 'var(--color-text)',
+                                cursor: 'pointer',
+                                fontSize: '13px',
+                                fontWeight: '500',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
                       <input
                         type="text"
                         id="pcollections"
-                        placeholder="Easter, Valentine, Parties, Weddings"
+                        placeholder="Or type custom tags separated by commas..."
                         value={newProduct.collectionsText}
                         onChange={(e) => setNewProduct({ ...newProduct, collectionsText: e.target.value })}
                       />
-                      <small className="field-note">Enter comma-separated collection names for holiday, occasion, celebration, or event tags.</small>
+                      <small className="field-note">Select from the options above or enter custom comma-separated tags.</small>
                     </div>
                   </div>
 
@@ -2937,6 +3064,60 @@ export const Admin = () => {
             </div>
           )}
 
+          {activeTab === 'shipping' && (
+            <div className="admin-tab-content">
+              <h2>Shipping Settings</h2>
+              <p className="tab-subtitle">Manage delivery pricing and shipping rules for your store</p>
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ paddingBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                    <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-primary)', margin: 0 }}>
+                      🚚 Shipping Settings
+                    </h3>
+                  </div>
+                  <div className="form-group" style={{ maxWidth: '300px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Standard Flat Rate Delivery Price ($NZD)</label>
+                    <div style={{ position: 'relative', marginTop: '6px' }}>
+                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: '600', color: '#615a75' }}>$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="19.00"
+                        style={{ paddingLeft: '28px' }}
+                        value={tempSettings?.shipping?.flatRate ?? 19.00}
+                        onChange={(e) => setTempSettings(prev => ({
+                          ...prev,
+                          shipping: { ...prev.shipping, flatRate: Number(e.target.value) }
+                        }))}
+                      />
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px', lineHeight: '1.4' }}>
+                      This is the default shipping cost applied to all orders outside of Hamilton.
+                    </p>
+                  </div>
+                </div>
+
+                {settingsSuccess && (
+                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
+                    {settingsSuccess}
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '12px', marginTop: '10px' }}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}
+                  >
+                    Save Shipping Rules
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
           {activeTab === 'cms-pages' && (
             <div className="admin-tab-content">
               <h2>CMS Content Pages Editor</h2>
@@ -3175,6 +3356,87 @@ export const Admin = () => {
                 <div>
                   <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
                     Save CMS Pages
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {activeTab === 'faq' && (
+            <div className="admin-tab-content">
+              <h2>FAQ Page Settings</h2>
+              <p className="tab-subtitle">Manage the Frequently Asked Questions displayed on the FAQ page</p>
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {(tempSettings.faqs || []).map((faq, idx) => (
+                    <div key={idx} className="glass-card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', background: 'var(--color-surface)', border: '1.5px solid var(--color-border)', borderRadius: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          FAQ #{idx + 1}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFaqRow(idx)}
+                          style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', fontWeight: '700' }}
+                        >
+                          <Trash2 size={13} /> Remove FAQ
+                        </button>
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Question</label>
+                        <input
+                          type="text"
+                          value={faq.q || ''}
+                          onChange={(e) => handleFaqFieldChange(idx, 'q', e.target.value)}
+                          style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none' }}
+                        />
+                      </div>
+                      
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Answer</label>
+                        <textarea
+                          rows="3"
+                          value={faq.a || ''}
+                          onChange={(e) => handleFaqFieldChange(idx, 'a', e.target.value)}
+                          style={{ width: '100%', padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', resize: 'vertical' }}
+                        />
+                      </div>
+
+                      <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Category</label>
+                        <input
+                          type="text"
+                          value={faq.category || ''}
+                          onChange={(e) => handleFaqFieldChange(idx, 'category', e.target.value)}
+                          placeholder="e.g. Delivery & Shipping"
+                          style={{ padding: '10px 12px', borderRadius: '10px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none' }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={handleAddFaqRow}
+                    style={{ padding: '12px', border: '2px dashed var(--color-border)', borderRadius: '12px', background: 'transparent', color: 'var(--color-text)', fontWeight: '700', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', transition: 'all 0.2s ease' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--color-border)'; e.currentTarget.style.color = 'var(--color-text)'; }}
+                  >
+                    ➕ Add FAQ
+                  </button>
+                </div>
+                
+                {settingsSuccess && (
+                  <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
+                    {settingsSuccess}
+                  </div>
+                )}
+
+                <div>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 24px', fontSize: '14px', fontWeight: '700' }}>
+                    Save FAQ Settings
                   </button>
                 </div>
               </form>
@@ -3638,122 +3900,7 @@ export const Admin = () => {
             </div>
           )}
 
-          {activeTab === 'blogs' && (
-            <div className="admin-tab-content animate-fade-in">
-              <h2>Blogs & Recipes Manager</h2>
-              <p className="tab-subtitle">Draft, publish, and schedule sweet recipe guides or blogs for search engines.</p>
-              
-              {/* Blog Form */}
-              <div className="glass-card" style={{ padding: '24px', marginBottom: '24px' }}>
-                <h3>{editingBlogPostId ? '✏️ Edit Blog Post' : '➕ Write New Article'}</h3>
-                <form onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (editingBlogPostId) {
-                    await updateBlogPost(editingBlogPostId, newBlogPost);
-                    setEditingBlogPostId(null);
-                    alert('Post updated successfully! ✍️');
-                  } else {
-                    await addBlogPost(newBlogPost);
-                    alert('Blog post published! 🎉');
-                  }
-                  setNewBlogPost({ title: '', slug: '', content: '', excerpt: '', author: 'Admin', category: 'General', tags: '', featuredImage: '', seoTitle: '', seoDescription: '', published: true, scheduledDate: '' });
-                }} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '14px' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>Title</label>
-                      <input type="text" value={newBlogPost.title} onChange={(e) => {
-                        const t = e.target.value;
-                        const s = t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                        setNewBlogPost({...newBlogPost, title: t, slug: s, seoTitle: `${t} | Best Lolly Shop` });
-                      }} placeholder="e.g. Best Easter Party Sweets" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>URL Slug</label>
-                      <input type="text" value={newBlogPost.slug} onChange={(e) => setNewBlogPost({...newBlogPost, slug: e.target.value.toLowerCase()})} placeholder="e.g. best-easter-party-sweets" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '14px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>Category</label>
-                      <input type="text" value={newBlogPost.category} onChange={(e) => setNewBlogPost({...newBlogPost, category: e.target.value})} placeholder="e.g. Recipes" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>Tags (comma separated)</label>
-                      <input type="text" value={newBlogPost.tags} onChange={(e) => setNewBlogPost({...newBlogPost, tags: e.target.value})} placeholder="e.g. easter, kids, gummies" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>Featured Image URL</label>
-                      <input type="text" value={newBlogPost.featuredImage} onChange={(e) => setNewBlogPost({...newBlogPost, featuredImage: e.target.value})} placeholder="e.g. https://image..." style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label>Short Summary / Excerpt</label>
-                    <textarea value={newBlogPost.excerpt} onChange={(e) => setNewBlogPost({...newBlogPost, excerpt: e.target.value})} placeholder="Brief summary of what this post is about..." rows="2" style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'inherit', background: 'var(--color-background)', color: 'var(--color-text)' }}></textarea>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label>Main Body Content (HTML Allowed)</label>
-                    <textarea value={newBlogPost.content} onChange={(e) => setNewBlogPost({...newBlogPost, content: e.target.value})} placeholder="Write details here (supports <h2>, <p>, <strong> tags)..." rows="6" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'monospace', background: 'var(--color-background)', color: 'var(--color-text)' }}></textarea>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>SEO Title Override</label>
-                      <input type="text" value={newBlogPost.seoTitle} onChange={(e) => setNewBlogPost({...newBlogPost, seoTitle: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label>SEO Meta Description</label>
-                      <input type="text" value={newBlogPost.seoDescription} onChange={(e) => setNewBlogPost({...newBlogPost, seoDescription: e.target.value})} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '10px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold' }}>
-                      <input type="checkbox" checked={newBlogPost.published} onChange={(e) => setNewBlogPost({...newBlogPost, published: e.target.checked})} /> Publish Instantly
-                    </label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '20px' }}>
-                      <label>Schedule Publication date:</label>
-                      <input type="date" value={newBlogPost.scheduledDate} onChange={(e) => setNewBlogPost({...newBlogPost, scheduledDate: e.target.value})} style={{ padding: '6px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    </div>
-                    <button type="submit" className="btn btn-primary" style={{ marginLeft: 'auto', padding: '10px 24px', fontWeight: 'bold' }}>
-                      {editingBlogPostId ? 'Save Changes' : 'Publish Blog'}
-                    </button>
-                  </div>
-                </form>
-              </div>
 
-              {/* Blogs List */}
-              <div className="glass-card" style={{ overflow: 'hidden' }}>
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Title</th>
-                      <th>Category</th>
-                      <th>Author</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                      <th style={{ textAlign: 'right' }}>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(blogPosts || []).map((b, idx) => (
-                      <tr key={b.id || b._id || idx}>
-                        <td style={{ fontWeight: 'bold' }}>{b.title}</td>
-                        <td>{b.category}</td>
-                        <td>{b.author}</td>
-                        <td><span className={`status-badge ${b.published ? 'completed' : 'pending'}`}>{b.published ? 'Published' : 'Draft'}</span></td>
-                        <td>{new Date(b.createdAt || Date.now()).toLocaleDateString()}</td>
-                        <td style={{ textAlign: 'right', display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                          <button onClick={() => { setEditingBlogPostId(b.id || b._id); setNewBlogPost(b); }} style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Edit</button>
-                          <button onClick={async () => { if (window.confirm('Delete this post?')) await deleteBlogPost(b.id || b._id); }} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Delete</button>
-                        </td>
-                      </tr>
-                    ))}
-                    {(blogPosts || []).length === 0 && (
-                      <tr><td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>No blog articles written yet.</td></tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
 
           {activeTab === 'custom-pages' && (
             <div className="admin-tab-content animate-fade-in">

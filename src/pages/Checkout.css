@@ -679,7 +679,7 @@
   transition: all 0.8s ease-in-out;
 }
 
-/* NZ Post Shipping Options Styles */
+/* Shipping Options Styles */
 .shipping-option-card {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }

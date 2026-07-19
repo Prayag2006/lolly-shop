@@ -3,6 +3,11 @@ import mongoose from 'mongoose';
 const settingsSchema = new mongoose.Schema({
   key: { type: String, default: 'main_settings', unique: true },
   
+  // Shipping Settings
+  shipping: {
+    flatRate: { type: Number, default: 19.00 }
+  },
+
   // Announcement Marquees
   marquees: {
     type: [{

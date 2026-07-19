@@ -4,6 +4,7 @@ import { Plus, Minus, ArrowLeft, Heart, ShieldCheck, HelpCircle, Star, ShoppingB
 import { useStore } from '../context/StoreContext';
 import { CandyVisual } from '../components/SvgCandies';
 import { SEO } from '../components/SEO';
+import { getProductSlugUrl, getProductIdFromSlug } from '../utils/productUtils';
 import './ProductDetails.css';
 
 export const ProductDetails = () => {
@@ -11,33 +12,10 @@ export const ProductDetails = () => {
   const navigate = useNavigate();
   const { products, addToCart, addProductReview, currentUser } = useStore();
 
-  // Extract ID from slug format (e.g. pascall-pineapple-lumps-p-1 -> p-1)
-  const getProductIdFromSlug = (slugOrId) => {
-    if (!slugOrId) return '';
-    if (slugOrId.startsWith('p-')) return slugOrId;
-    const parts = slugOrId.split('-');
-    if (parts.length >= 2) {
-      const pIdx = parts.lastIndexOf('p');
-      if (pIdx !== -1 && pIdx < parts.length - 1) {
-        return `p-${parts[pIdx + 1]}`;
-      }
-    }
-    return slugOrId;
-  };
-
   const realId = getProductIdFromSlug(id);
 
   // Find product by id
   const product = products.find(p => String(p.id) === String(realId));
-
-  const getProductSlugUrl = (prod) => {
-    if (!prod) return '';
-    const cleanName = prod.name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '');
-    return `/product/${cleanName}-${prod.id}`;
-  };
 
   const [quantity, setQuantity] = useState(1);
   const [selectedWeight, setSelectedWeight] = useState(() => {
