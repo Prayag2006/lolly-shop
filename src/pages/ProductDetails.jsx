@@ -406,13 +406,9 @@ export const ProductDetails = () => {
               <h3>PAYMENT & SECURITY</h3>
               
               <div className="brand-logos-row">
-                {/* Apple Pay Logo */}
-                <div className="payment-logo logo-applepay" title="Apple Pay">
-                  <span> Pay</span>
-                </div>
-                {/* Google Pay Logo */}
-                <div className="payment-logo logo-gpay" title="Google Pay">
-                  <span className="g-letter">G</span><span>Pay</span>
+                {/* Visa Logo */}
+                <div className="payment-logo logo-visa" title="Visa">
+                  <span className="v-bold">VISA</span>
                 </div>
                 {/* Mastercard Logo */}
                 <div className="payment-logo logo-mastercard" title="Mastercard">
@@ -422,17 +418,9 @@ export const ProductDetails = () => {
                   </div>
                   <span className="mc-text">mastercard</span>
                 </div>
-                {/* Shop Pay Logo */}
-                <div className="payment-logo logo-shoppay" title="Shop Pay">
-                  <span className="sh-bold">shop</span><span>pay</span>
-                </div>
-                {/* UnionPay Logo */}
-                <div className="payment-logo logo-unionpay" title="UnionPay">
-                  <span className="up-text">UnionPay</span>
-                </div>
-                {/* Visa Logo */}
-                <div className="payment-logo logo-visa" title="Visa">
-                  <span className="v-bold">VISA</span>
+                {/* Stripe Logo */}
+                <div className="payment-logo logo-stripe" title="Stripe">
+                  <span className="stripe-text">stripe</span>
                 </div>
               </div>
 
