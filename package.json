@@ -10,7 +10,8 @@
     "build": "vite build",
     "vercel-build": "npm install --prefix server --omit=optional && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@vercel/speed-insights": "^2.0.0",
@@ -36,11 +37,13 @@
     "node": ">=20.0.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.45.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
     "concurrently": "^10.0.3",
     "oxlint": "^1.71.0",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "wrangler": "^4.112.0"
   }
 }
