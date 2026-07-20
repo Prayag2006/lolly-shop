@@ -116,7 +116,7 @@ export const Checkout = () => {
   };
 
   // Shipping Method States
-  const [shippingFee, setShippingFee] = useState(defaultShippingFee); // Default flat rate
+  const [shippingFee, setShippingFee] = useState(null); // Calculated later
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
@@ -217,7 +217,7 @@ export const Checkout = () => {
     } else if (!isHamiltonPostcode(shippingForm.zip)) {
       setShippingOptions([]);
       setSelectedOption(null);
-      setShippingFee(defaultShippingFee);
+      setShippingFee(null);
       setIsHamilton(false);
     }
   }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
@@ -225,7 +225,7 @@ export const Checkout = () => {
   // Pricing math
   const subtotal = getCartTotal();
   const discountAmt = (subtotal * discountPercent) / 100 + flatDiscount;
-  const finalTotal = Math.max(0, subtotal - discountAmt) + shippingFee;
+  const finalTotal = Math.max(0, subtotal - discountAmt) + (shippingFee || 0);
 
   // Coupon apply
   const handleApplyCoupon = (e) => {
@@ -998,7 +998,7 @@ export const Checkout = () => {
                 )}
                 <div className="b-row">
                   <span>Shipping</span>
-                  <span>{isHamilton ? 'Free Delivery - Hamilton' : (shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)}`)}</span>
+                  <span>{isHamilton ? 'Free Delivery - Hamilton' : (shippingFee === null ? 'Calculated next step' : (shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)}`))}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="b-row final-row">
