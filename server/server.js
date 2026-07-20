@@ -3275,7 +3275,7 @@ app.get('/api/settings', async (req, res) => {
   }
 });
 
-app.put('/api/settings', async (req, res) => {
+app.put('/api/settings', checkPermission('settings'), async (req, res) => {
   try {
     if (sqlAvailable()) {
       const updated = await Settings.findOneAndUpdate(
@@ -3297,14 +3297,11 @@ app.put('/api/settings', async (req, res) => {
 const ROLE_PERMISSIONS = {
   admin: ['*'],
   manager: ['*'],
-  product_manager: ['products', 'categories', 'brands', 'media'],
-  order_manager: ['orders', 'customers'],
-  marketing_manager: ['offers', 'settings', 'testimonials', 'reviews', 'newsletter'],
-  customer_support: ['orders', 'customers', 'contacts', 'reviews'],
-  content_editor: ['cms', 'blogs', 'media', 'settings']
+  product_manager: ['dashboard', 'products', 'add-product'],
+  order_manager: ['dashboard', 'orders', 'users', 'shipping']
 };
 
-const checkPermission = (actionArea) => {
+function checkPermission(actionArea) {
   return (req, res, next) => {
     const userRole = req.headers['x-user-role'] || 'user';
     if (userRole === 'admin') return next();
@@ -3716,6 +3713,57 @@ app.delete('/api/newsletter-subscribers/:id', checkPermission('newsletter'), asy
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ message: 'Error removing subscriber', error: error.message });
+  }
+});
+
+app.post('/api/newsletter/dispatch', checkPermission('newsletter'), async (req, res) => {
+  try {
+    const { subject, content } = req.body;
+    if (!subject || !content) return res.status(400).json({ message: 'Subject and content required' });
+
+    let subs = [];
+    if (sqlAvailable()) {
+      subs = await NewsletterSubscriber.find();
+    } else {
+      subs = readLocalData('subscribers.json', []);
+    }
+
+    if (subs.length === 0) {
+      return res.status(400).json({ message: 'No subscribers found' });
+    }
+
+    let mailConfig;
+    try {
+      mailConfig = await createMailTransporter();
+    } catch (mailErr) {
+      return res.status(500).json({ message: 'Email not configured on server', error: mailErr.message });
+    }
+
+    const { transporter, smtpUser } = mailConfig;
+
+    const emailHtml = getResponsiveEmailTemplate({
+      previewText: subject,
+      headerEmoji: '💌',
+      headerTitle: 'Lolly Shop News',
+      headerSubtitle: 'A sweet update for you',
+      headerGradient: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)',
+      bodyHtml: content
+    });
+
+    const promises = subs.map(sub => 
+      transporter.sendMail({
+        from: `"Lolly Shop" <${smtpUser}>`,
+        to: sub.email,
+        subject: subject,
+        html: emailHtml
+      }).catch(err => console.error(`Error sending to ${sub.email}:`, err))
+    );
+
+    await Promise.all(promises);
+
+    res.json({ success: true, count: subs.length });
+  } catch (error) {
+    res.status(500).json({ message: 'Error dispatching newsletter', error: error.message });
   }
 });
 

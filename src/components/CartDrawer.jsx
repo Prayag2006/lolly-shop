@@ -133,7 +133,7 @@ export const CartDrawer = ({ isOpen, onClose }) => {
             </div>
             <div className="summary-row shipping-row">
               <span>Shipping</span>
-              <span>$5.00</span>
+              <span style={{ fontSize: '0.85em', color: 'var(--text-light, #888)' }}>Calculated at checkout</span>
             </div>
             
             <div className="summary-divider"></div>
@@ -141,7 +141,7 @@ export const CartDrawer = ({ isOpen, onClose }) => {
             <div className="summary-row total-row">
               <span>Estimated Total</span>
               <span className="final-total-amt">
-                ${(total + 5).toFixed(2)}
+                ${total.toFixed(2)}
               </span>
             </div>
 

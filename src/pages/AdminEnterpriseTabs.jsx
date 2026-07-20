@@ -502,11 +502,8 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
                 <label>Scope Role Scope</label>
                 <select value={newStaff.role} onChange={(e) => setNewStaff({...newStaff, role: e.target.value})} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}>
                   <option value="manager">General Manager (Read/Write)</option>
-                  <option value="product_manager">Product Manager (Products & Media)</option>
+                  <option value="product_manager">Product Manager (Products)</option>
                   <option value="order_manager">Order Manager (Orders & Customers)</option>
-                  <option value="marketing_manager">Marketing Manager (Offers & Settings)</option>
-                  <option value="customer_support">Customer Support (Orders, Contacts & Reviews)</option>
-                  <option value="content_editor">Content Editor (CMS & Blogs)</option>
                   <option value="custom">Custom (Select specific access)</option>
                 </select>
               </div>

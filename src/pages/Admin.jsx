@@ -163,6 +163,8 @@ export const Admin = () => {
   });
 
   const [editingProductId, setEditingProductId] = useState(null);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [newTagInput, setNewTagInput] = useState('');
   const [weightOptions, setWeightOptions] = useState([
     { weight: '100g', price: '' },
     { weight: '250g', price: '' },
@@ -649,12 +651,9 @@ export const Admin = () => {
 
 
   const ROLE_PERMISSIONS = {
-    manager: ['dashboard', 'orders', 'products', 'add-product', 'categories', 'users', 'contacts', 'reports', 'settings', 'brands', 'media-library', 'testimonials', 'reviews', 'shipping', 'cms-pages', 'faq', 'cms-theme', 'offers', 'custom-pages', 'seo', 'newsletter', 'staff', 'audit-logs', 'backups', 'ai-tools'],
-    product_manager: ['dashboard', 'products', 'add-product', 'categories', 'brands', 'media-library'],
-    order_manager: ['dashboard', 'orders', 'users', 'shipping'],
-    marketing_manager: ['dashboard', 'offers', 'settings', 'reviews', 'newsletter', 'seo'],
-    customer_support: ['dashboard', 'orders', 'users', 'contacts', 'reviews', 'faq'],
-    content_editor: ['dashboard', 'cms-pages', 'custom-pages', 'faq', 'cms-theme', 'media-library', 'settings', 'seo']
+    manager: ['*'],
+    product_manager: ['dashboard', 'products', 'add-product'],
+    order_manager: ['dashboard', 'orders', 'users', 'shipping']
   };
 
   const hasAccess = (tab) => {
@@ -2002,38 +2001,116 @@ export const Admin = () => {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <label htmlFor="pcollections">Collections / Tags</label>
-                      <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
-                        {['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'].map(tag => {
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <label htmlFor="pcollections" style={{ margin: 0 }}>Collections / Tags</label>
+                        <button 
+                          type="button" 
+                          onClick={() => setIsEditingTags(!isEditingTags)}
+                          style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
+                        >
+                          {isEditingTags ? 'Done Editing' : 'Edit Options'}
+                        </button>
+                      </div>
+                      <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', marginTop: '8px' }}>
+                        {(settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free']).map(tag => {
                           const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
                           const isSelected = currentTags.includes(tag);
                           return (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => {
-                                if (isSelected) {
-                                  setNewProduct({ ...newProduct, collectionsText: currentTags.filter(t => t !== tag).join(', ') });
-                                } else {
-                                  setNewProduct({ ...newProduct, collectionsText: [...currentTags, tag].join(', ') });
-                                }
-                              }}
-                              style={{
-                                padding: '6px 14px',
-                                borderRadius: '20px',
-                                border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                background: isSelected ? 'var(--color-primary)' : 'transparent',
-                                color: isSelected ? 'white' : 'var(--color-text)',
-                                cursor: 'pointer',
-                                fontSize: '13px',
-                                fontWeight: '500',
-                                transition: 'all 0.2s ease'
-                              }}
-                            >
-                              {tag}
-                            </button>
+                            <div key={tag} style={{ position: 'relative' }}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (isEditingTags) return;
+                                  if (isSelected) {
+                                    setNewProduct({ ...newProduct, collectionsText: currentTags.filter(t => t !== tag).join(', ') });
+                                  } else {
+                                    setNewProduct({ ...newProduct, collectionsText: [...currentTags, tag].join(', ') });
+                                  }
+                                }}
+                                style={{
+                                  padding: '6px 14px',
+                                  borderRadius: '20px',
+                                  border: `1px solid ${isSelected && !isEditingTags ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                  background: isSelected && !isEditingTags ? 'var(--color-primary)' : 'transparent',
+                                  color: isSelected && !isEditingTags ? 'white' : 'var(--color-text)',
+                                  cursor: isEditingTags ? 'default' : 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '500',
+                                  transition: 'all 0.2s ease',
+                                  opacity: isEditingTags ? 0.7 : 1
+                                }}
+                              >
+                                {tag}
+                              </button>
+                              {isEditingTags && (
+                                <button
+                                  type="button"
+                                  onClick={async () => {
+                                    const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                    await updateSettings({ ...settings, productTags: currentProductTags.filter(t => t !== tag) });
+                                  }}
+                                  style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    background: '#ef4444',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '16px',
+                                    height: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '10px',
+                                    cursor: 'pointer',
+                                    padding: 0
+                                  }}
+                                >
+                                  ×
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
+                        {isEditingTags && (
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <input 
+                              type="text" 
+                              value={newTagInput}
+                              onChange={(e) => setNewTagInput(e.target.value)}
+                              placeholder="New tag..."
+                              style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', width: '100px' }}
+                              onKeyDown={async (e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  if (newTagInput.trim()) {
+                                    const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                    if (!currentProductTags.includes(newTagInput.trim())) {
+                                      await updateSettings({ ...settings, productTags: [...currentProductTags, newTagInput.trim()] });
+                                    }
+                                    setNewTagInput('');
+                                  }
+                                }
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                if (newTagInput.trim()) {
+                                  const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                  if (!currentProductTags.includes(newTagInput.trim())) {
+                                    await updateSettings({ ...settings, productTags: [...currentProductTags, newTagInput.trim()] });
+                                  }
+                                  setNewTagInput('');
+                                }
+                              }}
+                              style={{ background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 8px', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                              Add
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <input
                         type="text"
@@ -4138,12 +4215,31 @@ export const Admin = () => {
                 {/* Email Builder Campaign */}
                 <div className="glass-card" style={{ padding: '20px' }}>
                   <h3>✉️ Email Builder Campaign</h3>
-                  <form onSubmit={(e) => {
+                  <form onSubmit={async (e) => {
                     e.preventDefault();
                     if (!newsletterCampaign.subject || !newsletterCampaign.content) return;
-                    setCampaignSuccess(`Simulated email campaign successfully dispatched to ${newsletterSubscribers.length} recipients! 📬`);
-                    setTimeout(() => setCampaignSuccess(''), 6000);
-                    setNewsletterCampaign({ subject: '', content: '' });
+                    try {
+                      setCampaignSuccess('Sending campaign...');
+                      const res = await fetch('/api/newsletter/dispatch', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'X-User-Role': currentUser?.role || '',
+                          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
+                        },
+                        body: JSON.stringify(newsletterCampaign)
+                      });
+                      const data = await res.json();
+                      if (res.ok) {
+                        setCampaignSuccess(`Email campaign successfully dispatched to ${data.count} recipients! 📬`);
+                        setTimeout(() => setCampaignSuccess(''), 6000);
+                        setNewsletterCampaign({ subject: '', content: '' });
+                      } else {
+                        setCampaignSuccess(`Error: ${data.message}`);
+                      }
+                    } catch (err) {
+                      setCampaignSuccess('Failed to send campaign.');
+                    }
                   }} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <label>Campaign Email Subject</label>
@@ -4193,11 +4289,8 @@ export const Admin = () => {
                       <label>Scope Role Scope</label>
                       <select value={newStaff.role} onChange={(e) => setNewStaff({...newStaff, role: e.target.value})} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}>
                         <option value="manager">General Manager (Read/Write)</option>
-                        <option value="product_manager">Product Manager (Products & Media)</option>
+                        <option value="product_manager">Product Manager (Products)</option>
                         <option value="order_manager">Order Manager (Orders & Customers)</option>
-                        <option value="marketing_manager">Marketing Manager (Offers & Settings)</option>
-                        <option value="customer_support">Customer Support (Orders, Contacts & Reviews)</option>
-                        <option value="content_editor">Content Editor (CMS & Blogs)</option>
                       </select>
                     </div>
                     <button type="submit" className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Create Staff User</button>
