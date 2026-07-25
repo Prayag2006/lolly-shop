@@ -57,10 +57,11 @@ export const Login = () => {
     
     const result = await login(username, password);
     if (result.success) {
-      setSuccess(`Welcome back, ${result.user.name}!`);
+      setSuccess(`Welcome back, ${result.user.name}! 👑`);
+      const isStaffRole = ['admin', 'manager', 'product_manager', 'order_manager'].includes(result.user.role);
       setTimeout(() => {
-        navigate(result.user.role === 'admin' && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
-      }, 1500);
+        navigate(isStaffRole && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
+      }, 1000);
     } else {
       setError(result.message);
     }

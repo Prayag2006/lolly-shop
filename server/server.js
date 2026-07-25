@@ -3845,9 +3845,6 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
     if (sqlAvailable()) {
       const existing = await User.findOne({ email: cleanEmail });
       if (existing) {
-        if (existing.role !== 'user') {
-          return res.status(400).json({ message: `Staff member with email "${cleanEmail}" already exists.` });
-        }
         existing.role = assignedRole;
         if (name) existing.name = name;
         if (password) existing.password = hashPassword(password);
@@ -3868,9 +3865,6 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
       const users = readLocalData('users.json', defaultUsers);
       const existingIdx = users.findIndex(u => u.email === cleanEmail);
       if (existingIdx !== -1) {
-        if (users[existingIdx].role !== 'user') {
-          return res.status(400).json({ message: `Staff member with email "${cleanEmail}" already exists.` });
-        }
         users[existingIdx].role = assignedRole;
         if (name) users[existingIdx].name = name;
         if (password) users[existingIdx].password = hashPassword(password);
@@ -3891,7 +3885,7 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
         writeLocalData('users.json', users);
       }
     }
-    await logAudit(req, 'CREATE_STAFF', `Added/promoted staff user "${name}" (${cleanEmail}) to role "${assignedRole}"`);
+    await logAudit(req, 'CREATE_STAFF', `Added/updated staff user "${name}" (${cleanEmail}) with role "${assignedRole}"`);
     const formattedId = newUser._id ? newUser._id.toString() : newUser.id;
     res.status(201).json({ 
       id: formattedId, 
@@ -3909,22 +3903,30 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
 
 app.put('/api/users/staff/:id', checkPermission('settings'), async (req, res) => {
   try {
-    const { role, permissions } = req.body;
+    const { name, role, permissions, password } = req.body;
     let updated;
     if (sqlAvailable()) {
-      updated = await User.findByIdAndUpdate(req.params.id, { role, permissions: permissions || [] }, { new: true });
+      const updateData = {};
+      if (role) updateData.role = role;
+      if (name) updateData.name = name;
+      if (permissions) updateData.permissions = permissions;
+      if (password) updateData.password = hashPassword(password);
+
+      updated = await User.findByIdAndUpdate(req.params.id, updateData, { new: true });
     } else {
       const users = readLocalData('users.json', defaultUsers);
       const idx = users.findIndex(u => (u.id === req.params.id || u._id === req.params.id));
       if (idx !== -1) {
         if (role) users[idx].role = role;
+        if (name) users[idx].name = name;
         if (permissions) users[idx].permissions = permissions;
+        if (password) users[idx].password = hashPassword(password);
         updated = users[idx];
         writeLocalData('users.json', users);
       }
     }
     if (!updated) return res.status(404).json({ message: 'Staff member not found' });
-    await logAudit(req, 'UPDATE_STAFF', `Updated staff role for user "${updated.name}" to "${role}"`);
+    await logAudit(req, 'UPDATE_STAFF', `Updated staff details for user "${updated.name}"`);
     const formattedId = updated._id ? updated._id.toString() : updated.id;
     res.json({ 
       id: formattedId, 
