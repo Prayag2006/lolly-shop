@@ -3806,11 +3806,26 @@ app.post('/api/newsletter/dispatch', checkPermission('newsletter'), async (req, 
 app.get('/api/users/staff', checkPermission('settings'), async (req, res) => {
   try {
     if (sqlAvailable()) {
-      const staff = await User.find({ role: { $ne: 'user' } });
-      res.json(staff);
+      const staff = await User.find({ role: { $ne: 'user' } }).select('-password');
+      const formatted = staff.map(u => ({
+        id: u._id.toString(),
+        _id: u._id.toString(),
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        permissions: u.permissions || []
+      }));
+      res.json(formatted);
     } else {
       const users = readLocalData('users.json', defaultUsers);
-      const staff = users.filter(u => u.role !== 'user');
+      const staff = users.filter(u => u.role !== 'user').map(u => ({
+        id: u.id || u._id,
+        _id: u.id || u._id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        permissions: u.permissions || []
+      }));
       res.json(staff);
     }
   } catch (error) {
@@ -3821,24 +3836,52 @@ app.get('/api/users/staff', checkPermission('settings'), async (req, res) => {
 app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
   try {
     const { name, email, password, role, permissions } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: 'Name, email, and password are required' });
+    }
+    const cleanEmail = email.toLowerCase().trim();
+    const assignedRole = role || 'manager';
     let newUser;
     if (sqlAvailable()) {
-      const existing = await User.findOne({ email });
-      if (existing) return res.status(400).json({ message: 'User already exists' });
-      newUser = new User({ name, email, password: hashPassword(password), role, permissions: permissions || [] });
+      const existing = await User.findOne({ email: cleanEmail });
+      if (existing) return res.status(400).json({ message: 'A user with this email already exists' });
+      newUser = new User({ 
+        name, 
+        email: cleanEmail, 
+        password: hashPassword(password), 
+        role: assignedRole, 
+        permissions: permissions || [] 
+      });
       await newUser.save();
     } else {
       const users = readLocalData('users.json', defaultUsers);
-      const existing = users.find(u => u.email === email);
-      if (existing) return res.status(400).json({ message: 'User already exists' });
-      newUser = { id: `u-${Date.now()}`, name, email, password: hashPassword(password), role, permissions: permissions || [], createdAt: new Date().toISOString() };
+      const existing = users.find(u => u.email === cleanEmail);
+      if (existing) return res.status(400).json({ message: 'A user with this email already exists' });
+      newUser = { 
+        id: `u-${Date.now()}`, 
+        name, 
+        email: cleanEmail, 
+        password: hashPassword(password), 
+        role: assignedRole, 
+        permissions: permissions || [], 
+        createdAt: new Date().toISOString() 
+      };
       users.push(newUser);
       writeLocalData('users.json', users);
     }
-    await logAudit(req, 'CREATE_STAFF', `Added staff user "${name}" with role "${role}"`);
-    res.status(201).json({ id: newUser.id, name: newUser.name, email: newUser.email, role: newUser.role, permissions: newUser.permissions || [] });
+    await logAudit(req, 'CREATE_STAFF', `Added staff user "${name}" (${cleanEmail}) with role "${assignedRole}"`);
+    const formattedId = newUser._id ? newUser._id.toString() : newUser.id;
+    res.status(201).json({ 
+      id: formattedId, 
+      _id: formattedId, 
+      name: newUser.name, 
+      email: newUser.email, 
+      role: newUser.role, 
+      permissions: newUser.permissions || [] 
+    });
   } catch (error) {
-    res.status(400).json({ message: 'Error creating staff', error: error.message });
+    console.error('Error creating staff member:', error);
+    res.status(400).json({ message: 'Error creating staff: ' + error.message, error: error.message });
   }
 });
 
@@ -3850,9 +3893,9 @@ app.put('/api/users/staff/:id', checkPermission('settings'), async (req, res) =>
       updated = await User.findByIdAndUpdate(req.params.id, { role, permissions: permissions || [] }, { new: true });
     } else {
       const users = readLocalData('users.json', defaultUsers);
-      const idx = users.findIndex(u => u.id === req.params.id);
+      const idx = users.findIndex(u => (u.id === req.params.id || u._id === req.params.id));
       if (idx !== -1) {
-        users[idx].role = role;
+        if (role) users[idx].role = role;
         if (permissions) users[idx].permissions = permissions;
         updated = users[idx];
         writeLocalData('users.json', users);
@@ -3860,9 +3903,18 @@ app.put('/api/users/staff/:id', checkPermission('settings'), async (req, res) =>
     }
     if (!updated) return res.status(404).json({ message: 'Staff member not found' });
     await logAudit(req, 'UPDATE_STAFF', `Updated staff role for user "${updated.name}" to "${role}"`);
-    res.json({ id: updated.id, name: updated.name, email: updated.email, role: updated.role, permissions: updated.permissions || [] });
+    const formattedId = updated._id ? updated._id.toString() : updated.id;
+    res.json({ 
+      id: formattedId, 
+      _id: formattedId, 
+      name: updated.name, 
+      email: updated.email, 
+      role: updated.role, 
+      permissions: updated.permissions || [] 
+    });
   } catch (error) {
-    res.status(400).json({ message: 'Error updating staff member', error: error.message });
+    console.error('Error updating staff member:', error);
+    res.status(400).json({ message: 'Error updating staff member: ' + error.message, error: error.message });
   }
 });
 
@@ -3873,7 +3925,7 @@ app.delete('/api/users/staff/:id', checkPermission('settings'), async (req, res)
       deleted = await User.findByIdAndDelete(req.params.id);
     } else {
       const users = readLocalData('users.json', defaultUsers);
-      const idx = users.findIndex(u => u.id === req.params.id);
+      const idx = users.findIndex(u => (u.id === req.params.id || u._id === req.params.id));
       if (idx !== -1) {
         deleted = users[idx];
         users.splice(idx, 1);
@@ -3882,7 +3934,12 @@ app.delete('/api/users/staff/:id', checkPermission('settings'), async (req, res)
     }
     if (!deleted) return res.status(404).json({ message: 'Staff member not found' });
     await logAudit(req, 'DELETE_STAFF', `Removed staff user "${deleted.name}"`);
-    res.json({ success: true });
+    res.json({ success: true, message: 'Staff member removed successfully' });
+  } catch (error) {
+    console.error('Error deleting staff member:', error);
+    res.status(500).json({ message: 'Error deleting staff member: ' + error.message, error: error.message });
+  }
+});
   } catch (error) {
     res.status(500).json({ message: 'Error removing staff member', error: error.message });
   }

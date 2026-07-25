@@ -477,41 +477,44 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
         
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'flex-start' }}>
           {/* Create Staff Form */}
-          <div className="glass-card" style={{ padding: '20px' }}>
-            <h3>➕ Add Staff User</h3>
+          <div className="glass-card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: '8px' }}>➕ Add Staff User</h3>
             <form onSubmit={async (e) => {
               e.preventDefault();
               if (!newStaff.name || !newStaff.email || !newStaff.password) return;
-              await addStaffUser(newStaff);
-              setNewStaff({ name: '', email: '', password: '', role: 'manager', permissions: [] });
-              alert('Staff account created successfully! 👑');
-            }} style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+              const res = await addStaffUser(newStaff);
+              if (res?.success) {
+                setNewStaff({ name: '', email: '', password: '', role: 'manager', permissions: [] });
+                alert('👑 Staff account created successfully!');
+              }
+            }} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label>Full Name</label>
-                <input type="text" value={newStaff.name} onChange={(e) => setNewStaff({...newStaff, name: e.target.value})} placeholder="e.g. Liam Thompson" required style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
+                <label style={{ fontSize: '13px', fontWeight: '700' }}>Full Name</label>
+                <input type="text" value={newStaff.name} onChange={(e) => setNewStaff({...newStaff, name: e.target.value})} placeholder="e.g. Liam Thompson" required style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label>Email Address</label>
-                <input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value.toLowerCase().trim()})} placeholder="e.g. liam@lollyshop.co.nz" required style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
+                <label style={{ fontSize: '13px', fontWeight: '700' }}>Email Address</label>
+                <input type="email" value={newStaff.email} onChange={(e) => setNewStaff({...newStaff, email: e.target.value.toLowerCase().trim()})} placeholder="e.g. liam@lollyshop.co.nz" required style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label>Login Password</label>
-                <input type="password" value={newStaff.password} onChange={(e) => setNewStaff({...newStaff, password: e.target.value})} placeholder="••••••••" required style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
+                <label style={{ fontSize: '13px', fontWeight: '700' }}>Login Password</label>
+                <input type="password" value={newStaff.password} onChange={(e) => setNewStaff({...newStaff, password: e.target.value})} placeholder="••••••••" required style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <label>Scope Role Scope</label>
-                <select value={newStaff.role} onChange={(e) => setNewStaff({...newStaff, role: e.target.value})} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}>
+                <label style={{ fontSize: '13px', fontWeight: '700' }}>Assigned Role & Access Scope</label>
+                <select value={newStaff.role} onChange={(e) => setNewStaff({...newStaff, role: e.target.value})} style={{ padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}>
+                  <option value="admin">Administrator (Full Access)</option>
                   <option value="manager">General Manager (Read/Write)</option>
-                  <option value="product_manager">Product Manager (Products)</option>
+                  <option value="product_manager">Product Manager (Products & Inventory)</option>
                   <option value="order_manager">Order Manager (Orders & Customers)</option>
                   <option value="custom">Custom (Select specific access)</option>
                 </select>
               </div>
               
               {newStaff.role === 'custom' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--color-background)', borderRadius: '6px', border: '1px solid var(--color-border)' }}>
-                  <label style={{ fontWeight: 'bold' }}>Select Permissions:</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.9em' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--color-background)', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                  <label style={{ fontWeight: 'bold', fontSize: '12px' }}>Select Permissions:</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', fontSize: '0.85em' }}>
                     {['dashboard', 'orders', 'products', 'categories', 'brands', 'offers', 'settings', 'testimonials', 'reviews', 'newsletter', 'customers', 'contacts', 'cms', 'faq', 'media'].map(perm => (
                       <label key={perm} style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
                         <input 
@@ -532,14 +535,14 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
                 </div>
               )}
 
-              <button type="submit" className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Create Staff User</button>
+              <button type="submit" className="btn btn-primary" style={{ padding: '12px', fontWeight: '800', marginTop: '6px' }}>Create Staff User</button>
             </form>
           </div>
 
           {/* Staff list table */}
-          <div className="glass-card" style={{ padding: '20px' }}>
-            <h3>Active Staff Users ({staffUsers ? staffUsers.length : 0})</h3>
-            <div style={{ marginTop: '12px' }}>
+          <div className="glass-card" style={{ padding: '24px' }}>
+            <h3 style={{ margin: '0 0 16px' }}>Active Staff Users ({staffUsers ? staffUsers.length : 0})</h3>
+            <div>
               <table className="admin-table">
                 <thead>
                   <tr>
@@ -550,16 +553,85 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {(staffUsers || []).map((u, idx) => (
-                    <tr key={u.id || u._id || idx}>
-                      <td style={{ fontWeight: 'bold' }}>{u.name}</td>
-                      <td>{u.email}</td>
-                      <td><span style={{ fontSize: '11px', padding: '4px 8px', borderRadius: '20px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 'bold' }}>{u.role.replace('_', ' ').toUpperCase()}</span></td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button onClick={async () => { if (window.confirm(`Delete staff member "${u.name}"?`)) await deleteStaffUser(u.id || u._id); }} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>Remove Access</button>
-                      </td>
+                  {(staffUsers || []).length === 0 ? (
+                    <tr>
+                      <td colSpan="4" style={{ textAlign: 'center', padding: '24px', color: 'var(--color-text-muted)' }}>No staff accounts found.</td>
                     </tr>
-                  ))}
+                  ) : (
+                    (staffUsers || []).map((u, idx) => {
+                      const userId = u.id || u._id || `staff-${idx}`;
+                      const isSuperAdmin = u.email === 'admin@lollyshop.co.nz';
+                      
+                      let badgeBg = 'rgba(231, 44, 131, 0.1)';
+                      let badgeColor = 'var(--color-primary)';
+                      if (u.role === 'admin') {
+                        badgeBg = 'rgba(239, 68, 68, 0.12)';
+                        badgeColor = '#dc2626';
+                      } else if (u.role === 'product_manager') {
+                        badgeBg = 'rgba(59, 130, 246, 0.12)';
+                        badgeColor = '#2563eb';
+                      } else if (u.role === 'order_manager') {
+                        badgeBg = 'rgba(16, 185, 129, 0.12)';
+                        badgeColor = '#059669';
+                      }
+
+                      return (
+                        <tr key={userId}>
+                          <td>
+                            <div style={{ fontWeight: '800', color: 'var(--color-text)' }}>{u.name}</div>
+                          </td>
+                          <td style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>{u.email}</td>
+                          <td>
+                            {isSuperAdmin ? (
+                              <span style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '20px', background: badgeBg, color: badgeColor, fontWeight: '800' }}>
+                                SUPER ADMIN
+                              </span>
+                            ) : (
+                              <select 
+                                value={u.role || 'manager'} 
+                                onChange={async (e) => {
+                                  const newRole = e.target.value;
+                                  await updateStaffUser(userId, { role: newRole });
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  border: '1px solid var(--color-border)',
+                                  fontSize: '12px',
+                                  fontWeight: '700',
+                                  background: badgeBg,
+                                  color: badgeColor,
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                <option value="admin">ADMIN</option>
+                                <option value="manager">MANAGER</option>
+                                <option value="product_manager">PRODUCT MANAGER</option>
+                                <option value="order_manager">ORDER MANAGER</option>
+                                <option value="custom">CUSTOM</option>
+                              </select>
+                            )}
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            {!isSuperAdmin ? (
+                              <button 
+                                onClick={async () => { 
+                                  if (window.confirm(`Remove staff access for "${u.name}" (${u.email})?`)) {
+                                    await deleteStaffUser(userId); 
+                                  }
+                                }} 
+                                style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '800', fontSize: '12px' }}
+                              >
+                                Remove Access
+                              </button>
+                            ) : (
+                              <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Protected</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>

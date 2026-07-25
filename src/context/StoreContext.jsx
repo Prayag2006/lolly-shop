@@ -85,6 +85,12 @@ export const StoreProvider = ({ children }) => {
     return () => clearInterval(pollInterval);
   }, []);
 
+  useEffect(() => {
+    if (currentUser) {
+      fetchStaffUsers();
+    }
+  }, [currentUser]);
+
   const fetchSettings = async () => {
     try {
       const res = await fetch('/api/settings');
@@ -1215,13 +1221,16 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/users/staff', {
         headers: {
-          'X-User-Role': currentUser?.role || 'admin'
+          'X-User-Role': currentUser?.role || 'admin',
+          'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+          'X-User-Email': currentUser?.email || '',
+          'X-User-Name': currentUser?.name || ''
         }
       });
       const data = await res.json();
       if (Array.isArray(data)) setStaffUsers(data);
     } catch (e) {
-      console.error(e);
+      console.error('Error fetching staff users:', e);
     }
   };
 
@@ -1240,11 +1249,16 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        setStaffUsers(prev => [...prev, data]);
-        return data;
+        setStaffUsers(prev => [...prev.filter(u => u.email !== data.email), data]);
+        return { success: true, data };
+      } else {
+        alert(`❌ ${data.message || 'Failed to create staff user'}`);
+        return { success: false, error: data.message };
       }
     } catch (e) {
       console.error(e);
+      alert('❌ Network error creating staff user');
+      return { success: false, error: e.message };
     }
   };
 
@@ -1263,11 +1277,16 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        setStaffUsers(prev => prev.map(u => u.id === id ? { ...u, ...data } : u));
-        return data;
+        setStaffUsers(prev => prev.map(u => (u.id === id || u._id === id) ? { ...u, ...data } : u));
+        return { success: true, data };
+      } else {
+        alert(`❌ ${data.message || 'Failed to update staff user'}`);
+        return { success: false, error: data.message };
       }
     } catch (e) {
       console.error(e);
+      alert('❌ Network error updating staff user');
+      return { success: false, error: e.message };
     }
   };
 
@@ -1282,12 +1301,18 @@ export const StoreProvider = ({ children }) => {
           'X-User-Name': currentUser?.name || ''
         }
       });
+      const data = await res.json();
       if (res.ok) {
-        setStaffUsers(prev => prev.filter(u => u.id !== id));
-        return true;
+        setStaffUsers(prev => prev.filter(u => u.id !== id && u._id !== id));
+        return { success: true };
+      } else {
+        alert(`❌ ${data.message || 'Failed to remove staff access'}`);
+        return { success: false, error: data.message };
       }
     } catch (e) {
       console.error(e);
+      alert('❌ Network error deleting staff user');
+      return { success: false, error: e.message };
     }
   };
 
