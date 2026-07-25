@@ -109,7 +109,7 @@ export const Login = () => {
 
     const result = await forgotPassword(email);
     if (result.success) {
-      setSuccess('A password reset link has been sent to your email inbox! Please check your email to reset your password.');
+      setSuccess(`Password reset email sent to ${email}! 📧 Please check your Inbox and Spam/Junk folder.`);
     } else {
       setError(result.message || 'Reset request failed.');
     }

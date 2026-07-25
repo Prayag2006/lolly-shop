@@ -70,36 +70,20 @@ app.use('/api', async (req, res, next) => {
 
 // ── CENTRALIZED SMTP TRANSPORTER HELPER ──
 const createMailTransporter = async () => {
-  const host = process.env.SMTP_HOST;
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = process.env.SMTP_PORT || 587;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-
-  const isProduction = process.env.NODE_ENV === 'production';
+  const smtpUser = process.env.SMTP_USER || 'bestlollyshopnz@gmail.com';
+  const smtpPass = process.env.SMTP_PASS || 'mbhoppntnsmbupeu';
 
   if (smtpUser && smtpPass) {
-    if (host && host.includes('gmail.com')) {
-      return {
-        transporter: nodemailer.createTransport({
-          service: 'gmail',
-          auth: { user: smtpUser, pass: smtpPass }
-        }),
-        isFallback: false,
-        smtpUser
-      };
-    } else if (host) {
-      return {
-        transporter: nodemailer.createTransport({
-          host,
-          port: Number(port),
-          secure: Number(port) === 465,
-          auth: { user: smtpUser, pass: smtpPass },
-          tls: { rejectUnauthorized: false }
-        }),
-        isFallback: false,
-        smtpUser
-      };
-    }
+    return {
+      transporter: nodemailer.createTransport({
+        service: 'gmail',
+        auth: { user: smtpUser, pass: smtpPass }
+      }),
+      isFallback: false,
+      smtpUser
+    };
   }
 
   if (isProduction) {
