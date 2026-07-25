@@ -112,9 +112,6 @@ export const ProductDetails = () => {
     })
     .slice(0, 5); // Display 5 recommendation cards
 
-  // Best Before Date simulation
-  const bbdSimulated = `BBD: ${product.id % 2 === 0 ? '5/2026' : '12/2026'}`;
-
   // Simulated Flavours
   const flavoursSimulated = 
     product.category === 'Chocolates' ? 'Milk Chocolate Ganache, Roasted Almond Crunch' :
@@ -263,11 +260,6 @@ export const ProductDetails = () => {
               <span className="details-amount">{currentPrice.toFixed(2)}</span>
             </div>
 
-            {/* BBD details */}
-            <div className="details-bbd-tag">
-              <strong>{bbdSimulated}</strong>
-            </div>
-
             <p className="details-description">{product.description}</p>
 
             {/* Size Selector */}
@@ -353,37 +345,7 @@ export const ProductDetails = () => {
                 </div>
               </div>
 
-              {/* Nutrition Accordion */}
-              <div className="details-accordion-item">
-                <button 
-                  type="button"
-                  className={`accordion-header ${activeAccordion === 'nutrition' ? 'active' : ''}`}
-                  onClick={() => toggleAccordion('nutrition')}
-                >
-                  <span>NUTRITION VALUE (Per 100g)</span>
-                  <span className="header-icon">{activeAccordion === 'nutrition' ? '−' : '+'}</span>
-                </button>
-                <div className={`accordion-content ${activeAccordion === 'nutrition' ? 'open' : ''}`}>
-                  <div className="nutrition-details-grid">
-                    <div className="nutrition-row">
-                      <span>Calories</span>
-                      <strong>{product.nutrition?.calories || 'N/A'}</strong>
-                    </div>
-                    <div className="nutrition-row">
-                      <span>Sugar</span>
-                      <strong>{product.nutrition?.sugar || 'N/A'}</strong>
-                    </div>
-                    <div className="nutrition-row">
-                      <span>Fats</span>
-                      <strong>{product.nutrition?.fat || 'N/A'}</strong>
-                    </div>
-                    <div className="nutrition-row">
-                      <span>Protein</span>
-                      <strong>{product.nutrition?.protein || 'N/A'}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
+
 
               {/* Flavours Accordion */}
               <div className="details-accordion-item">
