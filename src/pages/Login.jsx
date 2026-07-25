@@ -184,20 +184,7 @@ export const Login = () => {
             </div>
           )}
 
-          {etherealUrl && (
-            <div className="login-alert alert-info" style={{ textCenter: 'center' }}>
-              <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>🔑 Password Reset Token Ready!</p>
-              <a 
-                href={etherealUrl} 
-                target={etherealUrl.startsWith('http') ? "_blank" : "_self"} 
-                rel="noopener noreferrer" 
-                className="ethereal-link"
-                style={{ display: 'inline-block', padding: '8px 16px', background: 'var(--color-primary)', color: '#fff', borderRadius: '20px', textDecoration: 'none', fontWeight: '700', fontSize: '13px' }}
-              >
-                Proceed to Reset Password Page ↗
-              </a>
-            </div>
-          )}
+
 
           {/* Form rendering based on mode */}
           {mode === 'login' && (
