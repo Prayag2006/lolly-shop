@@ -5070,16 +5070,32 @@ export const Admin = () => {
                                 </td>
                                 <td style={{ textAlign: 'right' }}>
                                   {!isSuperAdmin ? (
-                                    <button 
-                                      onClick={async () => { 
-                                        if (window.confirm(`Remove staff access for "${u.name}" (${u.email})?`)) {
-                                          await deleteStaffUser(userId); 
-                                        }
-                                      }} 
-                                      style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '800', fontSize: '12px' }}
-                                    >
-                                      Remove Access
-                                    </button>
+                                    <>
+                                      <button 
+                                        type="button"
+                                        onClick={async () => {
+                                          const res = await forgotPassword(u.email);
+                                          if (res.success) {
+                                            alert(`Password reset email successfully sent to ${u.email}! 📧`);
+                                          } else {
+                                            alert(`Failed to send reset email: ${res.message}`);
+                                          }
+                                        }}
+                                        style={{ background: 'transparent', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontWeight: '800', fontSize: '12px', marginRight: '14px' }}
+                                      >
+                                        📧 Send Reset Email
+                                      </button>
+                                      <button 
+                                        onClick={async () => { 
+                                          if (window.confirm(`Remove staff access for "${u.name}" (${u.email})?`)) {
+                                            await deleteStaffUser(userId); 
+                                          }
+                                        }} 
+                                        style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: '800', fontSize: '12px' }}
+                                      >
+                                        Remove Access
+                                      </button>
+                                    </>
                                   ) : (
                                     <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>Protected</span>
                                   )}
