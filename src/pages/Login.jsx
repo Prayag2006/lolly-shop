@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
-import { User, Lock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
+import { User, UserPlus, Lock, KeyRound, AlertCircle, CheckCircle, Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
 import { auth, googleProvider, firebaseEnabled } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import './Login.css';
@@ -39,7 +39,6 @@ export const Login = () => {
   useEffect(() => {
     setError('');
     setSuccess('');
-    setEtherealUrl('');
     setPassword('');
     setConfirmPassword('');
   }, [mode]);
