@@ -2770,12 +2770,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     res.json({
       success: true,
-      message: emailSent 
-        ? 'A password reset link has been sent to your email inbox.' 
-        : 'Password reset link generated! Click the link below to proceed with setting a new password.',
-      resetLink,
-      token,
-      previewUrl: previewUrl || resetLink,
+      message: 'A password reset link has been sent to your email inbox.',
       emailSent
     });
   } catch (error) {

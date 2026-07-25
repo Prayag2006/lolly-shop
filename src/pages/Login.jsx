@@ -25,7 +25,6 @@ export const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [etherealUrl, setEtherealUrl] = useState('');
   
   const redirectTarget = searchParams.get('redirect') || '/';
 
@@ -102,7 +101,6 @@ export const Login = () => {
     e.preventDefault();
     setError('');
     setSuccess('');
-    setEtherealUrl('');
 
     if (!email.trim()) {
       setError('Please enter your email address.');
@@ -111,10 +109,7 @@ export const Login = () => {
 
     const result = await forgotPassword(email);
     if (result.success) {
-      setSuccess(result.message || 'A password reset link has been sent to your email.');
-      if (result.resetLink || result.previewUrl) {
-        setEtherealUrl(result.resetLink || result.previewUrl);
-      }
+      setSuccess('A password reset link has been sent to your email inbox! Please check your email to reset your password.');
     } else {
       setError(result.message || 'Reset request failed.');
     }
