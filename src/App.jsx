@@ -11,6 +11,9 @@ import { PromoModal } from './components/PromoModal';
 import { CookieConsent } from './components/CookieConsent';
 import { VideoSplash } from './components/VideoSplash';
 
+import Login from './pages/Login';
+import ResetPassword from './pages/ResetPassword';
+
 // Lazy load Pages (Code splitting)
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const Shop = lazy(() => import('./pages/Shop').then(m => ({ default: m.Shop })));
@@ -18,10 +21,8 @@ const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.C
 const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
 const ProductDetails = lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
 const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
-const Login = lazy(() => import('./pages/Login').then(m => ({ default: m.Login })));
 const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
-const ResetPassword = lazy(() => import('./pages/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const TrackOrder = lazy(() => import('./pages/TrackOrder').then(m => ({ default: m.TrackOrder })));
 const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
 const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
