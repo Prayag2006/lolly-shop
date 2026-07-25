@@ -112,8 +112,8 @@ export const Login = () => {
     const result = await forgotPassword(email);
     if (result.success) {
       setSuccess(result.message || 'A password reset link has been sent to your email.');
-      if (result.previewUrl) {
-        setEtherealUrl(result.previewUrl);
+      if (result.resetLink || result.previewUrl) {
+        setEtherealUrl(result.resetLink || result.previewUrl);
       }
     } else {
       setError(result.message || 'Reset request failed.');
@@ -123,24 +123,15 @@ export const Login = () => {
   const handleGoogleSignIn = async () => {
     setError('');
     setSuccess('');
-    if (!firebaseEnabled) {
-      setError('Firebase credentials are not set in your .env file. Please append VITE_FIREBASE_API_KEY, etc. to .env at the root of your project.');
-      return;
-    }
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const res = await loginWithGoogle(result.user);
-      if (res.success) {
-        setSuccess(`Logged in successfully via Google!`);
-        setTimeout(() => {
-          navigate(redirectTarget, { replace: true });
-        }, 1500);
-      } else {
-        setError(res.message);
-      }
-    } catch (err) {
-      console.error('Google Sign-in error:', err);
-      setError('Google Sign-In failed or was cancelled.');
+    const result = await loginWithGoogle();
+    if (result.success) {
+      setSuccess(`Welcome back, ${result.user.name}! 👑`);
+      const isStaffRole = ['admin', 'manager', 'product_manager', 'order_manager'].includes(result.user.role);
+      setTimeout(() => {
+        navigate(isStaffRole && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
+      }, 1000);
+    } else {
+      setError(result.message || 'Google sign in failed');
     }
   };
 
@@ -152,32 +143,33 @@ export const Login = () => {
       
       <div className="container login-container animate-slide-up">
         <div className="login-card glass-card">
-          {/* Header section based on mode */}
+          
           <div className="login-header">
             {mode !== 'login' && (
               <button className="login-back-btn" onClick={() => setMode('login')}>
-                <ArrowLeft size={16} /> Back to Sign In
+                ← Back to Sign In
               </button>
             )}
             
             <div className="login-icon-wrapper">
               {mode === 'login' && <KeyRound size={28} />}
-              {mode === 'register' && <User size={28} />}
+              {mode === 'register' && <UserPlus size={28} />}
               {mode === 'forgot' && <Mail size={28} />}
             </div>
             
             <h2>
               {mode === 'login' && "Portal Sign In"}
               {mode === 'register' && "Create Account"}
-              {mode === 'forgot' && "Forgot Password"}
+              {mode === 'forgot' && "FORGOT PASSWORD"}
             </h2>
-            <p>
+            
+            <p className="login-subtitle">
               {mode === 'login' && "Access your Lolly Shop account or administrator panel"}
-              {mode === 'register' && "Join us and enjoy NZ's finest selection of candy and treats!"}
+              {mode === 'register' && "Join Lolly Shop to manage your orders & exclusive perks"}
               {mode === 'forgot' && "Enter your email to receive a password reset link"}
             </p>
           </div>
-          
+
           {error && (
             <div className="login-alert alert-error">
               <AlertCircle size={18} />
@@ -193,10 +185,16 @@ export const Login = () => {
           )}
 
           {etherealUrl && (
-            <div className="login-alert alert-info">
-              <p>📬 <strong>Ethereal Sandbox Mode:</strong> A test email was sent! You can preview it here:</p>
-              <a href={etherealUrl} target="_blank" rel="noopener noreferrer" className="ethereal-link">
-                View Sandbox Email Preview ↗
+            <div className="login-alert alert-info" style={{ textCenter: 'center' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '13px', fontWeight: '600' }}>🔑 Password Reset Token Ready!</p>
+              <a 
+                href={etherealUrl} 
+                target={etherealUrl.startsWith('http') ? "_blank" : "_self"} 
+                rel="noopener noreferrer" 
+                className="ethereal-link"
+                style={{ display: 'inline-block', padding: '8px 16px', background: 'var(--color-primary)', color: '#fff', borderRadius: '20px', textDecoration: 'none', fontWeight: '700', fontSize: '13px' }}
+              >
+                Proceed to Reset Password Page ↗
               </a>
             </div>
           )}
