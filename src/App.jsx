@@ -27,6 +27,43 @@ const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ de
 const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
 const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
 
+// Global Error Boundary to prevent blank screens
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught an error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: '80px 20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+          <h2 style={{ color: '#e72c83', fontSize: '24px', fontWeight: '800' }}>Something went wrong</h2>
+          <p style={{ color: '#615a75', fontSize: '15px', margin: '12px 0 24px' }}>
+            {this.state.error?.message || 'An unexpected error occurred while rendering the page.'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            style={{ padding: '12px 28px', background: '#e72c83', color: '#fff', border: 'none', borderRadius: '30px', fontWeight: '700', cursor: 'pointer' }}
+          >
+            Reload Page
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 // Lightweight fallback loader for lazy-loaded pages
 const PageLoadingFallback = () => (
   <div style={{
@@ -68,9 +105,12 @@ function App() {
     if (typeof window !== 'undefined' && sessionStorage.getItem('lolly_shop_splash_shown') === 'true') {
       return false;
     }
-    // Bypass splash screen entirely on password reset path
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/reset-password')) {
-      return false;
+    // Bypass splash screen entirely on auth, admin, checkout, profile and reset-password routes
+    if (typeof window !== 'undefined') {
+      const pathname = window.location.pathname;
+      if (['/login', '/reset-password', '/admin', '/checkout', '/profile'].some(path => pathname.startsWith(path))) {
+        return false;
+      }
     }
     // Bypass splash screen for search engine crawlers to prevent indexing empty tags
     if (typeof navigator !== 'undefined') {
@@ -105,66 +145,68 @@ function App() {
           <Navbar onCartOpen={() => setCartOpen(true)} />
 
           {/* Page Routing */}
-          <Suspense fallback={<PageLoadingFallback />}>
-            <Routes>
-              <Route 
-                path="/" 
-                element={<Home onProductClick={(p) => setActiveModalProduct(p)} />} 
-              />
-              <Route 
-                path="/shop" 
-                element={<Shop onProductClick={(p) => setActiveModalProduct(p)} />} 
-              />
-              <Route 
-                path="/product/:id" 
-                element={<ProductDetails />} 
-              />
-              <Route 
-                path="/checkout" 
-                element={<Checkout />} 
-              />
-              <Route 
-                path="/contact" 
-                element={<Contact />} 
-              />
-              <Route 
-                path="/about" 
-                element={<About />} 
-              />
-              <Route 
-                path="/profile" 
-                element={<Profile />} 
-              />
-              <Route 
-                path="/login" 
-                element={<Login />} 
-              />
-              <Route 
-                path="/reset-password" 
-                element={<ResetPassword />} 
-              />
-              <Route 
-                path="/track-order/:id" 
-                element={<TrackOrder />} 
-              />
-              <Route 
-                path="/admin" 
-                element={<Admin />} 
-              />
-              <Route 
-                path="/privacy" 
-                element={<PrivacyPolicy />} 
-              />
-              <Route 
-                path="/terms" 
-                element={<TermsOfService />} 
-              />
-              <Route 
-                path="/faq" 
-                element={<FAQ />} 
-              />
-            </Routes>
-          </Suspense>
+          <ErrorBoundary>
+            <Suspense fallback={<PageLoadingFallback />}>
+              <Routes>
+                <Route 
+                  path="/" 
+                  element={<Home onProductClick={(p) => setActiveModalProduct(p)} />} 
+                />
+                <Route 
+                  path="/shop" 
+                  element={<Shop onProductClick={(p) => setActiveModalProduct(p)} />} 
+                />
+                <Route 
+                  path="/product/:id" 
+                  element={<ProductDetails />} 
+                />
+                <Route 
+                  path="/checkout" 
+                  element={<Checkout />} 
+                />
+                <Route 
+                  path="/contact" 
+                  element={<Contact />} 
+                />
+                <Route 
+                  path="/about" 
+                  element={<About />} 
+                />
+                <Route 
+                  path="/profile" 
+                  element={<Profile />} 
+                />
+                <Route 
+                  path="/login" 
+                  element={<Login />} 
+                />
+                <Route 
+                  path="/reset-password" 
+                  element={<ResetPassword />} 
+                />
+                <Route 
+                  path="/track-order/:id" 
+                  element={<TrackOrder />} 
+                />
+                <Route 
+                  path="/admin" 
+                  element={<Admin />} 
+                />
+                <Route 
+                  path="/privacy" 
+                  element={<PrivacyPolicy />} 
+                />
+                <Route 
+                  path="/terms" 
+                  element={<TermsOfService />} 
+                />
+                <Route 
+                  path="/faq" 
+                  element={<FAQ />} 
+                />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
 
           {/* Footer shared across pages */}
           <Footer />
