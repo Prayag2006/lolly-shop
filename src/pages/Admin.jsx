@@ -497,7 +497,8 @@ export const Admin = () => {
     }
   }, [settings]);
 
-  if (!currentUser || currentUser.role !== 'admin') {
+  const allowedStaffRoles = ['admin', 'manager', 'product_manager', 'order_manager', 'custom'];
+  if (!currentUser || !allowedStaffRoles.includes(currentUser.role)) {
     return <Navigate to="/login?redirect=admin" replace />;
   }
 
@@ -693,9 +694,10 @@ export const Admin = () => {
 
 
   const ROLE_PERMISSIONS = {
+    admin: ['*'],
     manager: ['*'],
-    product_manager: ['dashboard', 'products', 'add-product'],
-    order_manager: ['dashboard', 'orders', 'users', 'shipping']
+    product_manager: ['dashboard', 'products', 'add-product', 'categories', 'brands', 'media'],
+    order_manager: ['dashboard', 'orders', 'customers', 'contacts', 'shipping']
   };
 
   const hasAccess = (tab) => {
@@ -724,8 +726,10 @@ export const Admin = () => {
           <div className="admin-profile">
             <div className="admin-avatar">👑</div>
             <div className="admin-profile-info">
-              <h3>Client Portal</h3>
-              <p>Store Administrator</p>
+              <h3 style={{ fontSize: '15px', fontWeight: '800', margin: '0' }}>{currentUser?.name || 'Staff User'}</h3>
+              <p style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', color: 'var(--color-primary)', margin: '2px 0 0' }}>
+                {currentUser?.role ? currentUser.role.replace('_', ' ') : 'STAFF MEMBER'}
+              </p>
             </div>
           </div>
 
