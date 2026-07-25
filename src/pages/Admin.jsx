@@ -217,7 +217,8 @@ export const Admin = () => {
 
   // Enterprise Newsletter state
   const [newSubscriberEmail, setNewSubscriberEmail] = useState('');
-  const [newsletterCampaign, setNewsletterCampaign] = useState({ subject: '', content: '' });
+  const [newsletterCampaign, setNewsletterCampaign] = useState({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
+  const [uploadingNewsletterImage, setUploadingNewsletterImage] = useState(false);
   const [campaignSuccess, setCampaignSuccess] = useState('');
 
   // Enterprise Staff users state
@@ -647,6 +648,29 @@ export const Admin = () => {
 
   const handleMarkComplete = (orderId) => {
     updateOrderStatus(orderId, 'Completed');
+  };
+
+  const handleNewsletterImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingNewsletterImage(true);
+    try {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const uploaded = await uploadMedia(file.name, file.type, reader.result);
+          const imageUrl = uploaded?.url || `/api/media/file/${file.name}`;
+          setNewsletterCampaign(prev => ({ ...prev, imageUrl }));
+        } catch (err) {
+          alert('Image upload failed: ' + err.message);
+        } finally {
+          setUploadingNewsletterImage(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setUploadingNewsletterImage(false);
+    }
   };
 
 
@@ -4212,46 +4236,238 @@ export const Admin = () => {
                   </div>
                 </div>
 
-                {/* Email Builder Campaign */}
-                <div className="glass-card" style={{ padding: '20px' }}>
-                  <h3>✉️ Email Builder Campaign</h3>
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!newsletterCampaign.subject || !newsletterCampaign.content) return;
-                    try {
-                      setCampaignSuccess('Sending campaign...');
-                      const res = await fetch('/api/newsletter/dispatch', {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'X-User-Role': currentUser?.role || '',
-                          'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
-                        },
-                        body: JSON.stringify(newsletterCampaign)
-                      });
-                      const data = await res.json();
-                      if (res.ok && data.success) {
-                        setCampaignSuccess(data.message || `Email campaign successfully dispatched to ${data.count} recipients! 📬`);
-                        setTimeout(() => setCampaignSuccess(''), 6000);
-                        setNewsletterCampaign({ subject: '', content: '' });
-                      } else {
-                        setCampaignSuccess(`❌ ${data.message || 'Error sending newsletter email.'}`);
+                {/* Visual Email Builder Campaign */}
+                <div className="glass-card" style={{ padding: '24px' }}>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>✉️ Simple Visual Email Builder</h3>
+                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-text-light)' }}>
+                      Easily compose and send newsletters without writing any HTML code. Fill in the fields below and preview your email live!
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
+                    {/* Form Side */}
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!newsletterCampaign.subject || (!newsletterCampaign.heading && !newsletterCampaign.message)) {
+                        alert('Please fill in the subject line and at least a title or message for your newsletter.');
+                        return;
                       }
-                    } catch (err) {
-                      setCampaignSuccess('Failed to send campaign.');
-                    }
-                  }} style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '12px' }}>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label>Campaign Email Subject</label>
-                      <input type="text" value={newsletterCampaign.subject} onChange={(e) => setNewsletterCampaign({...newsletterCampaign, subject: e.target.value})} placeholder="e.g. 🎉 Sweet Easter Lolly Specials inside!" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
+                      try {
+                        setCampaignSuccess('Sending campaign...');
+                        
+                        // Auto-generate clean, responsive email HTML automatically
+                        let generatedContent = '';
+                        if (newsletterCampaign.heading?.trim()) {
+                          generatedContent += `<h1 style="color:#e72c83; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 16px; font-family: sans-serif;">${newsletterCampaign.heading.trim()}</h1>`;
+                        }
+                        if (newsletterCampaign.imageUrl?.trim()) {
+                          generatedContent += `<div style="text-align: center; margin-bottom: 20px;"><img src="${newsletterCampaign.imageUrl.trim()}" alt="Newsletter Banner" style="max-width: 100%; max-height: 350px; border-radius: 12px; object-fit: cover;" /></div>`;
+                        }
+                        if (newsletterCampaign.message?.trim()) {
+                          const paragraphs = newsletterCampaign.message
+                            .split('\n')
+                            .filter(p => p.trim() !== '')
+                            .map(p => `<p style="font-size: 15px; line-height: 1.65; color: #475569; margin-bottom: 14px; font-family: sans-serif;">${p.trim()}</p>`)
+                            .join('');
+                          generatedContent += paragraphs;
+                        }
+                        if (newsletterCampaign.buttonText?.trim() && newsletterCampaign.buttonUrl?.trim()) {
+                          generatedContent += `
+                            <div style="text-align: center; margin-top: 24px; margin-bottom: 12px;">
+                              <a href="${newsletterCampaign.buttonUrl.trim()}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%); color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; font-family: sans-serif;">
+                                ${newsletterCampaign.buttonText.trim()}
+                              </a>
+                            </div>
+                          `;
+                        }
+
+                        const res = await fetch('/api/newsletter/dispatch', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-User-Role': currentUser?.role || '',
+                            'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
+                          },
+                          body: JSON.stringify({
+                            subject: newsletterCampaign.subject,
+                            content: generatedContent
+                          })
+                        });
+                        const data = await res.json();
+                        if (res.ok && data.success) {
+                          setCampaignSuccess(data.message || `Email campaign successfully dispatched to ${data.count} recipients! 📬`);
+                          setTimeout(() => setCampaignSuccess(''), 8000);
+                          setNewsletterCampaign({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
+                        } else {
+                          setCampaignSuccess(`❌ ${data.message || 'Error sending newsletter email.'}`);
+                        }
+                      } catch (err) {
+                        setCampaignSuccess('Failed to send campaign: ' + err.message);
+                      }
+                    }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                      {/* 1. Campaign Subject */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '13px' }}>📧 Email Subject Line <span style={{ color: '#dc2626' }}>*</span></label>
+                        <input 
+                          type="text" 
+                          value={newsletterCampaign.subject} 
+                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, subject: e.target.value})} 
+                          placeholder="e.g. 🎉 Sweet Easter Lolly Specials inside!" 
+                          required 
+                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px' }} 
+                        />
+                      </div>
+
+                      {/* 2. Headline / Title (H1) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '13px' }}>🏷️ Main Title / Headline (H1)</label>
+                        <input 
+                          type="text" 
+                          value={newsletterCampaign.heading} 
+                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, heading: e.target.value})} 
+                          placeholder="e.g. Happy Holidays from Lolly Shop! 🍬" 
+                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px' }} 
+                        />
+                      </div>
+
+                      {/* 3. Image Selector */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '13px' }}>🖼️ Newsletter Image (Optional)</label>
+                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                          <input 
+                            type="text" 
+                            value={newsletterCampaign.imageUrl} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, imageUrl: e.target.value})} 
+                            placeholder="Paste image URL (e.g. https://...)" 
+                            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }} 
+                          />
+                          <label style={{ background: 'var(--color-primary)', color: 'white', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>{uploadingNewsletterImage ? 'Uploading...' : '📁 Upload Image'}</span>
+                            <input 
+                              type="file" 
+                              accept="image/*" 
+                              onChange={handleNewsletterImageUpload} 
+                              disabled={uploadingNewsletterImage} 
+                              style={{ display: 'none' }} 
+                            />
+                          </label>
+                        </div>
+                        {newsletterCampaign.imageUrl && (
+                          <div style={{ position: 'relative', width: '100px', height: '60px', marginTop: '6px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
+                            <img src={newsletterCampaign.imageUrl} alt="Thumbnail preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            <button 
+                              type="button" 
+                              onClick={() => setNewsletterCampaign({...newsletterCampaign, imageUrl: ''})} 
+                              style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.9)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
+                              title="Remove image"
+                            >✕</button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4. Newsletter Message (Paragraphs) */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '13px' }}>📝 Newsletter Message / Description</label>
+                        <textarea 
+                          value={newsletterCampaign.message} 
+                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, message: e.target.value})} 
+                          placeholder="Write your email message here... (Line breaks will automatically turn into clean paragraphs)" 
+                          rows="5" 
+                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', lineHeight: '1.5' }}
+                        ></textarea>
+                      </div>
+
+                      {/* 5. Call-to-Action Button Options */}
+                      <div style={{ background: 'rgba(231,44,131,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <label style={{ fontWeight: '700', fontSize: '12px', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔘 Action Button (Optional)</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                          <input 
+                            type="text" 
+                            value={newsletterCampaign.buttonText} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonText: e.target.value})} 
+                            placeholder="Button Text (e.g. Shop 15% Off)" 
+                            style={{ padding: '9px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px', background: 'var(--color-background)', color: 'var(--color-text)' }} 
+                          />
+                          <input 
+                            type="text" 
+                            value={newsletterCampaign.buttonUrl} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonUrl: e.target.value})} 
+                            placeholder="Link URL (e.g. https://...)" 
+                            style={{ padding: '9px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px', background: 'var(--color-background)', color: 'var(--color-text)' }} 
+                          />
+                        </div>
+                      </div>
+
+                      {campaignSuccess && (
+                        <div style={{ padding: '12px', borderRadius: '8px', background: campaignSuccess.includes('❌') ? 'rgba(220,38,38,0.1)' : 'rgba(16,185,129,0.1)', color: campaignSuccess.includes('❌') ? '#dc2626' : '#10b981', fontWeight: '700', fontSize: '13.5px' }}>
+                          {campaignSuccess}
+                        </div>
+                      )}
+
+                      <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontWeight: '800', fontSize: '14px', marginTop: '4px' }}>
+                        🚀 Dispatch Newsletter Campaign
+                      </button>
+                    </form>
+
+                    {/* Live Email Preview Side */}
+                    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
+                        <span style={{ fontWeight: '800', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>👁️ Live Email Preview</span>
+                        <span style={{ fontSize: '11px', color: '#94a3b8', background: '#e2e8f0', padding: '2px 8px', borderRadius: '12px' }}>Inbox View</span>
+                      </div>
+
+                      {/* Simulated Inbox Card */}
+                      <div style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
+                        {/* Email Header Banner */}
+                        <div style={{ background: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)', padding: '16px 20px', color: 'white', textAlign: 'center' }}>
+                          <div style={{ fontSize: '24px' }}>💌</div>
+                          <div style={{ fontWeight: '800', fontSize: '16px' }}>Lolly Shop News</div>
+                          <div style={{ fontSize: '12px', opacity: 0.9 }}>A sweet update for you</div>
+                        </div>
+
+                        {/* Email Content Body */}
+                        <div style={{ padding: '20px' }}>
+                          {newsletterCampaign.heading ? (
+                            <h1 style={{ color: '#e72c83', fontSize: '18px', fontWeight: '800', margin: '0 0 14px 0' }}>
+                              {newsletterCampaign.heading}
+                            </h1>
+                          ) : (
+                            <h1 style={{ color: '#cbd5e1', fontSize: '15px', fontStyle: 'italic', margin: '0 0 14px 0' }}>
+                              [Headline Title will appear here]
+                            </h1>
+                          )}
+
+                          {newsletterCampaign.imageUrl && (
+                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
+                              <img src={newsletterCampaign.imageUrl} alt="Newsletter preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'cover' }} />
+                            </div>
+                          )}
+
+                          {newsletterCampaign.message ? (
+                            newsletterCampaign.message.split('\n').filter(p => p.trim() !== '').map((p, idx) => (
+                              <p key={idx} style={{ fontSize: '13.5px', lineHeight: '1.6', color: '#475569', margin: '0 0 10px 0' }}>
+                                {p}
+                              </p>
+                            ))
+                          ) : (
+                            <p style={{ fontSize: '13.5px', color: '#cbd5e1', fontStyle: 'italic', margin: '0 0 10px 0' }}>
+                              [Your newsletter message text will appear here as clean paragraphs]
+                            </p>
+                          )}
+
+                          {newsletterCampaign.buttonText && (
+                            <div style={{ textAlign: 'center', marginTop: '18px', marginBottom: '8px' }}>
+                              <span style={{ background: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)', color: '#ffffff', padding: '10px 22px', borderRadius: '24px', fontWeight: '700', fontSize: '13px', display: 'inline-block' }}>
+                                {newsletterCampaign.buttonText}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <label>Email Body (HTML Template Builder)</label>
-                      <textarea value={newsletterCampaign.content} onChange={(e) => setNewsletterCampaign({...newsletterCampaign, content: e.target.value})} placeholder="<h1>Happy Holidays from Lolly Shop!</h1><p>We are excited to share a 15% discount code: EASTER15</p>" rows="10" required style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', fontFamily: 'monospace', background: 'var(--color-background)', color: 'var(--color-text)' }}></textarea>
-                    </div>
-                    {campaignSuccess && <div className="alert alert-success" style={{ padding: '10px', borderRadius: '6px', background: 'rgba(16,185,129,0.1)', color: '#10b981', marginBottom: '10px' }}>{campaignSuccess}</div>}
-                    <button type="submit" className="btn btn-primary" style={{ padding: '12px', fontWeight: 'bold' }}>Dispatch Newsletter Campaign</button>
-                  </form>
+                  </div>
                 </div>
               </div>
             </div>
