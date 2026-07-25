@@ -172,9 +172,23 @@ export const Login = () => {
           )}
           
           {success && (
-            <div className="login-alert alert-success">
-              <CheckCircle size={18} />
-              <span>{success}</span>
+            <div className="login-alert alert-success" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <CheckCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{success}</span>
+              </div>
+              {mode === 'forgot' && (
+                <div style={{ marginTop: '6px', paddingTop: '8px', borderTop: '1px solid rgba(21, 128, 61, 0.2)', width: '100%', fontSize: '12.5px' }}>
+                  <span>Email not appearing in Inbox? Check <strong>Spam/Junk</strong> or </span>
+                  <button 
+                    type="button" 
+                    onClick={() => navigate('/reset-password')}
+                    style={{ background: 'none', border: 'none', color: '#15803d', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+                  >
+                    Click Here to Reset Password Directly ↗
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
