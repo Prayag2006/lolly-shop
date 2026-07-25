@@ -4230,12 +4230,12 @@ export const Admin = () => {
                         body: JSON.stringify(newsletterCampaign)
                       });
                       const data = await res.json();
-                      if (res.ok) {
-                        setCampaignSuccess(`Email campaign successfully dispatched to ${data.count} recipients! 📬`);
+                      if (res.ok && data.success) {
+                        setCampaignSuccess(data.message || `Email campaign successfully dispatched to ${data.count} recipients! 📬`);
                         setTimeout(() => setCampaignSuccess(''), 6000);
                         setNewsletterCampaign({ subject: '', content: '' });
                       } else {
-                        setCampaignSuccess(`Error: ${data.message}`);
+                        setCampaignSuccess(`❌ ${data.message || 'Error sending newsletter email.'}`);
                       }
                     } catch (err) {
                       setCampaignSuccess('Failed to send campaign.');

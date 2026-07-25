@@ -3728,15 +3728,15 @@ app.post('/api/newsletter/dispatch', checkPermission('newsletter'), async (req, 
       subs = readLocalData('subscribers.json', []);
     }
 
-    if (subs.length === 0) {
-      return res.status(400).json({ message: 'No subscribers found' });
+    if (!subs || subs.length === 0) {
+      return res.status(400).json({ message: 'No newsletter subscribers found.' });
     }
 
     let mailConfig;
     try {
       mailConfig = await createMailTransporter();
     } catch (mailErr) {
-      return res.status(500).json({ message: 'Email not configured on server', error: mailErr.message });
+      return res.status(500).json({ message: 'Email server error: ' + mailErr.message, error: mailErr.message });
     }
 
     const { transporter, smtpUser } = mailConfig;
@@ -3750,20 +3750,45 @@ app.post('/api/newsletter/dispatch', checkPermission('newsletter'), async (req, 
       bodyHtml: content
     });
 
-    const promises = subs.map(sub => 
-      transporter.sendMail({
-        from: `"Lolly Shop" <${smtpUser}>`,
-        to: sub.email,
-        subject: subject,
-        html: emailHtml
-      }).catch(err => console.error(`Error sending to ${sub.email}:`, err))
+    const results = await Promise.allSettled(
+      subs.map(sub => 
+        transporter.sendMail({
+          from: `"Lolly Shop" <${smtpUser}>`,
+          to: sub.email,
+          subject: subject,
+          html: emailHtml
+        })
+      )
     );
 
-    await Promise.all(promises);
+    const successful = results.filter(r => r.status === 'fulfilled');
+    const failed = results.filter(r => r.status === 'rejected');
 
-    res.json({ success: true, count: subs.length });
+    if (successful.length === 0 && failed.length > 0) {
+      const rawError = failed[0].reason?.message || 'Unknown SMTP error';
+      let cleanMessage = rawError;
+      if (rawError.includes('535') || rawError.includes('BadCredentials') || rawError.includes('Username and Password not accepted')) {
+        cleanMessage = 'SMTP Authentication Failed (535): Invalid Gmail App Password. Please generate a 16-character App Password in Google Account -> Security -> 2-Step Verification -> App Passwords and update SMTP_PASS in your .env file.';
+      }
+      console.error('[Newsletter Dispatch Error]', rawError);
+      return res.status(500).json({ 
+        success: false,
+        message: cleanMessage,
+        rawError
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      count: successful.length,
+      failedCount: failed.length,
+      message: failed.length > 0 
+        ? `Sent to ${successful.length} subscriber(s) (${failed.length} failed: ${failed[0].reason?.message})`
+        : `Successfully sent newsletter to ${successful.length} subscriber(s)! 📬`
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error dispatching newsletter', error: error.message });
+    console.error('[Newsletter Route Error]', error);
+    res.status(500).json({ message: 'Error dispatching newsletter: ' + error.message, error: error.message });
   }
 });
 
