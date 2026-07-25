@@ -3844,32 +3844,54 @@ app.post('/api/users/staff', checkPermission('settings'), async (req, res) => {
     let newUser;
     if (sqlAvailable()) {
       const existing = await User.findOne({ email: cleanEmail });
-      if (existing) return res.status(400).json({ message: 'A user with this email already exists' });
-      newUser = new User({ 
-        name, 
-        email: cleanEmail, 
-        password: hashPassword(password), 
-        role: assignedRole, 
-        permissions: permissions || [] 
-      });
-      await newUser.save();
+      if (existing) {
+        if (existing.role !== 'user') {
+          return res.status(400).json({ message: `Staff member with email "${cleanEmail}" already exists.` });
+        }
+        existing.role = assignedRole;
+        if (name) existing.name = name;
+        if (password) existing.password = hashPassword(password);
+        if (permissions) existing.permissions = permissions;
+        await existing.save();
+        newUser = existing;
+      } else {
+        newUser = new User({ 
+          name, 
+          email: cleanEmail, 
+          password: hashPassword(password), 
+          role: assignedRole, 
+          permissions: permissions || [] 
+        });
+        await newUser.save();
+      }
     } else {
       const users = readLocalData('users.json', defaultUsers);
-      const existing = users.find(u => u.email === cleanEmail);
-      if (existing) return res.status(400).json({ message: 'A user with this email already exists' });
-      newUser = { 
-        id: `u-${Date.now()}`, 
-        name, 
-        email: cleanEmail, 
-        password: hashPassword(password), 
-        role: assignedRole, 
-        permissions: permissions || [], 
-        createdAt: new Date().toISOString() 
-      };
-      users.push(newUser);
-      writeLocalData('users.json', users);
+      const existingIdx = users.findIndex(u => u.email === cleanEmail);
+      if (existingIdx !== -1) {
+        if (users[existingIdx].role !== 'user') {
+          return res.status(400).json({ message: `Staff member with email "${cleanEmail}" already exists.` });
+        }
+        users[existingIdx].role = assignedRole;
+        if (name) users[existingIdx].name = name;
+        if (password) users[existingIdx].password = hashPassword(password);
+        if (permissions) users[existingIdx].permissions = permissions;
+        newUser = users[existingIdx];
+        writeLocalData('users.json', users);
+      } else {
+        newUser = { 
+          id: `u-${Date.now()}`, 
+          name, 
+          email: cleanEmail, 
+          password: hashPassword(password), 
+          role: assignedRole, 
+          permissions: permissions || [], 
+          createdAt: new Date().toISOString() 
+        };
+        users.push(newUser);
+        writeLocalData('users.json', users);
+      }
     }
-    await logAudit(req, 'CREATE_STAFF', `Added staff user "${name}" (${cleanEmail}) with role "${assignedRole}"`);
+    await logAudit(req, 'CREATE_STAFF', `Added/promoted staff user "${name}" (${cleanEmail}) to role "${assignedRole}"`);
     const formattedId = newUser._id ? newUser._id.toString() : newUser.id;
     res.status(201).json({ 
       id: formattedId, 
@@ -3938,10 +3960,6 @@ app.delete('/api/users/staff/:id', checkPermission('settings'), async (req, res)
   } catch (error) {
     console.error('Error deleting staff member:', error);
     res.status(500).json({ message: 'Error deleting staff member: ' + error.message, error: error.message });
-  }
-});
-  } catch (error) {
-    res.status(500).json({ message: 'Error removing staff member', error: error.message });
   }
 });
 
