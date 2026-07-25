@@ -492,11 +492,13 @@ export const StoreProvider = ({ children }) => {
 
   const updateOrderStatus = async (orderId, status) => {
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (currentUser?.role === 'admin') {
-        headers['X-User-Role'] = 'admin';
-        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
-      }
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-User-Role': currentUser?.role || 'admin',
+        'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+        'X-User-Email': currentUser?.email || '',
+        'X-User-Name': currentUser?.name || ''
+      };
       const res = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PUT',
         headers,
@@ -513,11 +515,13 @@ export const StoreProvider = ({ children }) => {
 
   const updateOrderDelivery = async (orderId, deliveryCompany, deliveryReference) => {
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (currentUser?.role === 'admin') {
-        headers['X-User-Role'] = 'admin';
-        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
-      }
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-User-Role': currentUser?.role || 'admin',
+        'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+        'X-User-Email': currentUser?.email || '',
+        'X-User-Name': currentUser?.name || ''
+      };
       const res = await fetch(`/api/orders/${orderId}/delivery`, {
         method: 'PUT',
         headers,
@@ -535,11 +539,13 @@ export const StoreProvider = ({ children }) => {
 
   const removeOrderItem = async (orderId, itemId, selectedWeight) => {
     try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (currentUser?.role === 'admin') {
-        headers['X-User-Role'] = 'admin';
-        headers['X-User-Permissions'] = JSON.stringify(currentUser?.permissions || []);
-      }
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-User-Role': currentUser?.role || 'admin',
+        'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+        'X-User-Email': currentUser?.email || '',
+        'X-User-Name': currentUser?.name || ''
+      };
       const res = await fetch(`/api/orders/${orderId}/remove-item`, {
         method: 'PUT',
         headers,
@@ -557,7 +563,13 @@ export const StoreProvider = ({ children }) => {
 
   const deleteOrder = async (orderId) => {
     try {
-      const headers = { 'Content-Type': 'application/json', 'X-User-Role': 'admin' };
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-User-Role': currentUser?.role || 'admin',
+        'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+        'X-User-Email': currentUser?.email || '',
+        'X-User-Name': currentUser?.name || ''
+      };
       const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Failed to delete order');
       setOrders(prev => prev.filter(ord => ord.id !== orderId));
@@ -570,7 +582,13 @@ export const StoreProvider = ({ children }) => {
 
   const clearAllOrders = async () => {
     try {
-      const headers = { 'Content-Type': 'application/json', 'X-User-Role': 'admin' };
+      const headers = { 
+        'Content-Type': 'application/json',
+        'X-User-Role': currentUser?.role || 'admin',
+        'X-User-Permissions': JSON.stringify(currentUser?.permissions || []),
+        'X-User-Email': currentUser?.email || '',
+        'X-User-Name': currentUser?.name || ''
+      };
       const res = await fetch('/api/orders', { method: 'DELETE', headers });
       if (!res.ok) throw new Error('Failed to clear orders');
       setOrders([]);

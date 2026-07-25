@@ -777,7 +777,7 @@ app.delete('/api/brands/:id', async (req, res) => {
 // ── ORDERS API ──
 app.get('/api/orders', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'orders');
     let orders;
     if (sqlAvailable()) {
       orders = await Order.find().sort({ createdAt: -1 });
@@ -797,7 +797,7 @@ app.get('/api/orders', async (req, res) => {
 // GET a single order by ID (used by TrackOrder page)
 app.get('/api/orders/:id', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'orders');
     if (sqlAvailable()) {
       const order = await Order.findOne({ id: req.params.id });
       if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -816,7 +816,7 @@ app.get('/api/orders/:id', async (req, res) => {
 // DELETE a single order (admin only)
 app.delete('/api/orders/:id', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'orders');
     if (!isAdmin) return res.status(403).json({ message: 'Admin access required' });
 
     if (sqlAvailable()) {
@@ -839,7 +839,7 @@ app.delete('/api/orders/:id', async (req, res) => {
 // DELETE all orders (admin only)
 app.delete('/api/orders', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'orders');
     if (!isAdmin) return res.status(403).json({ message: 'Admin access required' });
 
     if (sqlAvailable()) {
@@ -2941,7 +2941,7 @@ app.get('/api/categories', async (req, res) => {
 
 app.post('/api/categories', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     if (sqlAvailable()) {
@@ -2966,7 +2966,7 @@ app.post('/api/categories', async (req, res) => {
 
 app.put('/api/categories/:id', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     if (sqlAvailable()) {
@@ -2989,7 +2989,7 @@ app.put('/api/categories/:id', async (req, res) => {
 
 app.delete('/api/categories/:id', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     if (sqlAvailable()) {
@@ -3036,7 +3036,7 @@ app.get('/api/media', async (req, res) => {
 
 app.post('/api/media', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'media');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     const { filename, contentType, base64Data } = req.body;
@@ -3100,7 +3100,7 @@ app.post('/api/media', async (req, res) => {
 
 app.delete('/api/media/:filename', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'media');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     const safeName = req.params.filename;
@@ -3151,7 +3151,7 @@ app.get('/api/media/file/:filename', async (req, res) => {
 // ── PRODUCT CMS ACTIONS ──
 app.post('/api/products/:id/duplicate', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     let sourceProduct = null;
@@ -3202,7 +3202,7 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
 
 app.post('/api/products/import', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     const productsToImport = req.body;
@@ -3239,7 +3239,7 @@ app.post('/api/products/import', async (req, res) => {
 
 app.get('/api/products-export', async (req, res) => {
   try {
-    const isAdmin = req.headers['x-user-role'] === 'admin';
+    const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     let list = [];
@@ -3307,27 +3307,42 @@ app.put('/api/settings', checkPermission('settings'), async (req, res) => {
 const ROLE_PERMISSIONS = {
   admin: ['*'],
   manager: ['*'],
-  product_manager: ['dashboard', 'products', 'add-product'],
-  order_manager: ['dashboard', 'orders', 'users', 'shipping']
+  product_manager: ['dashboard', 'products', 'add-product', 'categories', 'brands', 'media', 'reviews', 'offers', 'cms'],
+  order_manager: ['dashboard', 'orders', 'users', 'customers', 'contacts', 'shipping', 'reports']
+};
+
+const isStaffAuthorized = (req, actionArea = 'general') => {
+  const userRole = req.headers['x-user-role'] || 'user';
+  if (userRole === 'admin' || userRole === 'manager') return true;
+  
+  if (userRole === 'product_manager') {
+    const productAreas = ['products', 'categories', 'brands', 'media', 'reviews', 'offers', 'add-product', 'dashboard', 'cms'];
+    return productAreas.includes(actionArea);
+  }
+  
+  if (userRole === 'order_manager') {
+    const orderAreas = ['orders', 'users', 'customers', 'contacts', 'shipping', 'reports', 'dashboard'];
+    return orderAreas.includes(actionArea);
+  }
+  
+  if (userRole === 'custom') {
+    try {
+      const perms = JSON.parse(req.headers['x-user-permissions'] || '[]');
+      return perms.includes('*') || perms.includes(actionArea);
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  return false;
 };
 
 function checkPermission(actionArea) {
   return (req, res, next) => {
-    const userRole = req.headers['x-user-role'] || 'user';
-    if (userRole === 'admin') return next();
-    
-    let allowed = ROLE_PERMISSIONS[userRole] || [];
-    if (userRole === 'custom') {
-      try {
-        allowed = JSON.parse(req.headers['x-user-permissions'] || '[]');
-      } catch (e) {
-        allowed = [];
-      }
-    }
-    
-    if (allowed.includes('*') || allowed.includes(actionArea)) {
+    if (isStaffAuthorized(req, actionArea)) {
       return next();
     }
+    const userRole = req.headers['x-user-role'] || 'user';
     return res.status(403).json({ message: `Forbidden: Role '${userRole}' does not have permission for '${actionArea}'` });
   };
 };
