@@ -653,6 +653,24 @@ export const Admin = () => {
   const handleNewsletterImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Strict File Type Validation (Images only)
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif', 'image/bmp'];
+    if (!allowedTypes.includes(file.type.toLowerCase()) && !file.type.startsWith('image/')) {
+      alert('❌ Invalid file type! Only image files (JPG, PNG, WEBP, GIF, SVG, AVIF) are allowed.');
+      e.target.value = '';
+      return;
+    }
+
+    // Strict File Size Validation (Max 5MB)
+    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+    if (file.size > MAX_SIZE_BYTES) {
+      const actualMb = (file.size / (1024 * 1024)).toFixed(2);
+      alert(`❌ File size exceeds the 5MB limit! Your image is ${actualMb} MB. Please select a smaller image.`);
+      e.target.value = '';
+      return;
+    }
+
     setUploadingNewsletterImage(true);
     try {
       const reader = new FileReader();
@@ -3711,8 +3729,24 @@ export const Admin = () => {
                   id="media-upload-input" 
                   style={{ display: 'none' }} 
                   onChange={async (e) => {
-                    const file = e.target.files[0];
+                    const file = e.target.files?.[0];
                     if (!file) return;
+
+                    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif', 'image/bmp'];
+                    if (!allowedTypes.includes(file.type.toLowerCase()) && !file.type.startsWith('image/')) {
+                      alert('❌ Invalid file type! Only image files (JPG, PNG, WEBP, GIF, SVG, AVIF) are allowed.');
+                      e.target.value = '';
+                      return;
+                    }
+
+                    const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+                    if (file.size > MAX_SIZE_BYTES) {
+                      const actualMb = (file.size / (1024 * 1024)).toFixed(2);
+                      alert(`❌ File size exceeds 5MB limit! Your image is ${actualMb} MB. Please select a smaller image.`);
+                      e.target.value = '';
+                      return;
+                    }
+
                     const reader = new FileReader();
                     reader.onloadend = async () => {
                       try {
@@ -3727,7 +3761,7 @@ export const Admin = () => {
                 />
                 <span style={{ fontSize: '32px' }}>📷</span>
                 <h4 style={{ margin: 0, fontWeight: '800' }}>Drag & Drop file here, or click to browse</h4>
-                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Supports JPG, PNG, GIF, WebP (up to 4MB)</p>
+                <p style={{ margin: 0, fontSize: '12px', color: 'var(--color-text-muted)' }}>Supports JPG, PNG, GIF, WebP, SVG, AVIF (Max 5MB per file)</p>
               </div>
 
               {/* Asset list grid */}

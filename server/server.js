@@ -3044,11 +3044,21 @@ app.post('/api/media', async (req, res) => {
       return res.status(400).json({ message: 'Filename, contentType, and base64Data are required' });
     }
 
-    if (!contentType.startsWith('image/')) {
-      return res.status(400).json({ message: 'Only image files are allowed for upload.' });
+    // 1. Strict File Type Validation (Images only: JPG, PNG, WEBP, GIF, SVG, AVIF, BMP)
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml', 'image/avif', 'image/bmp'];
+    if (!contentType || (!allowedImageTypes.includes(contentType.toLowerCase()) && !contentType.startsWith('image/'))) {
+      return res.status(400).json({ message: 'Invalid file type. Only JPG, PNG, WEBP, GIF, SVG, and AVIF image files are allowed.' });
     }
 
-    const sizeBytes = Buffer.from(base64Data, 'base64').length;
+    // 2. Strict File Size Validation (Max 5MB limit)
+    const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+    const rawBase64 = base64Data.includes(',') ? base64Data.split(',')[1] : base64Data;
+    const sizeBytes = Buffer.from(rawBase64, 'base64').length;
+    if (sizeBytes > MAX_FILE_SIZE_BYTES) {
+      const actualMb = (sizeBytes / (1024 * 1024)).toFixed(2);
+      return res.status(400).json({ message: `File size exceeds the 5MB maximum limit. Your image is ${actualMb} MB.` });
+    }
+
     const safeName = filename.replace(/[^a-zA-Z0-9\._-]/g, '_');
 
     if (sqlAvailable()) {
