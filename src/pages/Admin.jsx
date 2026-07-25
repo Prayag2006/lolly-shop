@@ -22,7 +22,9 @@ import {
   Star,
   Sparkles,
   Truck,
-  HelpCircle
+  HelpCircle,
+  Layout,
+  Link2
 } from 'lucide-react';
 import { CandyVisual } from '../components/SvgCandies';
 import { AdminEnterpriseTabs } from './AdminEnterpriseTabs';
@@ -480,6 +482,80 @@ export const Admin = () => {
     });
   };
 
+  const handleAddFooterQuickLink = () => {
+    setTempSettings(prev => ({
+      ...prev,
+      footer: {
+        ...(prev.footer || {}),
+        quickLinks: [
+          ...((prev.footer && prev.footer.quickLinks) || []),
+          { label: 'New Link', link: '/shop' }
+        ]
+      }
+    }));
+  };
+
+  const handleRemoveFooterQuickLink = (index) => {
+    setTempSettings(prev => ({
+      ...prev,
+      footer: {
+        ...(prev.footer || {}),
+        quickLinks: ((prev.footer && prev.footer.quickLinks) || []).filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const handleFooterQuickLinkChange = (index, field, value) => {
+    setTempSettings(prev => {
+      const updated = [...((prev.footer && prev.footer.quickLinks) || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...prev,
+        footer: {
+          ...(prev.footer || {}),
+          quickLinks: updated
+        }
+      };
+    });
+  };
+
+  const handleAddFooterPolicyLink = () => {
+    setTempSettings(prev => ({
+      ...prev,
+      footer: {
+        ...(prev.footer || {}),
+        policies: [
+          ...((prev.footer && prev.footer.policies) || []),
+          { label: 'New Policy', link: '/terms' }
+        ]
+      }
+    }));
+  };
+
+  const handleRemoveFooterPolicyLink = (index) => {
+    setTempSettings(prev => ({
+      ...prev,
+      footer: {
+        ...(prev.footer || {}),
+        policies: ((prev.footer && prev.footer.policies) || []).filter((_, i) => i !== index)
+      }
+    }));
+  };
+
+  const handleFooterPolicyLinkChange = (index, field, value) => {
+    setTempSettings(prev => {
+      const updated = [...((prev.footer && prev.footer.policies) || [])];
+      updated[index] = { ...updated[index], [field]: value };
+      return {
+        ...prev,
+        footer: {
+          ...(prev.footer || {}),
+          policies: updated
+        }
+      };
+    });
+  };
+
   useEffect(() => {
     if (settings) {
       const defaultFaqs = [
@@ -490,8 +566,39 @@ export const Admin = () => {
         { q: "Do you offer sugar-free or vegan confections?", a: "Yes, we believe everyone deserves sweet moments! We stock a premium selection of Sugar Free confections (perfect for diabetic diets) and gelatine-free Vegan lollies. You can filter these easily using the search categories on our Shop page.", category: "Dietary & Health" },
         { q: "Where is the Best Lolly Shop physical presence?", a: "We operate primarily as an online candy store NZ-wide. Our storage and packaging depot is located at 17 Braid Road, St Andrews, Hamilton 3200, where we maintain strict temperature-controlled standards to guarantee sweet freshness.", category: "About Us" }
       ];
+      const defaultFooter = {
+        description: "NZ's favorite online candy store. Hand-picked imported confections, luxury chocolates, and sour straps delivered directly to your doorstep.",
+        badgeText: "✨ Premium Quality Confections",
+        quickShopTitle: "QUICK SHOP",
+        quickLinks: [
+          { label: 'Shop All Sweets', link: '/shop' },
+          { label: 'Frequently Asked Questions', link: '/faq' },
+          { label: 'NZ Lollies', link: '/shop?category=NZ%20Lollies' },
+          { label: 'Imported Lollies', link: '/shop?category=Imported%20Lollies' },
+          { label: 'Chocolates', link: '/shop?category=Chocolates' },
+          { label: 'Drinks', link: '/shop?category=Drinks' },
+          { label: 'Snacks', link: '/shop?category=Snacks' }
+        ],
+        contactTitle: "CONTACT US",
+        newsletterTitle: "SWEET NEWSLETTER",
+        newsletterSub: "Subscribe to receive news about fresh candies, flash sales, and exclusive coupons!",
+        copyright: "© 2026 Best Lolly Shop. All rights reserved.",
+        policies: [
+          { label: 'Privacy Policy', link: '/privacy' },
+          { label: 'Terms of Service', link: '/terms' }
+        ]
+      };
+      const defaultContact = {
+        email: 'BestLollyShop@gmail.com',
+        phone: '021 082 63626',
+        address: '17 Braid Road, St Andrews, Hamilton 3200, New Zealand',
+        googleMap: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed'
+      };
+
       setTempSettings({
         ...settings,
+        footer: { ...defaultFooter, ...(settings.footer || {}) },
+        contactUs: { ...defaultContact, ...(settings.contactUs || {}) },
         faqs: settings.faqs && settings.faqs.length > 0 ? settings.faqs : defaultFaqs
       });
     }
@@ -813,6 +920,15 @@ export const Admin = () => {
             >
               <Activity size={18} />
               <span>Promotions / Settings</span>
+            </button>
+          )}
+            {hasAccess('footer') && (
+            <button
+              className={`admin-nav-item ${activeTab === 'footer' ? 'active' : ''}`}
+              onClick={() => setActiveTab('footer')}
+            >
+              <Layout size={18} />
+              <span>Footer & Branding</span>
             </button>
           )}
             {hasAccess('shipping') && (
@@ -3184,6 +3300,307 @@ export const Admin = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          )}
+
+          {activeTab === 'footer' && (
+            <div className="admin-tab-content">
+              <h2>Footer & Branding Customization</h2>
+              <p className="tab-subtitle">Manage your website footer text, quick shop links, contact info, newsletter copy, and legal policy links</p>
+
+              {settingsSuccess && (
+                <div className="login-alert alert-success animate-fade-in" style={{ marginBottom: '20px' }}>
+                  {settingsSuccess}
+                </div>
+              )}
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '28px' }}>
+                
+                {/* 1. Brand Description & Quality Badge */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    🏷️ Brand Summary & Quality Badge
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Store Summary Description</label>
+                      <textarea
+                        rows={3}
+                        className="admin-input"
+                        value={tempSettings?.footer?.description || ''}
+                        onChange={(e) => handleNestedFieldChange('footer', 'description', e.target.value)}
+                        placeholder="NZ's favorite online candy store. Hand-picked imported confections..."
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Quality Badge Text</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.footer?.badgeText || ''}
+                        onChange={(e) => handleNestedFieldChange('footer', 'badgeText', e.target.value)}
+                        placeholder="✨ Premium Quality Confections"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Quick Shop Navigation Column */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🔗 Quick Shop Navigation Links
+                    </h3>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleAddFooterQuickLink}
+                    >
+                      + Add Quick Link
+                    </button>
+                  </div>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Column Header Title</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={tempSettings?.footer?.quickShopTitle || ''}
+                      onChange={(e) => handleNestedFieldChange('footer', 'quickShopTitle', e.target.value)}
+                      placeholder="QUICK SHOP"
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(tempSettings?.footer?.quickLinks || []).map((linkItem, idx) => (
+                      <div key={`ql-row-${idx}`} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          style={{ flex: 1 }}
+                          value={linkItem.label || ''}
+                          onChange={(e) => handleFooterQuickLinkChange(idx, 'label', e.target.value)}
+                          placeholder="Link Label (e.g. Shop All Sweets)"
+                        />
+                        <input
+                          type="text"
+                          className="admin-input"
+                          style={{ flex: 1 }}
+                          value={linkItem.link || ''}
+                          onChange={(e) => handleFooterQuickLinkChange(idx, 'link', e.target.value)}
+                          placeholder="Target URL (e.g. /shop)"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleRemoveFooterQuickLink(idx)}
+                          style={{ padding: '8px 12px' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Contact Us Info Column */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📞 Contact Us Info Column
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Contact Header Title</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.footer?.contactTitle || ''}
+                        onChange={(e) => handleNestedFieldChange('footer', 'contactTitle', e.target.value)}
+                        placeholder="CONTACT US"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Customer Support Email</label>
+                      <input
+                        type="email"
+                        className="admin-input"
+                        value={tempSettings?.contactUs?.email || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'email', e.target.value)}
+                        placeholder="bestlollyshopnz@gmail.com"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Support Phone Number</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.contactUs?.phone || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'phone', e.target.value)}
+                        placeholder="021 082 63626"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Physical Address</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.contactUs?.address || ''}
+                        onChange={(e) => handleNestedFieldChange('contactUs', 'address', e.target.value)}
+                        placeholder="17 Braid Road, St Andrews, Hamilton 3200, New Zealand"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Google Maps Link / Search URL</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={tempSettings?.contactUs?.googleMap || ''}
+                      onChange={(e) => handleNestedFieldChange('contactUs', 'googleMap', e.target.value)}
+                      placeholder="https://maps.google.com/maps?q=..."
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Sweet Newsletter Column */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    💌 Sweet Newsletter Column
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' }}>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Newsletter Title</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.footer?.newsletterTitle || ''}
+                        onChange={(e) => handleNestedFieldChange('footer', 'newsletterTitle', e.target.value)}
+                        placeholder="SWEET NEWSLETTER"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Newsletter Subtitle / Description</label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={tempSettings?.footer?.newsletterSub || ''}
+                        onChange={(e) => handleNestedFieldChange('footer', 'newsletterSub', e.target.value)}
+                        placeholder="Subscribe to receive news about fresh candies..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Copyright & Policy Links */}
+                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '17px', fontWeight: '800', color: 'var(--color-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      ⚖️ Bottom Bar Copyright & Policy Links
+                    </h3>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={handleAddFooterPolicyLink}
+                    >
+                      + Add Policy Link
+                    </button>
+                  </div>
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '13px', display: 'block', marginBottom: '6px' }}>Copyright Notice</label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={tempSettings?.footer?.copyright || ''}
+                      onChange={(e) => handleNestedFieldChange('footer', 'copyright', e.target.value)}
+                      placeholder="© 2026 Best Lolly Shop. All rights reserved."
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {(tempSettings?.footer?.policies || []).map((polItem, idx) => (
+                      <div key={`pol-row-${idx}`} style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="admin-input"
+                          style={{ flex: 1 }}
+                          value={polItem.label || ''}
+                          onChange={(e) => handleFooterPolicyLinkChange(idx, 'label', e.target.value)}
+                          placeholder="Policy Name (e.g. Privacy Policy)"
+                        />
+                        <input
+                          type="text"
+                          className="admin-input"
+                          style={{ flex: 1 }}
+                          value={polItem.link || ''}
+                          onChange={(e) => handleFooterPolicyLinkChange(idx, 'link', e.target.value)}
+                          placeholder="Policy URL (e.g. /privacy)"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleRemoveFooterPolicyLink(idx)}
+                          style={{ padding: '8px 12px' }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Save Action */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="submit" className="btn btn-primary" style={{ padding: '12px 32px', fontSize: '15px', fontWeight: '800' }}>
+                    💾 Save Footer & Contact Settings
+                  </button>
+                </div>
+
+              </form>
+
+              {/* Live Preview Box */}
+              <div className="glass-card animate-fade-in" style={{ marginTop: '28px', padding: '24px' }}>
+                <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--color-primary)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  👁️ Live Footer Preview
+                </h3>
+                <div style={{ background: '#faf8fc', borderRadius: '16px', padding: '24px', border: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '20px' }}>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '8px' }}>Brand Summary</h4>
+                      <p style={{ fontSize: '13px', color: '#666', lineHeight: '1.5' }}>{tempSettings?.footer?.description}</p>
+                      {tempSettings?.footer?.badgeText && (
+                        <span style={{ display: 'inline-block', marginTop: '8px', padding: '4px 10px', background: '#ffe4f0', color: '#e72c83', borderRadius: '12px', fontSize: '11px', fontWeight: '700' }}>
+                          {tempSettings?.footer?.badgeText}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '8px' }}>{tempSettings?.footer?.quickShopTitle || 'QUICK SHOP'}</h4>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px', color: '#444' }}>
+                        {(tempSettings?.footer?.quickLinks || []).map((l, i) => (
+                          <li key={i}>• {l.label} ({l.link})</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '8px' }}>{tempSettings?.footer?.contactTitle || 'CONTACT US'}</h4>
+                      <div style={{ fontSize: '13px', display: 'flex', flexDirection: 'column', gap: '6px', color: '#444' }}>
+                        <p style={{ margin: 0 }}>✉️ {tempSettings?.contactUs?.email}</p>
+                        <p style={{ margin: 0 }}>📞 {tempSettings?.contactUs?.phone}</p>
+                        <p style={{ margin: 0 }}>📍 {tempSettings?.contactUs?.address}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <h4 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '8px' }}>{tempSettings?.footer?.newsletterTitle || 'SWEET NEWSLETTER'}</h4>
+                      <p style={{ fontSize: '13px', color: '#666', margin: '0 0 10px 0' }}>{tempSettings?.footer?.newsletterSub}</p>
+                    </div>
+                  </div>
+                  <div style={{ borderTop: '1px solid #e0d8e8', paddingTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px', color: '#888' }}>
+                    <span>{tempSettings?.footer?.copyright}</span>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      {(tempSettings?.footer?.policies || []).map((p, i) => (
+                        <span key={i}>{p.label}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 

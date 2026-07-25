@@ -8,22 +8,31 @@ export const Footer = () => {
   const { settings, categories, addNewsletterSubscriber } = useStore();
 
   const footerSettings = settings?.footer || {
-    description: "We carefully source the finest international confectioneries to spread happiness and sweeten your life, one treat at a time.",
+    description: "NZ's favorite online candy store. Hand-picked imported confections, luxury chocolates, and sour straps delivered directly to your doorstep.",
+    badgeText: "✨ Premium Quality Confections",
+    quickShopTitle: "Quick Shop",
     quickLinks: [
-      { label: 'Shop All', link: '/shop' },
-      { label: 'About Us', link: '/about' },
-      { label: 'Contact Us', link: '/contact' }
+      { label: 'Shop All Sweets', link: '/shop' },
+      { label: 'Frequently Asked Questions', link: '/faq' },
+      { label: 'NZ Lollies', link: '/shop?category=NZ%20Lollies' },
+      { label: 'Imported Lollies', link: '/shop?category=Imported%20Lollies' },
+      { label: 'Chocolates', link: '/shop?category=Chocolates' },
+      { label: 'Drinks', link: '/shop?category=Drinks' },
+      { label: 'Snacks', link: '/shop?category=Snacks' }
     ],
+    contactTitle: "Contact Us",
+    newsletterTitle: "Sweet Newsletter",
+    newsletterSub: "Subscribe to receive news about fresh candies, flash sales, and exclusive coupons!",
+    copyright: '© 2026 Best Lolly Shop. All rights reserved.',
     policies: [
       { label: 'Privacy Policy', link: '/privacy' },
       { label: 'Terms of Service', link: '/terms' }
-    ],
-    copyright: '© 2026 Best Lolly Shop. All rights reserved.'
+    ]
   };
 
   const contactSettings = settings?.contactUs || {
     email: 'bestlollyshopnz@gmail.com',
-    phone: '021 123 4567',
+    phone: '021 082 63626',
     address: '17 Braid Road, St Andrews, Hamilton 3200, New Zealand',
     googleMap: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed'
   };
@@ -40,7 +49,7 @@ export const Footer = () => {
     }
   };
 
-  // Get first 5 categories dynamically for footer if available
+  // Get first 5 categories dynamically for footer if custom quickLinks not provided
   const footerCategories = categories && categories.length > 0
     ? categories.slice(0, 5)
     : [
@@ -70,31 +79,43 @@ export const Footer = () => {
             <p className="footer-desc">
               {footerSettings.description}
             </p>
-            <div className="brand-tag">
-              <Sparkles size={14} />
-              <span>Premium Quality Confections</span>
-            </div>
+            {footerSettings.badgeText && (
+              <div className="brand-tag">
+                <Sparkles size={14} />
+                <span>{footerSettings.badgeText}</span>
+              </div>
+            )}
           </div>
 
-          {/* Dynamic Categories Link Column */}
+          {/* Dynamic Quick Links Column */}
           <div className="footer-links-col">
-            <h3>Quick Shop</h3>
+            <h3>{footerSettings.quickShopTitle || "Quick Shop"}</h3>
             <ul className="footer-links">
-              <li><Link to="/shop">Shop All Sweets</Link></li>
-              <li><Link to="/faq">Frequently Asked Questions</Link></li>
-              {footerCategories.map((cat, idx) => (
-                <li key={`foot-cat-${idx}`}>
-                  <Link to={`/shop?category=${encodeURIComponent(cat.name || cat)}`}>
-                    {cat.name || cat}
-                  </Link>
-                </li>
-              ))}
+              {footerSettings.quickLinks && footerSettings.quickLinks.length > 0 ? (
+                footerSettings.quickLinks.map((ql, idx) => (
+                  <li key={`foot-ql-${idx}`}>
+                    <Link to={ql.link || '#'}>{ql.label}</Link>
+                  </li>
+                ))
+              ) : (
+                <>
+                  <li><Link to="/shop">Shop All Sweets</Link></li>
+                  <li><Link to="/faq">Frequently Asked Questions</Link></li>
+                  {footerCategories.map((cat, idx) => (
+                    <li key={`foot-cat-${idx}`}>
+                      <Link to={`/shop?category=${encodeURIComponent(cat.name || cat)}`}>
+                        {cat.name || cat}
+                      </Link>
+                    </li>
+                  ))}
+                </>
+              )}
             </ul>
           </div>
 
           {/* Dynamic Contact Details */}
           <div className="footer-links-col">
-            <h3>Contact Us</h3>
+            <h3>{footerSettings.contactTitle || "Contact Us"}</h3>
             <ul className="footer-contact">
               {contactSettings.email && (
                 <li>
@@ -132,8 +153,8 @@ export const Footer = () => {
 
           {/* Newsletter Form */}
           <div className="footer-newsletter">
-            <h3>Sweet Newsletter</h3>
-            <p>Subscribe to receive news about fresh candies, flash sales, and exclusive coupons!</p>
+            <h3>{footerSettings.newsletterTitle || "Sweet Newsletter"}</h3>
+            <p>{footerSettings.newsletterSub || "Subscribe to receive news about fresh candies, flash sales, and exclusive coupons!"}</p>
             <form className="newsletter-form" onSubmit={handleSubmit}>
               <input
                 type="email"
@@ -153,7 +174,7 @@ export const Footer = () => {
           <p>{footerSettings.copyright || `© ${new Date().getFullYear()} Best Lolly Shop. All rights reserved.`}</p>
           <div className="footer-bottom-links">
             {(footerSettings.policies || []).map((pol, idx) => (
-              <Link key={`foot-pol-${idx}`} to={pol.link}>{pol.label}</Link>
+              <Link key={`foot-pol-${idx}`} to={pol.link || '#'}>{pol.label}</Link>
             ))}
           </div>
         </div>
