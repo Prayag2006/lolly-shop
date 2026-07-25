@@ -875,12 +875,12 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  const resetPassword = async (token, password) => {
+  const resetPassword = async (token, password, email) => {
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password })
+        body: JSON.stringify({ token, password, email })
       });
       const data = await res.json();
       return data;

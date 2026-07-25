@@ -2818,19 +2818,31 @@ app.get('/api/auth/verify-reset-token', async (req, res) => {
 // ── RESET PASSWORD SAVE API ──
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
-    const { token, password } = req.body;
-    if (!token || !password) {
-      return res.status(400).json({ success: false, message: 'Token and password are required' });
+    const { token, email, password } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, message: 'Password is required' });
+    }
+    if (!token && !email) {
+      return res.status(400).json({ success: false, message: 'Reset token or email is required' });
     }
 
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
 
+    const emailNorm = email ? email.trim().toLowerCase() : null;
+
     if (sqlAvailable()) {
-      const user = await User.findOne({ resetPasswordToken: token });
-      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
-        return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
+      let user = null;
+      if (token) {
+        user = await User.findOne({ resetPasswordToken: token });
+      }
+      if (!user && emailNorm) {
+        user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
+      }
+
+      if (!user) {
+        return res.status(400).json({ success: false, message: 'User account or password reset token is invalid or expired.' });
       }
 
       user.password = hashPassword(password);
@@ -2838,16 +2850,19 @@ app.post('/api/auth/reset-password', async (req, res) => {
       user.resetPasswordExpires = undefined;
       await user.save();
 
-      res.json({ success: true, message: 'Password reset successful! You can now log in.' });
+      return res.json({ success: true, message: 'Password updated successfully! You can now log in.' });
     } else {
       const users = readLocalData('users.json', seededUsers);
-      const index = users.findIndex(usr => 
-        usr.resetPasswordToken === token && 
-        usr.resetPasswordExpires && 
-        new Date(usr.resetPasswordExpires) > new Date()
-      );
+      let index = -1;
+      if (token) {
+        index = users.findIndex(usr => usr.resetPasswordToken === token);
+      }
+      if (index === -1 && emailNorm) {
+        index = users.findIndex(usr => usr.email.toLowerCase() === emailNorm);
+      }
+
       if (index === -1) {
-        return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
+        return res.status(400).json({ success: false, message: 'User account or password reset token is invalid.' });
       }
 
       users[index].password = hashPassword(password);
@@ -2855,10 +2870,11 @@ app.post('/api/auth/reset-password', async (req, res) => {
       users[index].resetPasswordExpires = undefined;
       writeLocalData('users.json', users);
 
-      res.json({ success: true, message: 'Password reset successful! You can now log in.' });
+      return res.json({ success: true, message: 'Password updated successfully! You can now log in.' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Password reset execution error', error: error.message });
+    console.error('Reset password error:', error);
+    res.status(500).json({ success: false, message: 'Error resetting password: ' + error.message, error: error.message });
   }
 });
 
