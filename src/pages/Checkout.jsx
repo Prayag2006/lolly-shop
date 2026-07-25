@@ -116,7 +116,7 @@ export const Checkout = () => {
   };
 
   // Shipping Method States
-  const [shippingFee, setShippingFee] = useState(null); // Calculated later
+  const [shippingFee, setShippingFee] = useState(defaultShippingFee); // Default $19.00 NZD
   const [shippingOptions, setShippingOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
   const [loadingShipping, setLoadingShipping] = useState(false);
@@ -134,6 +134,11 @@ export const Checkout = () => {
   ];
 
   const isHamiltonPostcode = (zip) => HAMILTON_POSTCODES.includes((zip || '').trim());
+  const isHamiltonAddressCheck = (city, zip) => {
+    const z = (zip || '').trim();
+    const c = (city || '').trim().toLowerCase();
+    return (z.length === 4 && isHamiltonPostcode(z)) || z.startsWith('32') || c === 'hamilton';
+  };
 
   // Fetch Shipping Rates from backend
   const fetchShippingRates = async (address, city, zip) => {
@@ -149,8 +154,9 @@ export const Checkout = () => {
         throw new Error('Failed to fetch courier prices.');
       }
       const data = await response.json();
-      if (data.isHamilton) {
+      if (data.isHamilton || isHamiltonAddressCheck(city, zip)) {
         setIsHamilton(true);
+        setShippingFee(0);
         if (data.validatedCity && shippingForm.city !== data.validatedCity) {
           setShippingForm(prev => ({ ...prev, city: data.validatedCity }));
         }
@@ -159,10 +165,9 @@ export const Checkout = () => {
       }
       if (data.rates && data.rates.length > 0) {
         setShippingOptions(data.rates);
-        // Default to the first option
         const firstOption = data.rates[0];
         setSelectedOption(firstOption);
-        setShippingFee(firstOption.price);
+        setShippingFee(data.isHamilton ? 0 : firstOption.price);
       } else {
         throw new Error('No shipping options returned.');
       }
@@ -178,11 +183,10 @@ export const Checkout = () => {
     }
   };
 
-  // ─── Instant Hamilton postcode detection ──────────────────────────────────
-  // Fires as soon as a 4-digit Hamilton postcode (32xx) is typed —
-  // no need for the rest of the form to be valid.
+  // ─── Instant Hamilton vs Non-Hamilton Shipping Fee Detection ───
   useEffect(() => {
-    if (shippingForm.zip.length === 4 && isHamiltonPostcode(shippingForm.zip)) {
+    const isHam = isHamiltonAddressCheck(shippingForm.city, shippingForm.zip);
+    if (isHam) {
       setIsHamilton(true);
       setShippingFee(0);
       setShippingOptions([{
@@ -198,34 +202,30 @@ export const Checkout = () => {
         eta: '1-2 business days'
       });
       setShippingError('');
-    } else if (shippingForm.zip.length === 4 && !isHamiltonPostcode(shippingForm.zip)) {
-      // Non-Hamilton postcode — reset to default
+    } else {
       setIsHamilton(false);
-      setShippingFee(defaultShippingFee);
-      setShippingOptions([]);
-      setSelectedOption(null);
+      setShippingFee(prev => (prev === 0 ? defaultShippingFee : (prev ?? defaultShippingFee)));
     }
-  }, [shippingForm.zip]);
+  }, [shippingForm.zip, shippingForm.city, defaultShippingFee]);
 
-  // Automatically recalculate shipping when full form is complete (non-Hamilton)
+  // Automatically recalculate shipping when full address is typed (non-Hamilton)
   useEffect(() => {
-    if (isShippingValid() && !isHamiltonPostcode(shippingForm.zip)) {
+    const isHam = isHamiltonAddressCheck(shippingForm.city, shippingForm.zip);
+    if (isShippingValid() && !isHam) {
       const delayDebounce = setTimeout(() => {
         fetchShippingRates(shippingForm.address, shippingForm.city, shippingForm.zip);
       }, 600);
       return () => clearTimeout(delayDebounce);
-    } else if (!isHamiltonPostcode(shippingForm.zip)) {
-      setShippingOptions([]);
-      setSelectedOption(null);
-      setShippingFee(null);
-      setIsHamilton(false);
+    } else if (!isHam) {
+      setShippingFee(defaultShippingFee);
     }
-  }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
+  }, [shippingForm.address, shippingForm.city, shippingForm.zip, defaultShippingFee]);
 
   // Pricing math
   const subtotal = getCartTotal();
   const discountAmt = (subtotal * discountPercent) / 100 + flatDiscount;
-  const finalTotal = Math.max(0, subtotal - discountAmt) + (shippingFee || 0);
+  const activeShippingFee = isHamilton ? 0 : (shippingFee !== null && shippingFee !== undefined ? shippingFee : defaultShippingFee);
+  const finalTotal = Math.max(0, subtotal - discountAmt) + activeShippingFee;
 
   // Coupon apply
   const handleApplyCoupon = (e) => {
@@ -288,8 +288,8 @@ export const Checkout = () => {
           customerDetails: shippingForm,
           items: cart,
           finalTotal: finalTotal,
-          shippingFee: shippingFee,
-          deliveryCompany: selectedOption ? selectedOption.name : 'Standard Delivery'
+          shippingFee: activeShippingFee,
+          deliveryCompany: selectedOption ? selectedOption.name : (isHamilton ? 'Free Delivery — Hamilton' : 'Standard Courier Delivery')
         })
       });
       const data = await response.json();
@@ -998,7 +998,7 @@ export const Checkout = () => {
                 )}
                 <div className="b-row">
                   <span>Shipping</span>
-                  <span>{isHamilton ? 'Free Delivery - Hamilton' : (shippingFee === null ? 'Calculated next step' : (shippingFee === 0 ? 'FREE' : `$${shippingFee.toFixed(2)}`))}</span>
+                  <span>{isHamilton ? 'Free Delivery — Hamilton 🎉' : `$${activeShippingFee.toFixed(2)}`}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="b-row final-row">
