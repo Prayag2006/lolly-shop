@@ -6,6 +6,11 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   phone: { type: String, default: '' },
   location: { type: String, default: '' },
+  savedAddress: {
+    address: { type: String, default: '' },
+    city: { type: String, default: '' },
+    zip: { type: String, default: '' }
+  },
   role: { type: String, default: 'user' },
   permissions: { type: [String], default: [] },
   resetPasswordToken: { type: String },

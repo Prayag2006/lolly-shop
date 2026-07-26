@@ -8,7 +8,7 @@ import confetti from 'canvas-confetti';
 import './Checkout.css';
 
 export const Checkout = () => {
-  const { cart, getCartTotal, placeOrder, currentUser, clearCart, offers, settings } = useStore();
+  const { cart, getCartTotal, placeOrder, currentUser, clearCart, offers, settings, updateProfile } = useStore();
   const defaultShippingFee = settings?.shipping?.flatRate ?? 19.00;
   const navigate = useNavigate();
 
@@ -53,7 +53,7 @@ export const Checkout = () => {
   const [isAddressAutoFilled] = useState(initialDataRef.current.hasAddress);
   const [saveAddressForNextTime, setSaveAddressForNextTime] = useState(true);
 
-  const saveCustomerAddress = (formData) => {
+  const saveCustomerAddress = async (formData) => {
     if (!saveAddressForNextTime) return;
     const addressObj = {
       name: formData.name,
@@ -67,6 +67,22 @@ export const Checkout = () => {
       localStorage.setItem('lolly_saved_address', JSON.stringify(addressObj));
     } catch (e) {
       // ignore
+    }
+
+    if (currentUser?.email && updateProfile) {
+      try {
+        await updateProfile({
+          name: formData.name,
+          phone: formData.phone,
+          savedAddress: {
+            address: formData.address,
+            city: formData.city,
+            zip: formData.zip
+          }
+        });
+      } catch (e) {
+        // ignore
+      }
     }
   };
 

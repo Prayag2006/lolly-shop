@@ -2802,7 +2802,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
 // ── UPDATE PROFILE API ──
 app.put('/api/auth/profile', async (req, res) => {
   try {
-    const { email, name, phone, location } = req.body;
+    const { email, name, phone, location, savedAddress } = req.body;
     
     if (!email) {
       return res.status(400).json({ message: 'Email is required to identify user' });
@@ -2815,6 +2815,13 @@ app.put('/api/auth/profile', async (req, res) => {
       if (name) user.name = name;
       if (phone !== undefined) user.phone = phone;
       if (location !== undefined) user.location = location;
+      if (savedAddress !== undefined) {
+        user.savedAddress = {
+          address: savedAddress.address || user.savedAddress?.address || '',
+          city: savedAddress.city || user.savedAddress?.city || '',
+          zip: savedAddress.zip || user.savedAddress?.zip || ''
+        };
+      }
       
       await user.save();
       
@@ -2828,6 +2835,13 @@ app.put('/api/auth/profile', async (req, res) => {
       if (name) users[index].name = name;
       if (phone !== undefined) users[index].phone = phone;
       if (location !== undefined) users[index].location = location;
+      if (savedAddress !== undefined) {
+        users[index].savedAddress = {
+          address: savedAddress.address || users[index].savedAddress?.address || '',
+          city: savedAddress.city || users[index].savedAddress?.city || '',
+          zip: savedAddress.zip || users[index].savedAddress?.zip || ''
+        };
+      }
       
       writeLocalData('users.json', users);
       
