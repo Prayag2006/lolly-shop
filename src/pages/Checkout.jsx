@@ -21,17 +21,54 @@ export const Checkout = () => {
   const [couponSuccess, setCouponSuccess] = useState('');
   const [submitError, setSubmitError] = useState('');
 
-  // Form Field States
-  const [shippingForm, setShippingForm] = useState({
-    name: currentUser?.name || '',
-    email: currentUser?.email || '',
-    phone: '',
-    address: '',
-    city: '',
-    zip: ''
-  });
+  // Read saved address from currentUser or localStorage
+  const getInitialShippingData = () => {
+    let savedLocal = {};
+    try {
+      const stored = localStorage.getItem('lolly_saved_address');
+      if (stored) savedLocal = JSON.parse(stored);
+    } catch (e) {
+      // ignore
+    }
 
-  const [isAddressVerified, setIsAddressVerified] = useState(false);
+    const savedAddr = currentUser?.savedAddress || savedLocal;
+    const hasAddress = Boolean(savedAddr?.address);
+
+    return {
+      form: {
+        name: currentUser?.name || savedLocal.name || '',
+        email: currentUser?.email || savedLocal.email || '',
+        phone: currentUser?.phone || savedLocal.phone || '',
+        address: savedAddr?.address || '',
+        city: savedAddr?.city || '',
+        zip: savedAddr?.zip || ''
+      },
+      hasAddress
+    };
+  };
+
+  const initialDataRef = useRef(getInitialShippingData());
+  const [shippingForm, setShippingForm] = useState(initialDataRef.current.form);
+  const [isAddressVerified, setIsAddressVerified] = useState(initialDataRef.current.hasAddress);
+  const [isAddressAutoFilled] = useState(initialDataRef.current.hasAddress);
+  const [saveAddressForNextTime, setSaveAddressForNextTime] = useState(true);
+
+  const saveCustomerAddress = (formData) => {
+    if (!saveAddressForNextTime) return;
+    const addressObj = {
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      address: formData.address,
+      city: formData.city,
+      zip: formData.zip
+    };
+    try {
+      localStorage.setItem('lolly_saved_address', JSON.stringify(addressObj));
+    } catch (e) {
+      // ignore
+    }
+  };
 
   const addressInputRef = useRef(null);
 
@@ -263,6 +300,7 @@ export const Checkout = () => {
   // Navigation handlers
   const handleNextStep = () => {
     if (step === 1 && isShippingValid()) {
+      saveCustomerAddress(shippingForm);
       setStep(2);
     }
   };
@@ -276,6 +314,7 @@ export const Checkout = () => {
   const handlePaymentCheckout = async (e) => {
     e.preventDefault();
     setSubmitError('');
+    saveCustomerAddress(shippingForm);
     setRedirectingToGateway(true);
 
     try {
@@ -391,7 +430,25 @@ export const Checkout = () => {
         <div className="checkout-form-column">
           {step === 1 && (
             <div className="glass-card checkout-form-card">
-              <h2>Shipping Details</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '8px' }}>
+                <h2 style={{ margin: 0 }}>Shipping Details</h2>
+                {isAddressAutoFilled && (
+                  <span style={{
+                    padding: '4px 12px',
+                    background: 'rgba(16, 185, 129, 0.12)',
+                    color: '#059669',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    ✨ Saved Address Auto-Filled
+                  </span>
+                )}
+              </div>
               <form onSubmit={(e) => { e.preventDefault(); handleNextStep(); }}>
                 <div className="form-row">
                   <div className="form-group">
@@ -596,11 +653,7 @@ export const Checkout = () => {
 
                 {/* Shipping Method Selector */}
                 {isShippingValid() && (
-                  <div className="shipping-methods-section" style={{ marginTop: '25px', marginBottom: '25px' }}>
-                    <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#2d2645', marginBottom: '15px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🚚 Delivery Options
-                    </h3>
-                    
+                  <div className="shipping-methods-section" style={{ marginTop: '20px', marginBottom: '20px' }}>
                     {loadingShipping ? (
                       <div className="shipping-loading-container" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '15px', background: 'rgba(255, 255, 255, 0.4)', borderRadius: '10px' }}>
                         <div className="spinner-small" style={{
@@ -703,6 +756,18 @@ export const Checkout = () => {
                     )}
                   </div>
                 )}
+
+                <div style={{ marginTop: '20px', marginBottom: '16px' }}>
+                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', fontSize: '13px', fontWeight: '600', color: 'var(--color-text)', cursor: 'pointer', userSelect: 'none' }}>
+                    <input 
+                      type="checkbox"
+                      checked={saveAddressForNextTime}
+                      onChange={(e) => setSaveAddressForNextTime(e.target.checked)}
+                      style={{ accentColor: 'var(--color-primary)', width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <span>💾 Save address for future orders</span>
+                  </label>
+                </div>
 
                 <div className="form-actions">
                   <button

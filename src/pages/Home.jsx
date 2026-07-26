@@ -430,9 +430,9 @@ export const Home = ({ onProductClick }) => {
           <div className="story-content">
             <div className="badge">
               <Sparkles size={14} style={{ marginRight: '6px' }} />
-              <span>Since 2015</span>
+              <span>{settings?.aboutUs?.badgeText || 'Since 2015'}</span>
             </div>
-            <h2 className="story-title">Our Sweet Journey</h2>
+            <h2 className="story-title">{settings?.aboutUs?.heading || 'OUR SWEET JOURNEY'}</h2>
             <p className="story-desc">
               {settings?.aboutUs?.description || "What started as a tiny confectionery passion project in a home kitchen has grown into New Zealand's most beloved premium online candy shop. At Best Lolly Shop, we believe in spreading pure joy and nostalgic happiness, one sweet bite at a time."}
             </p>
@@ -443,16 +443,16 @@ export const Home = ({ onProductClick }) => {
             {/* Counters */}
             <div className="stats-container">
               <div className="stat-item">
-                <h3>50K+</h3>
-                <p>Happy Customers</p>
+                <h3>{settings?.aboutUs?.stat1Value || '50K+'}</h3>
+                <p>{settings?.aboutUs?.stat1Label || 'Happy Customers'}</p>
               </div>
               <div className="stat-item">
-                <h3>500+</h3>
-                <p>Premium Treats</p>
+                <h3>{settings?.aboutUs?.stat2Value || '500+'}</h3>
+                <p>{settings?.aboutUs?.stat2Label || 'Premium Treats'}</p>
               </div>
               <div className="stat-item">
-                <h3>99%</h3>
-                <p>Satisfaction Rate</p>
+                <h3>{settings?.aboutUs?.stat3Value || '99%'}</h3>
+                <p>{settings?.aboutUs?.stat3Label || 'Satisfaction Rate'}</p>
               </div>
             </div>
           </div>
@@ -477,8 +477,8 @@ export const Home = ({ onProductClick }) => {
               <div className="story-badge">
                 <Smile size={24} />
                 <div>
-                  <h4>Certified Fresh</h4>
-                  <p>Hand-packed daily</p>
+                  <h4>{settings?.aboutUs?.badgeTitle || 'CERTIFIED FRESH'}</h4>
+                  <p>{settings?.aboutUs?.badgeSubtitle || 'Hand-packed daily'}</p>
                 </div>
               </div>
             </div>

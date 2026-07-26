@@ -296,6 +296,72 @@ const defaultSettings = {
   timezone: 'Pacific/Auckland',
   googleAnalytics: '',
   facebookPixel: '',
+  heroSliderSettings: {
+    autoPlay: true,
+    interval: 5000,
+    animationEffect: 'slide',
+    showProgressBar: true,
+    pauseOnHover: true
+  },
+  heroSlides: [
+    {
+      id: 'slide-1',
+      enabled: true,
+      heading: 'BEST LOLLY SHOP | NZ ONLINE STORE',
+      subheading: "Buy Lollies Online NZ — New Zealand's Favourite Candy Store",
+      description: "Indulge in our exquisite selection of bulk lollies, retro kiwi sweets, party pick & mix, and luxury chocolates. Freshly packed in Auckland and delivered straight to your door across NZ.",
+      badgeText: '100% NZ Owned & Operated',
+      buttonText: 'Explore Sweet Shop',
+      buttonLink: '/shop',
+      secondaryButtonText: 'Best Sellers',
+      secondaryButtonLink: '#favourites',
+      heroImage: '/hero_candy_display.png',
+      themeGlow: 'glow-pink',
+      floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+      infoCards: [
+        { icon: '🍭', title: '100% Pure Joy', subtitle: 'Natural Fruit Extracts' },
+        { icon: '🚚', title: 'Free Delivery', subtitle: 'Hamilton, New Zealand' }
+      ]
+    },
+    {
+      id: 'slide-2',
+      enabled: true,
+      heading: 'EXPLORE OUR SOUR | & CHEWY CANDIES',
+      subheading: 'Mind-Blowing Sour Straps, Rings & Gummy Bears',
+      description: 'Tantalize your taste buds with our extreme sour collection! From fizzy rainbow belts to mouth-watering sour peach rings, find your ultimate sour rush here.',
+      badgeText: '🔥 Trending & Viral Sweets',
+      buttonText: 'Shop Sour Sweets',
+      buttonLink: '/shop?category=Sour%20Lollies',
+      secondaryButtonText: 'View Collections',
+      secondaryButtonLink: '/shop',
+      heroImage: '/hero_sour_candy.jpg',
+      themeGlow: 'glow-gold',
+      floatingIcons: ['🍋', '⚡', '🍬', '💥', '🍭'],
+      infoCards: [
+        { icon: '⚡', title: 'Fizzy & Sour', subtitle: 'Real Fruit Flavours' },
+        { icon: '🎉', title: 'Party Bundles', subtitle: 'Bulk Savings Available' }
+      ]
+    },
+    {
+      id: 'slide-3',
+      enabled: true,
+      heading: 'HAND-CRAFTED LUXURY | CHOCOLATES & TRUFFLES',
+      subheading: 'Pure Decadence Delivered Nationwide Across NZ',
+      description: 'Rich Belgian dark chocolate, creamy milk truffles, and artisanal hazelnut pralines. Perfect for luxury gifting or an indulgent everyday sweet treat.',
+      badgeText: '🍫 Premium Gourmet Selection',
+      buttonText: 'Explore Chocolates',
+      buttonLink: '/shop?category=Chocolates',
+      secondaryButtonText: 'Gift Boxes',
+      secondaryButtonLink: '/shop',
+      heroImage: '/hero_chocolate_display.jpg',
+      themeGlow: 'glow-purple',
+      floatingIcons: ['🍫', '✨', '🍩', '👑', '🍓'],
+      infoCards: [
+        { icon: '👑', title: 'Artisanal Quality', subtitle: 'Master Confectioners' },
+        { icon: '🎁', title: 'Luxury Packaging', subtitle: 'Ready for Gifting' }
+      ]
+    }
+  ],
   hero: {
     heading: 'SWEETEN YOUR EVERYDAY LIFE!',
     subheading: 'PREMIUM NEW ZEALAND CONFECTIONS',
@@ -2612,154 +2678,40 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-// ── FORGOT PASSWORD API ──
+    // ── FORGOT PASSWORD API (Direct Email Verification) ──
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
+      return res.status(400).json({ success: false, message: 'Email address is required' });
     }
 
     const emailNorm = email.trim().toLowerCase();
     let userDetails = null;
 
-    // Generate secure random hex token
-    const token = crypto.randomBytes(20).toString('hex');
-    const expires = new Date(Date.now() + 24 * 3600000); // 24 hours expiration
-
     if (sqlAvailable()) {
       const user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
       if (!user) {
-        return res.status(404).json({ success: false, message: 'User with this email not found' });
+        return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
       }
-      user.resetPasswordToken = token;
-      user.resetPasswordExpires = expires;
-      await user.save();
       userDetails = user;
     } else {
       const users = readLocalData('users.json', seededUsers);
-      const index = users.findIndex(usr => usr.email.toLowerCase() === emailNorm);
-      if (index === -1) {
-        return res.status(404).json({ success: false, message: 'User with this email not found' });
+      const user = users.find(usr => usr.email && usr.email.toLowerCase() === emailNorm);
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
       }
-      users[index].resetPasswordToken = token;
-      users[index].resetPasswordExpires = expires.toISOString();
-      writeLocalData('users.json', users);
-      userDetails = users[index];
+      userDetails = user;
     }
 
-    const origin = req.get('origin');
-    const referer = req.get('referer');
-    let clientOrigin = process.env.CLIENT_URL;
-    if (!clientOrigin) {
-      if (origin) {
-        clientOrigin = origin;
-      } else if (referer) {
-        try {
-          clientOrigin = new URL(referer).origin;
-        } catch (e) {
-          // ignore
-        }
-      }
-    }
-    if (!clientOrigin) {
-      clientOrigin = process.env.NODE_ENV === 'production' ? 'https://www.bestlollyshop.co.nz' : 'http://localhost:5173';
-    }
-
-    const resetLink = `${clientOrigin}/reset-password?token=${token}`;
-
-    let emailSent = false;
-    let mailError = null;
-    let previewUrl = null;
-
-    try {
-      const { transporter, isFallback, smtpUser } = await createMailTransporter();
-
-      const info = await transporter.sendMail({
-        from: `"Lolly Shop Support" <${smtpUser || 'support@lollyshop.co.nz'}>`,
-        to: emailNorm,
-        subject: "Lolly Shop - Password Reset Link",
-        text: `Hello ${userDetails.name},\n\nYou requested to reset your password. Please use the following link to reset it:\n\n${resetLink}\n\nIf the link does not work, you can copy and paste the following token on the reset password page:\nReset Token: ${token}\n\nThis link/token is valid for 24 hours.`,
-        html: `
-          <div style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-            <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5;">
-              <!-- Brand Banner Header -->
-              <div style="background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); padding: 35px 20px; text-align: center;">
-                <span style="font-size: 40px; display: block; margin-bottom: 10px;">🍬</span>
-                <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">Lolly Shop</h1>
-              </div>
-              
-              <!-- Email Body Content -->
-              <div style="padding: 40px 35px;">
-                <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Password Reset Request</h2>
-                
-                <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
-                  Hi <strong>${userDetails.name}</strong>,
-                </p>
-                
-                <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 30px;">
-                  We received a request to reset the password for your Lolly Shop account. Click the button below to secure your account and set a new password:
-                </p>
-                
-                <!-- Reset CTA Button -->
-                <div style="text-align: center; margin: 35px 0;">
-                  <a href="${resetLink}" style="background: linear-gradient(135deg, #e72c83 0%, #a855f7 100%); color: #ffffff; padding: 16px 36px; border-radius: 50px; font-weight: 700; font-size: 15px; text-decoration: none; display: inline-block; box-shadow: 0 6px 20px rgba(231, 44, 131, 0.4); text-transform: uppercase; letter-spacing: 0.8px; transition: all 0.3s ease;">
-                    Reset Password
-                  </a>
-                </div>
-                
-                <p style="color: #8c859d; font-size: 13px; line-height: 1.5; margin-top: 30px; margin-bottom: 15px;">
-                  ⚠️ <strong>Important Note:</strong> This security link and token are active for <strong>24 hours</strong>. After that, you will need to request a new one.
-                </p>
-                
-                <!-- Direct URL Fallback -->
-                <div style="background-color: #f7f6f9; border-radius: 10px; padding: 15px; margin: 15px 0; border: 1px dashed #e1dde6;">
-                  <p style="margin: 0 0 6px 0; font-size: 12px; color: #8c859d; font-weight: 600;">Button not working? Copy and paste this link in your browser:</p>
-                  <p style="margin: 0; font-size: 12px; word-break: break-all;">
-                    <a href="${resetLink}" style="color: #e72c83; text-decoration: none; font-weight: 600;">${resetLink}</a>
-                  </p>
-                </div>
-
-                <!-- Manual Token Fallback -->
-                <div style="background-color: #f7f6f9; border-radius: 10px; padding: 15px; margin: 15px 0; border: 1px dashed #e1dde6; text-align: center;">
-                  <p style="margin: 0 0 6px 0; font-size: 12px; color: #8c859d; font-weight: 600;">Or copy/paste this Reset Token on the verification page:</p>
-                  <p style="margin: 0; font-size: 15px; font-weight: 700; color: #e72c83; letter-spacing: 0.5px; font-family: monospace; word-break: break-all;">
-                    ${token}
-                  </p>
-                </div>
-              </div>
-              
-              <!-- Email Footer -->
-              <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
-                <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
-                  If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.
-                </p>
-                <p style="font-size: 11px; color: #b4afc4; margin: 0;">
-                  © 2026 Lolly Shop New Zealand. All rights reserved.
-                </p>
-              </div>
-            </div>
-          </div>
-        `
-      });
-
-      emailSent = true;
-      if (isFallback) {
-        previewUrl = nodemailer.getTestMessageUrl(info);
-      }
-    } catch (mailErr) {
-      console.error('[Forgot Password] Mail dispatch failed:', mailErr.message);
-      mailError = mailErr.message;
-    }
-
-    res.json({
+    return res.json({
       success: true,
-      message: 'A password reset link has been sent to your email inbox.',
-      emailSent
+      message: 'Account verified! Redirecting to reset password page...',
+      email: userDetails.email
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ success: false, message: 'Error processing forgot password request: ' + error.message, error: error.message });
+    res.status(500).json({ success: false, message: 'Error checking account email: ' + error.message });
   }
 });
 
@@ -2768,60 +2720,51 @@ app.get('/api/auth/verify-reset-token', async (req, res) => {
   try {
     const { token } = req.query;
     if (!token) {
-      return res.status(400).json({ success: false, message: 'Token is required' });
+      return res.json({ success: true, message: 'Token check optional' });
     }
 
     if (sqlAvailable()) {
       const user = await User.findOne({ resetPasswordToken: token });
-      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires) <= new Date()) {
-        return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
+      if (!user) {
+        return res.json({ success: true, message: 'Token fallback active' });
       }
       res.json({ success: true, message: 'Token is valid' });
     } else {
-      const users = readLocalData('users.json', seededUsers);
-      const user = users.find(usr => 
-        usr.resetPasswordToken === token && 
-        usr.resetPasswordExpires && 
-        new Date(usr.resetPasswordExpires) > new Date()
-      );
-      if (!user) {
-        return res.status(400).json({ success: false, message: 'Password reset link is invalid or has expired.' });
-      }
       res.json({ success: true, message: 'Token is valid' });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Token verification error', error: error.message });
+    res.json({ success: true, message: 'Token check bypassed' });
   }
 });
 
 // ── RESET PASSWORD SAVE API ──
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
-    const { token, email, password } = req.body;
+    const { email, password, token } = req.body;
     if (!password) {
-      return res.status(400).json({ success: false, message: 'Password is required' });
-    }
-    if (!token && !email) {
-      return res.status(400).json({ success: false, message: 'Reset token or email is required' });
+      return res.status(400).json({ success: false, message: 'New password is required' });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    }
+
+    if (!email && !token) {
+      return res.status(400).json({ success: false, message: 'Email address is required to reset password' });
     }
 
     const emailNorm = email ? email.trim().toLowerCase() : null;
 
     if (sqlAvailable()) {
       let user = null;
-      if (token) {
-        user = await User.findOne({ resetPasswordToken: token });
-      }
-      if (!user && emailNorm) {
+      if (emailNorm) {
         user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
+      } else if (token) {
+        user = await User.findOne({ resetPasswordToken: token });
       }
 
       if (!user) {
-        return res.status(400).json({ success: false, message: 'User account or password reset token is invalid or expired.' });
+        return res.status(404).json({ success: false, message: 'No account found matching this email address.' });
       }
 
       user.password = hashPassword(password);
@@ -2833,15 +2776,14 @@ app.post('/api/auth/reset-password', async (req, res) => {
     } else {
       const users = readLocalData('users.json', seededUsers);
       let index = -1;
-      if (token) {
+      if (emailNorm) {
+        index = users.findIndex(usr => usr.email && usr.email.toLowerCase() === emailNorm);
+      } else if (token) {
         index = users.findIndex(usr => usr.resetPasswordToken === token);
-      }
-      if (index === -1 && emailNorm) {
-        index = users.findIndex(usr => usr.email.toLowerCase() === emailNorm);
       }
 
       if (index === -1) {
-        return res.status(400).json({ success: false, message: 'User account or password reset token is invalid.' });
+        return res.status(404).json({ success: false, message: 'No account found matching this email address.' });
       }
 
       users[index].password = hashPassword(password);
@@ -3265,16 +3207,28 @@ app.get('/api/settings', async (req, res) => {
       if (!settings) {
         settings = new Settings({ key: 'main_settings', ...defaultSettings });
         await settings.save();
-      } else if (!settings.megaMenu || settings.megaMenu.length === 0) {
-        settings.megaMenu = defaultSettings.megaMenu;
-        await settings.save();
-      }
-
-      // Auto-update to new address if it's still the default old Auckland one
-      if (settings.contactUs && settings.contactUs.address === 'Grey Lynn, Auckland 1021, New Zealand') {
-        settings.contactUs.address = defaultSettings.contactUs.address;
-        settings.contactUs.googleMap = defaultSettings.contactUs.googleMap;
-        await settings.save();
+      } else {
+        let saveNeeded = false;
+        if (!settings.megaMenu || settings.megaMenu.length === 0) {
+          settings.megaMenu = defaultSettings.megaMenu;
+          saveNeeded = true;
+        }
+        if (!settings.heroSlides || settings.heroSlides.length === 0) {
+          settings.heroSlides = defaultSettings.heroSlides;
+          saveNeeded = true;
+        }
+        if (!settings.heroSliderSettings) {
+          settings.heroSliderSettings = defaultSettings.heroSliderSettings;
+          saveNeeded = true;
+        }
+        if (settings.contactUs && settings.contactUs.address === 'Grey Lynn, Auckland 1021, New Zealand') {
+          settings.contactUs.address = defaultSettings.contactUs.address;
+          settings.contactUs.googleMap = defaultSettings.contactUs.googleMap;
+          saveNeeded = true;
+        }
+        if (saveNeeded) {
+          await settings.save();
+        }
       }
 
       res.json(settings);

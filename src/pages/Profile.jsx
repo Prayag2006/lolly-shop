@@ -7,11 +7,25 @@ import './Profile.css';
 export const Profile = () => {
   const { currentUser, orders, logout, updateProfile } = useStore();
   
+  const getSavedAddressFromStorage = () => {
+    try {
+      const stored = localStorage.getItem('lolly_saved_address');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      // ignore
+    }
+    return {};
+  };
+
+  const initialSaved = getSavedAddressFromStorage();
+
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: currentUser?.name || '',
-    phone: currentUser?.phone || '',
-    location: currentUser?.location || ''
+    phone: currentUser?.phone || initialSaved.phone || '',
+    address: currentUser?.savedAddress?.address || initialSaved.address || '',
+    city: currentUser?.savedAddress?.city || initialSaved.city || '',
+    zip: currentUser?.savedAddress?.zip || initialSaved.zip || ''
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -21,16 +35,44 @@ export const Profile = () => {
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
-    await updateProfile(editForm);
+
+    const savedAddressObj = {
+      name: editForm.name,
+      email: currentUser?.email || '',
+      phone: editForm.phone,
+      address: editForm.address,
+      city: editForm.city,
+      zip: editForm.zip
+    };
+
+    try {
+      localStorage.setItem('lolly_saved_address', JSON.stringify(savedAddressObj));
+    } catch (e) {
+      // ignore
+    }
+
+    await updateProfile({
+      name: editForm.name,
+      phone: editForm.phone,
+      savedAddress: {
+        address: editForm.address,
+        city: editForm.city,
+        zip: editForm.zip
+      }
+    });
+
     setIsSaving(false);
     setIsEditing(false);
   };
   
   const handleCancelEdit = () => {
+    const freshSaved = getSavedAddressFromStorage();
     setEditForm({
       name: currentUser?.name || '',
-      phone: currentUser?.phone || '',
-      location: currentUser?.location || ''
+      phone: currentUser?.phone || freshSaved.phone || '',
+      address: currentUser?.savedAddress?.address || freshSaved.address || '',
+      city: currentUser?.savedAddress?.city || freshSaved.city || '',
+      zip: currentUser?.savedAddress?.zip || freshSaved.zip || ''
     });
     setIsEditing(false);
   };
@@ -161,18 +203,45 @@ export const Profile = () => {
                   <MapPin size={16} />
                 </div>
                 <div className="profile-detail-text-box" style={{ width: '100%' }}>
-                  <label>Shipping Location</label>
+                  <label>Default Delivery Address</label>
                   {isEditing ? (
-                    <textarea 
-                      name="location"
-                      value={editForm.location} 
-                      onChange={handleEditChange}
-                      placeholder="e.g. 17 Braid Road, St Andrews, Hamilton 3200"
-                      rows={2}
-                      style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', marginTop: '4px', fontSize: '14px', resize: 'vertical' }}
-                    />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '6px' }}>
+                      <input 
+                        type="text" 
+                        name="address"
+                        value={editForm.address} 
+                        onChange={handleEditChange}
+                        placeholder="Street Address (e.g. 17 Braid Road)"
+                        style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '14px' }}
+                      />
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                        <input 
+                          type="text" 
+                          name="city"
+                          value={editForm.city} 
+                          onChange={handleEditChange}
+                          placeholder="City (e.g. Hamilton)"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '14px' }}
+                        />
+                        <input 
+                          type="text" 
+                          name="zip"
+                          value={editForm.zip} 
+                          onChange={handleEditChange}
+                          placeholder="Postcode (e.g. 3200)"
+                          maxLength="4"
+                          style={{ width: '100%', padding: '6px 10px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '14px' }}
+                        />
+                      </div>
+                    </div>
                   ) : (
-                    <span>{currentUser.location || 'Auckland, New Zealand'}</span>
+                    <span>
+                      {currentUser.savedAddress?.address || initialSaved.address ? (
+                        `${currentUser.savedAddress?.address || initialSaved.address}, ${currentUser.savedAddress?.city || initialSaved.city || ''} ${currentUser.savedAddress?.zip || initialSaved.zip || ''}`
+                      ) : (
+                        'No address saved yet'
+                      )}
+                    </span>
                   )}
                 </div>
               </div>

@@ -595,8 +595,76 @@ export const Admin = () => {
         googleMap: 'https://maps.google.com/maps?q=17%20Braid%20Road,%20St%20Andrews,%20Hamilton%203200,%20New%20Zealand&t=&z=15&ie=UTF8&iwloc=&output=embed'
       };
 
+      const defaultHeroSlides = [
+        {
+          id: 'slide-1',
+          enabled: true,
+          heading: 'BEST LOLLY SHOP | NZ ONLINE STORE',
+          subheading: "Buy Lollies Online NZ — New Zealand's Favourite Candy Store",
+          description: "Indulge in our exquisite selection of bulk lollies, retro kiwi sweets, party pick & mix, and luxury chocolates. Freshly packed in Auckland and delivered straight to your door across NZ.",
+          badgeText: '100% NZ Owned & Operated',
+          buttonText: 'Explore Sweet Shop',
+          buttonLink: '/shop',
+          secondaryButtonText: 'Best Sellers',
+          secondaryButtonLink: '#favourites',
+          heroImage: '/hero_candy_display.png',
+          themeGlow: 'glow-pink',
+          floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+          infoCards: [
+            { icon: '🍭', title: '100% Pure Joy', subtitle: 'Natural Fruit Extracts' },
+            { icon: '🚚', title: 'Free Delivery', subtitle: 'Hamilton, New Zealand' }
+          ]
+        },
+        {
+          id: 'slide-2',
+          enabled: true,
+          heading: 'EXPLORE OUR SOUR | & CHEWY CANDIES',
+          subheading: 'Mind-Blowing Sour Straps, Rings & Gummy Bears',
+          description: 'Tantalize your taste buds with our extreme sour collection! From fizzy rainbow belts to mouth-watering sour peach rings, find your ultimate sour rush here.',
+          badgeText: '🔥 Trending & Viral Sweets',
+          buttonText: 'Shop Sour Sweets',
+          buttonLink: '/shop?category=Sour%20Lollies',
+          secondaryButtonText: 'View Collections',
+          secondaryButtonLink: '/shop',
+          heroImage: '/hero_sour_candy.jpg',
+          themeGlow: 'glow-gold',
+          floatingIcons: ['🍋', '⚡', '🍬', '💥', '🍭'],
+          infoCards: [
+            { icon: '⚡', title: 'Fizzy & Sour', subtitle: 'Real Fruit Flavours' },
+            { icon: '🎉', title: 'Party Bundles', subtitle: 'Bulk Savings Available' }
+          ]
+        },
+        {
+          id: 'slide-3',
+          enabled: true,
+          heading: 'HAND-CRAFTED LUXURY | CHOCOLATES & TRUFFLES',
+          subheading: 'Pure Decadence Delivered Nationwide Across NZ',
+          description: 'Rich Belgian dark chocolate, creamy milk truffles, and artisanal hazelnut pralines. Perfect for luxury gifting or an indulgent everyday sweet treat.',
+          badgeText: '🍫 Premium Gourmet Selection',
+          buttonText: 'Explore Chocolates',
+          buttonLink: '/shop?category=Chocolates',
+          secondaryButtonText: 'Gift Boxes',
+          secondaryButtonLink: '/shop',
+          heroImage: '/hero_chocolate_display.jpg',
+          themeGlow: 'glow-purple',
+          floatingIcons: ['🍫', '✨', '🍩', '👑', '🍓'],
+          infoCards: [
+            { icon: '👑', title: 'Artisanal Quality', subtitle: 'Master Confectioners' },
+            { icon: '🎁', title: 'Luxury Packaging', subtitle: 'Ready for Gifting' }
+          ]
+        }
+      ];
+
       setTempSettings({
         ...settings,
+        heroSlides: (settings.heroSlides && settings.heroSlides.length > 0) ? settings.heroSlides : defaultHeroSlides,
+        heroSliderSettings: settings.heroSliderSettings || {
+          autoPlay: true,
+          interval: 5000,
+          animationEffect: 'slide',
+          showProgressBar: true,
+          pauseOnHover: true
+        },
         footer: { ...defaultFooter, ...(settings.footer || {}) },
         contactUs: { ...defaultContact, ...(settings.contactUs || {}) },
         faqs: settings.faqs && settings.faqs.length > 0 ? settings.faqs : defaultFaqs
@@ -938,6 +1006,15 @@ export const Admin = () => {
             >
               <Truck size={18} />
               <span>Shipping Settings</span>
+            </button>
+          )}
+            {hasAccess('hero-slider') && (
+            <button
+              className={`admin-nav-item ${activeTab === 'hero-slider' ? 'active' : ''}`}
+              onClick={() => setActiveTab('hero-slider')}
+            >
+              <Sparkles size={18} />
+              <span>Hero Slider & Photos</span>
             </button>
           )}
             {hasAccess('cms-pages') && (
@@ -3658,138 +3735,555 @@ export const Admin = () => {
             </div>
           )}
 
-          {activeTab === 'cms-pages' && (
+          {/* ✨ DEDICATED HERO SLIDER & PHOTOS TAB */}
+          {activeTab === 'hero-slider' && (
             <div className="admin-tab-content">
-              <h2>CMS Content Pages Editor</h2>
-              <p className="tab-subtitle">Edit the content of your Hero banner, About Us story, and Contact Details</p>
+              <h2>✨ Homepage Hero Slider & Photo Manager</h2>
+              <p className="tab-subtitle">Configure homepage slider settings, upload custom slide photos, reorder slides, and edit content</p>
 
               <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-                
-                {/* Hero section */}
-                <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>✨ Homepage Hero Section</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Heading (Use | for gradient highlight)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.heading || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'heading', e.target.value)}
-                        placeholder="e.g. SWEETEN YOUR | EVERYDAY LIFE!"
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading (SEO Line)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.subheading || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'subheading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '19px', fontWeight: '800', margin: 0, color: 'var(--color-primary)' }}>Hero Slides & Photo Showcase</h3>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--color-text-muted)' }}>Manage your slides list, drag & drop photos, and customize animation speed</p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newSlide = {
+                        id: `slide-${Date.now()}`,
+                        enabled: true,
+                        heading: 'NEW SWEET SELECTION | DISCOVER NOW',
+                        subheading: 'Freshly Arrived Confections In Store',
+                        description: 'Explore our newly curated collection of gourmet sweets and chocolates delivered NZ-wide.',
+                        badgeText: '✨ New Arrival',
+                        buttonText: 'Shop New Sweets',
+                        buttonLink: '/shop',
+                        secondaryButtonText: 'View All',
+                        secondaryButtonLink: '/shop',
+                        heroImage: '/hero_candy_display.png',
+                        themeGlow: 'glow-pink',
+                        floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+                        infoCards: [
+                          { icon: '🍭', title: 'Fresh Quality', subtitle: 'Guaranteed Delicious' },
+                          { icon: '🚚', title: 'Fast Delivery', subtitle: 'NZ-Wide Shipping' }
+                        ]
+                      };
+                      const updated = [...(tempSettings.heroSlides || []), newSlide];
+                      setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                    }}
+                    className="btn btn-primary"
+                    style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '700' }}
+                  >
+                    + Add New Hero Slide
+                  </button>
+                </div>
 
-                  <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '16px' }}>
-                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Description Text</label>
-                    <textarea 
-                      rows="3"
-                      value={tempSettings.hero?.description || ''}
-                      onChange={(e) => handleNestedFieldChange('hero', 'description', e.target.value)}
-                      style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                    />
-                  </div>
+                {/* Slider Global Animation & Autoplay Controls */}
+                <div className="glass-card" style={{ padding: '20px', borderRadius: '16px', background: 'var(--color-background)', border: '1px solid var(--color-border)' }}>
+                  <h4 style={{ fontSize: '13px', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '14px', color: 'var(--color-text)' }}>
+                    ⚙️ Slider Global Configuration
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
+                      <input 
+                        type="checkbox"
+                        checked={tempSettings.heroSliderSettings?.autoPlay !== false}
+                        onChange={(e) => handleNestedFieldChange('heroSliderSettings', 'autoPlay', e.target.checked)}
+                      />
+                      <span>Auto-Play Slider</span>
+                    </label>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Text</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.buttonText || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'buttonText', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Slide Duration (seconds)</label>
+                      <select
+                        value={((tempSettings.heroSliderSettings?.interval || 5000) / 1000).toString()}
+                        onChange={(e) => handleNestedFieldChange('heroSliderSettings', 'interval', Number(e.target.value) * 1000)}
+                        style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none' }}
+                      >
+                        <option value="3">3 Seconds</option>
+                        <option value="4">4 Seconds</option>
+                        <option value="5">5 Seconds (Default)</option>
+                        <option value="7">7 Seconds</option>
+                        <option value="10">10 Seconds</option>
+                      </select>
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button Link</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.buttonLink || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'buttonLink', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                    </div>
-                  </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Hero Image (Base64 or URL)</label>
-                      <input 
-                        type="text"
-                        value={tempSettings.hero?.heroImage || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'heroImage', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
-                      />
-                      <input 
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, (base64) => handleNestedFieldChange('hero', 'heroImage', base64))}
-                        style={{ marginTop: '8px' }}
-                      />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Transition Effect</label>
+                      <select
+                        value={tempSettings.heroSliderSettings?.animationEffect || 'slide'}
+                        onChange={(e) => handleNestedFieldChange('heroSliderSettings', 'animationEffect', e.target.value)}
+                        style={{ padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none' }}
+                      >
+                        <option value="slide">Slide (Horizontal)</option>
+                        <option value="fade">Fade</option>
+                        <option value="zoom">Zoom Scale</option>
+                      </select>
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Text</label>
+
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', fontWeight: '700', cursor: 'pointer' }}>
                       <input 
-                        type="text"
-                        value={tempSettings.hero?.badgeText || ''}
-                        onChange={(e) => handleNestedFieldChange('hero', 'badgeText', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                        type="checkbox"
+                        checked={tempSettings.heroSliderSettings?.showProgressBar !== false}
+                        onChange={(e) => handleNestedFieldChange('heroSliderSettings', 'showProgressBar', e.target.checked)}
                       />
-                    </div>
+                      <span>Show Progress Bar</span>
+                    </label>
                   </div>
                 </div>
 
-                {/* About Us section */}
+                {/* Slide List & Form Cards */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {(tempSettings.heroSlides || []).map((slide, idx) => (
+                    <div 
+                      key={slide.id || idx}
+                      style={{
+                        border: `2px solid ${slide.enabled !== false ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                        borderRadius: '18px',
+                        padding: '22px',
+                        background: 'var(--color-card)',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                    >
+                      {/* Slide Card Header */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--color-border)', paddingBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontWeight: '800', fontSize: '15px', color: 'var(--color-primary)' }}>
+                            🖼️ Slide #{idx + 1}: {slide.heading ? slide.heading.split('|')[0] : 'Untitled Slide'}
+                          </span>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: '700', color: slide.enabled !== false ? '#16a34a' : '#dc2626' }}>
+                            <input
+                              type="checkbox"
+                              checked={slide.enabled !== false}
+                              onChange={(e) => {
+                                const updated = [...(tempSettings.heroSlides || [])];
+                                updated[idx] = { ...updated[idx], enabled: e.target.checked };
+                                setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                              }}
+                            />
+                            {slide.enabled !== false ? '✅ Active' : '⬜ Disabled'}
+                          </label>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            disabled={idx === 0}
+                            onClick={() => {
+                              if (idx === 0) return;
+                              const updated = [...(tempSettings.heroSlides || [])];
+                              const temp = updated[idx - 1];
+                              updated[idx - 1] = updated[idx];
+                              updated[idx] = temp;
+                              setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                            }}
+                            style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.4 : 1 }}
+                          >
+                            ⬆️ Move Up
+                          </button>
+                          <button
+                            type="button"
+                            disabled={idx === (tempSettings.heroSlides || []).length - 1}
+                            onClick={() => {
+                              if (idx === (tempSettings.heroSlides || []).length - 1) return;
+                              const updated = [...(tempSettings.heroSlides || [])];
+                              const temp = updated[idx + 1];
+                              updated[idx + 1] = updated[idx];
+                              updated[idx] = temp;
+                              setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                            }}
+                            style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', cursor: idx === (tempSettings.heroSlides || []).length - 1 ? 'not-allowed' : 'pointer', opacity: idx === (tempSettings.heroSlides || []).length - 1 ? 0.4 : 1 }}
+                          >
+                            ⬇️ Move Down
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete Slide #${idx + 1}?`)) {
+                                const updated = (tempSettings.heroSlides || []).filter((_, i) => i !== idx);
+                                setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                              }
+                            }}
+                            style={{ padding: '4px 10px', fontSize: '12px', fontWeight: '700', borderRadius: '6px', border: '1px solid #fca5a5', background: '#fee2e2', color: '#dc2626', cursor: 'pointer' }}
+                          >
+                            🗑️ Delete
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Slide Content Form Fields */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: '24px' }}>
+                        {/* Photo Upload & Preview Column */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Slide Photo Showcase</label>
+                          <div style={{ width: '100%', height: '160px', borderRadius: '14px', border: '1px solid var(--color-border)', background: '#ffffff', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}>
+                            <img 
+                              src={slide.heroImage || '/hero_candy_display.png'} 
+                              alt="Slide Preview" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '10px' }} 
+                            />
+                          </div>
+                          
+                          <label style={{ fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Upload Photo</label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const updated = [...(tempSettings.heroSlides || [])];
+                                updated[idx] = { ...updated[idx], heroImage: reader.result };
+                                setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                            style={{ fontSize: '11px' }}
+                          />
+
+                          <input 
+                            type="text"
+                            value={slide.heroImage || ''}
+                            placeholder="Or paste Photo URL / Base64"
+                            onChange={(e) => {
+                              const updated = [...(tempSettings.heroSlides || [])];
+                              updated[idx] = { ...updated[idx], heroImage: e.target.value };
+                              setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                            }}
+                            style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '12px', outline: 'none' }}
+                          />
+                        </div>
+
+                        {/* Text & Button Fields Column */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Heading (Use | for gradient line)</label>
+                              <input 
+                                type="text"
+                                value={slide.heading || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], heading: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="e.g. BEST LOLLY SHOP | NZ STORE"
+                                style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading (SEO Line)</label>
+                              <input 
+                                type="text"
+                                value={slide.subheading || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], subheading: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Description Text</label>
+                            <textarea 
+                              rows="2"
+                              value={slide.description || ''}
+                              onChange={(e) => {
+                                const updated = [...(tempSettings.heroSlides || [])];
+                                updated[idx] = { ...updated[idx], description: e.target.value };
+                                setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                              }}
+                              style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', resize: 'vertical' }}
+                            />
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px' }}>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Tag Text</label>
+                              <input 
+                                type="text"
+                                value={slide.badgeText || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], badgeText: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="e.g. 100% NZ Owned"
+                                style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Theme Glow</label>
+                              <select
+                                value={slide.themeGlow || 'glow-pink'}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], themeGlow: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              >
+                                <option value="glow-pink">Magenta / Pink Glow</option>
+                                <option value="glow-gold">Gold / Amber Glow</option>
+                                <option value="glow-purple">Purple / Violet Glow</option>
+                                <option value="glow-cyan">Cyan / Teal Glow</option>
+                              </select>
+                            </div>
+
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Floating Candies (comma separated)</label>
+                              <input 
+                                type="text"
+                                value={Array.isArray(slide.floatingIcons) ? slide.floatingIcons.join(', ') : (slide.floatingIcons || '')}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  const list = e.target.value.split(',').map(s => s.trim()).filter(Boolean);
+                                  updated[idx] = { ...updated[idx], floatingIcons: list };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="🍬, 🍭, 🍫, 🍑, 🍒"
+                                style={{ padding: '9px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Button</label>
+                              <input 
+                                type="text"
+                                value={slide.buttonText || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], buttonText: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="e.g. Explore Shop"
+                                style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '12px' }}
+                              />
+                            </div>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Link</label>
+                              <input 
+                                type="text"
+                                value={slide.buttonLink || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], buttonLink: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="/shop"
+                                style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '12px' }}
+                              />
+                            </div>
+
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Secondary Button</label>
+                              <input 
+                                type="text"
+                                value={slide.secondaryButtonText || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], secondaryButtonText: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="e.g. Best Sellers"
+                                style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '12px' }}
+                              />
+                            </div>
+                            <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Secondary Link</label>
+                              <input 
+                                type="text"
+                                value={slide.secondaryButtonLink || ''}
+                                onChange={(e) => {
+                                  const updated = [...(tempSettings.heroSlides || [])];
+                                  updated[idx] = { ...updated[idx], secondaryButtonLink: e.target.value };
+                                  setTempSettings(prev => ({ ...prev, heroSlides: updated }));
+                                }}
+                                placeholder="#favourites"
+                                style={{ padding: '8px', borderRadius: '8px', border: '1px solid var(--color-border)', fontSize: '12px' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    style={{ padding: '14px 32px', fontSize: '15px', fontWeight: '800' }}
+                  >
+                    💾 Save Hero Slider & Photos
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* CMS PAGES TAB (About Us & Contact Us) */}
+          {activeTab === 'cms-pages' && (
+            <div className="admin-tab-content">
+              <h2>CMS Content Pages Editor</h2>
+              <p className="tab-subtitle">Edit the content of your About Us story and Contact Details</p>
+
+              <form onSubmit={handleSettingsSubmit} className="glass-card animate-fade-in" style={{ padding: '28px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+                
+                {/* About Us & Our Sweet Journey section */}
                 <div style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: '24px' }}>
-                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📖 About Us Page Settings</h3>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Page Heading</label>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '14px', color: 'var(--color-primary)' }}>📖 Our Sweet Journey / About Us Settings</h3>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Section Heading</label>
                       <input 
                         type="text"
-                        value={tempSettings.aboutUs?.heading || ''}
+                        value={tempSettings.aboutUs?.heading || 'OUR SWEET JOURNEY'}
                         onChange={(e) => handleNestedFieldChange('aboutUs', 'heading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', width: '100%' }}
                       />
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Tag</label>
+                      <input 
+                        type="text"
+                        value={tempSettings.aboutUs?.badgeText || 'Since 2015'}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'badgeText', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', width: '100%' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
                       <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Subheading description</label>
                       <input 
                         type="text"
                         value={tempSettings.aboutUs?.subheading || ''}
                         onChange={(e) => handleNestedFieldChange('aboutUs', 'subheading', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', width: '100%' }}
                       />
                     </div>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginTop: '16px' }}>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Story Text</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px', marginTop: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Primary Story Text (Paragraph 1)</label>
                       <textarea 
                         rows="4"
                         value={tempSettings.aboutUs?.description || ''}
                         onChange={(e) => handleNestedFieldChange('aboutUs', 'description', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical', width: '100%' }}
                       />
                     </div>
-                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Extended Story Text</label>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Extended Story Text (Paragraph 2)</label>
                       <textarea 
                         rows="4"
                         value={tempSettings.aboutUs?.story || ''}
                         onChange={(e) => handleNestedFieldChange('aboutUs', 'story', e.target.value)}
-                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical', width: '100%' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Stats Counters Configuration */}
+                  <h4 style={{ fontSize: '13px', fontWeight: '800', textTransform: 'uppercase', marginTop: '20px', marginBottom: '10px', color: 'var(--color-text)' }}>
+                    📊 Statistics & Experience Counters
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div style={{ background: 'var(--color-background)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '10px', textTransform: 'uppercase' }}>Stat 1 (Value & Label)</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', gap: '8px' }}>
+                        <input 
+                          type="text"
+                          placeholder="50K+"
+                          value={tempSettings.aboutUs?.stat1Value || '50K+'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat1Value', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                        <input 
+                          type="text"
+                          placeholder="Happy Customers"
+                          value={tempSettings.aboutUs?.stat1Label || 'Happy Customers'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat1Label', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'var(--color-background)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '10px', textTransform: 'uppercase' }}>Stat 2 (Value & Label)</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', gap: '8px' }}>
+                        <input 
+                          type="text"
+                          placeholder="500+"
+                          value={tempSettings.aboutUs?.stat2Value || '500+'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat2Value', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                        <input 
+                          type="text"
+                          placeholder="Premium Treats"
+                          value={tempSettings.aboutUs?.stat2Label || 'Premium Treats'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat2Label', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'var(--color-background)', padding: '12px', borderRadius: '10px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '10px', textTransform: 'uppercase' }}>Stat 3 (Value & Label)</label>
+                      <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', gap: '8px' }}>
+                        <input 
+                          type="text"
+                          placeholder="99%"
+                          value={tempSettings.aboutUs?.stat3Value || '99%'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat3Value', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                        <input 
+                          type="text"
+                          placeholder="Satisfaction Rate"
+                          value={tempSettings.aboutUs?.stat3Label || 'Satisfaction Rate'}
+                          onChange={(e) => handleNestedFieldChange('aboutUs', 'stat3Label', e.target.value)}
+                          style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-card)', color: 'var(--color-text)', fontSize: '13px', outline: 'none', minWidth: 0, width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Certified Badge Text */}
+                  <h4 style={{ fontSize: '13px', fontWeight: '800', textTransform: 'uppercase', marginTop: '20px', marginBottom: '10px', color: 'var(--color-text)' }}>
+                    🏷️ Certified Fresh Badge
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Title</label>
+                      <input 
+                        type="text"
+                        placeholder="CERTIFIED FRESH"
+                        value={tempSettings.aboutUs?.badgeTitle || 'CERTIFIED FRESH'}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'badgeTitle', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', width: '100%' }}
+                      />
+                    </div>
+                    <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '6px', minWidth: 0 }}>
+                      <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase' }}>Badge Subtitle</label>
+                      <input 
+                        type="text"
+                        placeholder="Hand-packed daily"
+                        value={tempSettings.aboutUs?.badgeSubtitle || 'Hand-packed daily'}
+                        onChange={(e) => handleNestedFieldChange('aboutUs', 'badgeSubtitle', e.target.value)}
+                        style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', width: '100%' }}
                       />
                     </div>
                   </div>

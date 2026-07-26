@@ -106,11 +106,15 @@ export const Login = () => {
       return;
     }
 
-    const result = await forgotPassword(email);
+    const result = await forgotPassword(email.trim());
     if (result.success) {
-      setSuccess(`Password reset email sent to ${email}! 📧 Please check your Inbox and Spam/Junk folder.`);
+      setSuccess(`Account verified! 🔑 Redirecting to Reset Password...`);
+      const targetEmail = result.email || email.trim();
+      setTimeout(() => {
+        navigate(`/reset-password?email=${encodeURIComponent(targetEmail)}`);
+      }, 1000);
     } else {
-      setError(result.message || 'Reset request failed.');
+      setError(result.message || 'No account found with this email address.');
     }
   };
 
@@ -160,7 +164,7 @@ export const Login = () => {
             <p className="login-subtitle">
               {mode === 'login' && "Access your Lolly Shop account or administrator panel"}
               {mode === 'register' && "Join Lolly Shop to manage your orders & exclusive perks"}
-              {mode === 'forgot' && "Enter your email to receive a password reset link"}
+              {mode === 'forgot' && "Enter your registered email address to verify your account"}
             </p>
           </div>
 
@@ -172,23 +176,9 @@ export const Login = () => {
           )}
           
           {success && (
-            <div className="login-alert alert-success" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <CheckCircle size={18} style={{ flexShrink: 0 }} />
-                <span>{success}</span>
-              </div>
-              {mode === 'forgot' && (
-                <div style={{ marginTop: '6px', paddingTop: '8px', borderTop: '1px solid rgba(21, 128, 61, 0.2)', width: '100%', fontSize: '12.5px' }}>
-                  <span>Email not appearing in Inbox? Check <strong>Spam/Junk</strong> or </span>
-                  <button 
-                    type="button" 
-                    onClick={() => navigate('/reset-password')}
-                    style={{ background: 'none', border: 'none', color: '#15803d', fontWeight: '800', textDecoration: 'underline', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-                  >
-                    Click Here to Reset Password Directly ↗
-                  </button>
-                </div>
-              )}
+            <div className="login-alert alert-success">
+              <CheckCircle size={18} style={{ flexShrink: 0 }} />
+              <span>{success}</span>
             </div>
           )}
 

@@ -126,6 +126,43 @@ const settingsSchema = new mongoose.Schema({
   googleAnalytics: { type: String, default: '' },
   facebookPixel: { type: String, default: '' },
 
+  // Hero Slider & Animations
+  heroSliderSettings: {
+    autoPlay: { type: Boolean, default: true },
+    interval: { type: Number, default: 5000 },
+    animationEffect: { type: String, default: 'slide' },
+    showProgressBar: { type: Boolean, default: true },
+    pauseOnHover: { type: Boolean, default: true }
+  },
+
+  heroSlides: {
+    type: [{
+      id: { type: String },
+      enabled: { type: Boolean, default: true },
+      heading: { type: String, default: '' },
+      subheading: { type: String, default: '' },
+      description: { type: String, default: '' },
+      badgeText: { type: String, default: '' },
+      buttonText: { type: String, default: '' },
+      buttonLink: { type: String, default: '' },
+      secondaryButtonText: { type: String, default: '' },
+      secondaryButtonLink: { type: String, default: '' },
+      heroImage: { type: String, default: '' },
+      backgroundImage: { type: String, default: '' },
+      themeGlow: { type: String, default: 'glow-pink' },
+      floatingIcons: { type: [String], default: ['🍬', '🍭', '🍫', '🍑', '🍒'] },
+      infoCards: {
+        type: [{
+          icon: { type: String },
+          title: { type: String },
+          subtitle: { type: String }
+        }],
+        default: []
+      }
+    }],
+    default: []
+  },
+
   // Hero Section
   hero: {
     heading: { type: String, default: 'SWEETEN YOUR EVERYDAY LIFE!' },
@@ -141,12 +178,21 @@ const settingsSchema = new mongoose.Schema({
     badgeText: { type: String, default: 'New NZ Confections' }
   },
 
-  // About Us Page
+  // About Us Page / Our Sweet Journey
   aboutUs: {
     heading: { type: String, default: 'Our Sweet Journey' },
+    badgeText: { type: String, default: 'Since 2015' },
     subheading: { type: String, default: 'Crafting smiles and supplying the finest confections across New Zealand since 2018.' },
     description: { type: String, default: 'Lolly Shop began with a simple mission: to bring the joy of premium confections right to your doorstep. Over the years, we have sourced the finest candies from around the globe while supporting local Kiwi makers.' },
     story: { type: String, default: 'Our story started in Auckland with a tiny storefront and a big passion for quality confectionery. Today, we are proud to be New Zealand\'s leading online sweet delivery store, sending thousands of packages of happiness every month.' },
+    stat1Value: { type: String, default: '50K+' },
+    stat1Label: { type: String, default: 'Happy Customers' },
+    stat2Value: { type: String, default: '500+' },
+    stat2Label: { type: String, default: 'Premium Treats' },
+    stat3Value: { type: String, default: '99%' },
+    stat3Label: { type: String, default: 'Satisfaction Rate' },
+    badgeTitle: { type: String, default: 'Certified Fresh' },
+    badgeSubtitle: { type: String, default: 'Hand-packed daily' },
     mission: { type: String, default: 'To satisfy every sweet tooth with top-tier, fresh lollies, while delivering exceptional, reliable service.' },
     vision: { type: String, default: 'To become the premier confection hub in the Southern Hemisphere, known for unique imported varieties and premium local packaging.' },
     images: { type: [String], default: ['/about_showcase1.png'] },
