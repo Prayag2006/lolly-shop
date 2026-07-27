@@ -222,7 +222,7 @@ const settingsSchema = new mongoose.Schema({
   // SMTP Email Settings
   smtpConfig: {
     user: { type: String, default: 'bestlollyshopnz@gmail.com' },
-    pass: { type: String, default: 'zowrsxqwdeqbaybs' },
+    pass: { type: String, default: 'iwiwwwmafwipuskv' },
     host: { type: String, default: 'smtp.gmail.com' },
     port: { type: Number, default: 587 },
     enabled: { type: Boolean, default: true }

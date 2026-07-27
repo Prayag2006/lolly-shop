@@ -86,16 +86,16 @@ const createMailTransporter = async () => {
   const host = settingsSmtp.host || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = Number(settingsSmtp.port || process.env.SMTP_PORT || 587);
   const smtpUser = settingsSmtp.user || process.env.SMTP_USER || 'bestlollyshopnz@gmail.com';
-  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || 'zowrsxqwdeqbaybs';
+  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || 'iwiwwwmafwipuskv';
 
   if (smtpUser && smtpPass) {
+    const isGmail = host.includes('gmail');
+    const transportConfig = isGmail 
+      ? { service: 'gmail', auth: { user: smtpUser, pass: smtpPass } }
+      : { host, port, secure: port === 465, auth: { user: smtpUser, pass: smtpPass } };
+
     return {
-      transporter: nodemailer.createTransport({
-        host,
-        port,
-        secure: port === 465,
-        auth: { user: smtpUser, pass: smtpPass }
-      }),
+      transporter: nodemailer.createTransport(transportConfig),
       isFallback: false,
       smtpUser
     };
