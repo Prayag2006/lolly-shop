@@ -86,7 +86,7 @@ const createMailTransporter = async () => {
   const host = settingsSmtp.host || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = Number(settingsSmtp.port || process.env.SMTP_PORT || 587);
   const smtpUser = settingsSmtp.user || process.env.SMTP_USER || 'bestlollyshopnz@gmail.com';
-  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || 'mbhoppntnsmbupeu';
+  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || 'zowrsxqwdeqbaybs';
 
   if (smtpUser && smtpPass) {
     return {
