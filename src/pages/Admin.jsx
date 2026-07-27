@@ -2929,7 +2929,7 @@ export const Admin = () => {
                     transition: 'all var(--transition-fast)'
                   }}
                 >
-                  Product Reviews ({products.reduce((acc, p) => acc + (p.reviews?.length || 0), 0)})
+                  Product Reviews ({safeProducts.reduce((acc, p) => acc + (p.reviews?.length || 0), 0)})
                 </button>
                 <button
                   className={`admin-subtab-btn ${reviewsSubTab === 'testimonials' ? 'active' : ''}`}
@@ -2950,12 +2950,12 @@ export const Admin = () => {
               {reviewsSubTab === 'products' ? (
                 /* Product Reviews List */
                 <div className="reviews-management-list" style={{ display: 'grid', gap: '16px' }}>
-                  {products.flatMap(p => (p.reviews || []).map(r => ({
+                  {safeProducts.flatMap(p => (p.reviews || []).map(r => ({
                     product: p,
                     review: r
                   }))).length > 0 ? (
-                    products.flatMap(p => (p.reviews || []).map(r => (
-                      <div key={r._id || r.id} className="admin-review-card glass-card animate-fade-in" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    safeProducts.flatMap(p => (p.reviews || []).map(r => (
+                      <div key={r._id || r.id || `${p.id}-${r.userName}`} className="admin-review-card glass-card animate-fade-in" style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <div>
                             <span style={{ fontSize: '11px', fontWeight: '800', textTransform: 'uppercase', color: 'var(--color-primary)', letterSpacing: '0.5px' }}>
@@ -2967,12 +2967,13 @@ export const Admin = () => {
                             </span>
                           </div>
                           <button
+                            type="button"
                             style={{
                               display: 'flex', alignItems: 'center', gap: '6px',
                               padding: '6px 12px', borderRadius: '8px', border: '1.5px solid #fee2e2',
                               background: '#fef2f2', color: '#dc2626', fontWeight: '700', fontSize: '12px', cursor: 'pointer'
                             }}
-                            onClick={() => deleteProductReview(p.id, r._id || r.id)}
+                            onClick={() => deleteProductReview(p.id || p._id, r._id || r.id)}
                           >
                             <Trash2 size={13} /> Remove
                           </button>

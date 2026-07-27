@@ -435,8 +435,10 @@ export const StoreProvider = ({ children }) => {
         body: JSON.stringify(reviewData)
       });
       const data = await res.json();
-      setProducts(prev => prev.map(p => p.id === productId ? data : p));
-      return data;
+      if (res.ok && data) {
+        setProducts(prev => prev.map(p => (String(p.id || p._id) === String(productId) || String(p.id || p._id) === String(data.id || data._id)) ? data : p));
+        return data;
+      }
     } catch (error) {
       console.error('Error adding product review:', error);
     }
@@ -463,8 +465,10 @@ export const StoreProvider = ({ children }) => {
         method: 'DELETE'
       });
       const data = await res.json();
-      setProducts(prev => prev.map(p => p.id === productId ? data : p));
-      return data;
+      if (res.ok && data) {
+        setProducts(prev => prev.map(p => (String(p.id || p._id) === String(productId) || String(p.id || p._id) === String(data.id || data._id)) ? data : p));
+        return data;
+      }
     } catch (error) {
       console.error('Error deleting product review:', error);
     }

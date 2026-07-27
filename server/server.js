@@ -663,7 +663,13 @@ app.post('/api/products/:id/reviews', async (req, res) => {
     const cleanComment = String(comment).trim().slice(0, 1000);
 
     if (sqlAvailable()) {
-      const product = await Product.findById(req.params.id);
+      let product;
+      if (req.params.id && req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+        product = await Product.findById(req.params.id);
+      }
+      if (!product) {
+        product = await Product.findOne({ id: req.params.id });
+      }
       if (!product) return res.status(404).json({ message: 'Product not found' });
       
       const newReview = { userName: cleanUserName, rating: rate, comment: cleanComment };
@@ -679,7 +685,7 @@ app.post('/api/products/:id/reviews', async (req, res) => {
       res.status(201).json(product);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => p.id === req.params.id);
+      const index = products.findIndex(p => String(p.id || p._id) === String(req.params.id));
       if (index === -1) return res.status(404).json({ message: 'Product not found' });
       
       const product = products[index];
@@ -711,10 +717,16 @@ app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
   try {
     const { id, reviewId } = req.params;
     if (sqlAvailable()) {
-      const product = await Product.findById(id);
+      let product;
+      if (id && id.match(/^[0-9a-fA-F]{24}$/)) {
+        product = await Product.findById(id);
+      }
+      if (!product) {
+        product = await Product.findOne({ id });
+      }
       if (!product) return res.status(404).json({ message: 'Product not found' });
       
-      product.reviews = product.reviews.filter(r => r._id.toString() !== reviewId);
+      product.reviews = (product.reviews || []).filter(r => String(r._id || r.id) !== String(reviewId));
       
       const totalReviews = product.reviews.length;
       if (totalReviews > 0) {
@@ -730,7 +742,7 @@ app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
       res.json(product);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => p.id === id);
+      const index = products.findIndex(p => String(p.id || p._id) === String(id));
       if (index === -1) return res.status(404).json({ message: 'Product not found' });
       
       const product = products[index];

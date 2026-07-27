@@ -6,6 +6,12 @@ const reviewSchema = new mongoose.Schema({
   comment: { type: String, required: true }
 }, { timestamps: true });
 
+reviewSchema.virtual('id').get(function() {
+  return this._id ? this._id.toHexString() : undefined;
+});
+reviewSchema.set('toJSON', { virtuals: true });
+reviewSchema.set('toObject', { virtuals: true });
+
 const productSchema = new mongoose.Schema({
   name: { type: String, required: true },
   category: { type: String, required: true },
