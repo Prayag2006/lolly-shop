@@ -148,72 +148,6 @@ export const Checkout = () => {
   const [verificationError, setVerificationError] = useState('');
   const [redirectingToStripe, setRedirectingToStripe] = useState(false);
   const [redirectingToGateway, setRedirectingToGateway] = useState(false);
-  const [selectedPaymentOption, setSelectedPaymentOption] = useState('card');
-
-  const handleCodCheckout = async (e) => {
-    e.preventDefault();
-    setSubmitError('');
-    saveCustomerAddress(shippingForm);
-    setRedirectingToGateway(true);
-
-    try {
-      const orderId = `ORD-${Date.now().toString().slice(-6)}`;
-      const nowStr = new Date().toISOString();
-      const dateFormatted = new Date().toLocaleDateString('en-NZ', { year: 'numeric', month: 'short', day: 'numeric' });
-
-      const orderPayload = {
-        id: orderId,
-        date: dateFormatted,
-        customer: {
-          name: shippingForm.name,
-          email: shippingForm.email,
-          phone: shippingForm.phone,
-          address: shippingForm.address,
-          city: shippingForm.city,
-          postalCode: shippingForm.zip,
-          country: 'New Zealand'
-        },
-        items: cart.map(item => ({
-          id: item.id || item._id,
-          name: item.name,
-          weight: item.selectedWeight || 'Standard',
-          quantity: item.quantity,
-          price: item.price,
-          image: item.image
-        })),
-        subtotal: cartTotal,
-        shipping: activeShippingFee,
-        total: finalTotal,
-        deliveryCompany: selectedOption ? selectedOption.name : (isHamilton ? 'Free Delivery - Hamilton' : 'Standard Courier Delivery'),
-        paymentMethod: 'Cash on Delivery (COD)',
-        paymentStatus: 'Pending (Cash on Delivery)',
-        status: 'Processing',
-        createdAt: nowStr,
-        updatedAt: nowStr
-      };
-
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderPayload)
-      });
-      const data = await response.json();
-
-      if (response.ok) {
-        clearCart();
-        setCompletedOrder(data);
-        setStep(3);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } else {
-        setSubmitError(data.message || 'Failed to place Cash on Delivery order. Please try again.');
-      }
-    } catch (err) {
-      console.error('Error placing COD order:', err);
-      setSubmitError('A connection error occurred. Please try again.');
-    } finally {
-      setRedirectingToGateway(false);
-    }
-  };
 
   // Form Validations
   const isValidNZPhoneNumber = (phone) => {
@@ -895,107 +829,80 @@ export const Checkout = () => {
                   </button>
                 </div>
               ) : (
-                <form onSubmit={selectedPaymentOption === 'cod' ? handleCodCheckout : handlePaymentCheckout}>
+                <form onSubmit={handlePaymentCheckout}>
                   <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '14px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)' }}>
-                    Select Payment Method
+                    Payment Method
                   </h3>
-                  <div className="payment-options-container" style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
-                    {/* Option 1: Credit / Debit Card (Stripe) */}
+                  <div className="payment-options-container" style={{ cursor: 'default' }}>
+                    {/* Option 1: Stripe */}
                     <div 
-                      className={`payment-row ${selectedPaymentOption === 'card' ? 'active' : ''}`}
-                      onClick={() => setSelectedPaymentOption('card')}
-                      style={{ cursor: 'pointer', padding: '16px', borderRadius: '12px', border: selectedPaymentOption === 'card' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', background: selectedPaymentOption === 'card' ? 'rgba(231,44,131,0.04)' : 'var(--color-background)', transition: 'all 0.2s ease' }}
+                      className="payment-row active"
+                      style={{ cursor: 'default' }}
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <input 
-                            type="radio" 
-                            name="paymentOption" 
-                            checked={selectedPaymentOption === 'card'} 
-                            onChange={() => setSelectedPaymentOption('card')}
-                            style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
-                          />
-                          <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
-                            💳 Credit / Debit Card (Stripe)
-                          </span>
-                        </div>
-                        
-                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                          <div style={{ background: 'white', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)', height: '18px', display: 'flex', alignItems: 'center' }}>
-                            <span style={{ color: '#1a1f71', fontWeight: '900', fontSize: '9px', fontStyle: 'italic' }}>VISA</span>
-                          </div>
-                          <div style={{ background: 'white', padding: '2px 5px', borderRadius: '4px', border: '1px solid rgba(0,0,0,0.1)', height: '18px', width: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <div style={{ display: 'flex', width: '16px', height: '10px', position: 'relative' }}>
-                              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eb001b', position: 'absolute', left: 0 }} />
-                              <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f00', position: 'absolute', right: 0, opacity: 0.85 }} />
-                            </div>
-                          </div>
-                          <div style={{ background: '#0070d2', padding: '2px 4px', borderRadius: '4px', height: '18px', display: 'flex', alignItems: 'center' }}>
-                            <span style={{ color: 'white', fontWeight: '900', fontSize: '7px' }}>AMEX</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {selectedPaymentOption === 'card' && (
-                        <div className="gateway-drawer stripe" style={{ display: 'block', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                            <div className="drawer-icon-box stripe">
-                              <ShieldCheck size={20} style={{ flexShrink: 0 }} />
-                            </div>
-                            <div style={{ textAlign: 'left' }}>
-                              <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
-                                Stripe Secure Card Checkout
-                              </h4>
-                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                                You'll be redirected to a 256-bit SSL encrypted Stripe portal to enter your card details safely.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Option 2: Cash on Delivery (COD) */}
-                    <div 
-                      className={`payment-row ${selectedPaymentOption === 'cod' ? 'active' : ''}`}
-                      onClick={() => setSelectedPaymentOption('cod')}
-                      style={{ cursor: 'pointer', padding: '16px', borderRadius: '12px', border: selectedPaymentOption === 'cod' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)', background: selectedPaymentOption === 'cod' ? 'rgba(231,44,131,0.04)' : 'var(--color-background)', transition: 'all 0.2s ease' }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <input 
-                            type="radio" 
-                            name="paymentOption" 
-                            checked={selectedPaymentOption === 'cod'} 
-                            onChange={() => setSelectedPaymentOption('cod')}
-                            style={{ width: '18px', height: '18px', accentColor: 'var(--color-primary)', cursor: 'pointer' }}
-                          />
-                          <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
-                            💵 Cash on Delivery (COD)
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '11px', fontWeight: '800', background: '#10b981', color: 'white', padding: '3px 8px', borderRadius: '12px', textTransform: 'uppercase' }}>
-                          Pay at Doorstep
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ fontWeight: '700', fontSize: '15px', color: 'var(--color-text)' }}>
+                          Credit / Debit Card (Stripe)
                         </span>
                       </div>
-
-                      {selectedPaymentOption === 'cod' && (
-                        <div className="gateway-drawer cod" style={{ display: 'block', marginTop: '12px', paddingTop: '12px', borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                          <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-                            <div style={{ background: 'rgba(16,185,129,0.1)', padding: '10px', borderRadius: '10px', color: '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              💵
-                            </div>
-                            <div style={{ textAlign: 'left' }}>
-                              <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
-                                Cash on Delivery Available
-                              </h4>
-                              <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
-                                Pay cash directly to our courier driver when your sweet parcel arrives at your door. No online card required!
-                              </p>
-                            </div>
+                      
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {/* Visa badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '18px'
+                        }}>
+                          <span style={{ color: '#1a1f71', fontWeight: '900', fontSize: '9px', fontStyle: 'italic', letterSpacing: '-0.3px', lineHeight: 1 }}>VISA</span>
+                        </div>
+                        {/* Mastercard badge */}
+                        <div style={{
+                          background: 'white',
+                          padding: '2px 5px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(0,0,0,0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '18px',
+                          width: '28px'
+                        }}>
+                          <div style={{ display: 'flex', width: '16px', height: '10px', position: 'relative' }}>
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#eb001b', position: 'absolute', left: 0 }} />
+                            <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f00', position: 'absolute', right: 0, opacity: 0.85 }} />
                           </div>
                         </div>
-                      )}
+                        {/* Amex badge */}
+                        <div style={{
+                          background: '#0070d2',
+                          padding: '2px 4px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '18px'
+                        }}>
+                          <span style={{ color: 'white', fontWeight: '900', fontSize: '7px', letterSpacing: '0.1px', lineHeight: 1 }}>AMEX</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="gateway-drawer stripe" style={{ display: 'block' }}>
+                      <div style={{ display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
+                        <div className="drawer-icon-box stripe">
+                          <ShieldCheck size={20} style={{ flexShrink: 0 }} />
+                        </div>
+                        <div style={{ textAlign: 'left' }}>
+                          <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: '800', color: 'var(--color-text)' }}>
+                            Stripe Secure Checkout
+                          </h4>
+                          <p style={{ margin: 0, fontSize: '13px', color: 'var(--color-text-muted)', lineHeight: '1.5' }}>
+                            You'll be redirected to a secure, 256-bit SSL encrypted Stripe portal to enter your card details. Lolly Shop never stores your private payment credentials.
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -1042,12 +949,13 @@ export const Checkout = () => {
                             borderRadius: '50%',
                             animation: 'spin 0.6s linear infinite'
                           }} />
-                          <span>Processing Order...</span>
+                          <span>Connecting to Stripe...</span>
                         </div>
                       ) : (
-                        selectedPaymentOption === 'cod' 
-                          ? `Place Order (Cash on Delivery) — $${finalTotal.toFixed(2)} NZD` 
-                          : `Pay $${finalTotal.toFixed(2)} NZD with Card`
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                          <Lock size={16} style={{ flexShrink: 0, opacity: 0.9 }} />
+                          <span>Pay Securely with Stripe (${finalTotal.toFixed(2)})</span>
+                        </div>
                       )}
                     </button>
                   </div>
