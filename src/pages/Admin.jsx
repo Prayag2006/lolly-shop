@@ -102,7 +102,7 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
 
 export const Admin = () => {
   const { 
-    currentUser, products, orders, contactSubmissions, 
+    currentUser, products, orders, contactSubmissions, addContactSubmission, deleteContactSubmission, 
     addProduct, updateProduct, deleteProduct, updateProductStock, 
     updateOrderStatus, categories, addCategory, updateCategory, deleteCategory, brands, 
     addBrand, deleteBrand, updateBrand, testimonials, 
@@ -218,7 +218,9 @@ export const Admin = () => {
   const [newRedirect, setNewRedirect] = useState({ fromPath: '', toPath: '', statusCode: 301 });
   const [redirectSuccess, setRedirectSuccess] = useState('');
 
-  // Enterprise Newsletter state
+  // Contact Requests State
+  const [selectedContactModal, setSelectedContactModal] = useState(null);
+  const [contactSearchTerm, setContactSearchTerm] = useState('');
   const [newSubscriberEmail, setNewSubscriberEmail] = useState('');
   const [subscriberSearchTerm, setSubscriberSearchTerm] = useState('');
   const [newsletterCampaign, setNewsletterCampaign] = useState({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
@@ -1820,40 +1822,223 @@ export const Admin = () => {
 
 
           {activeTab === 'contacts' && (
-            <div className="admin-tab-content">
-              <h2>Contact Requests</h2>
-              {contactSubmissions.length === 0 ? (
-                <div className="admin-empty-state glass-card">
-                  <div className="empty-state-icon">📩</div>
-                  <h3>No contact requests yet</h3>
-                  <p>Requests submitted through the Contact page will appear here.</p>
+            <div className="admin-tab-content animate-fade-in">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ margin: 0 }}>Contact Requests & Inquiries</h2>
+                  <p className="tab-subtitle" style={{ margin: '4px 0 0' }}>Customer messages submitted via the Contact Us form appear here in real-time.</p>
+                </div>
+                <span className="nl-count-badge" style={{ background: 'linear-gradient(135deg, rgba(231, 44, 131, 0.1) 0%, rgba(237, 90, 158, 0.1) 100%)', color: 'var(--color-primary)', border: '1px solid rgba(231, 44, 131, 0.2)', padding: '6px 16px', borderRadius: '30px', fontWeight: '800', fontSize: '13px' }}>
+                  {safeContactSubmissions.length} Request{safeContactSubmissions.length === 1 ? '' : 's'} Total
+                </span>
+              </div>
+
+              {safeContactSubmissions.length > 0 && (
+                <div className="nl-subscriber-search-box" style={{ marginBottom: '20px', maxWidth: '400px' }}>
+                  <svg className="nl-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                  <input 
+                    type="text" 
+                    className="nl-search-input"
+                    placeholder="Search by name, email, or message..." 
+                    value={contactSearchTerm}
+                    onChange={(e) => setContactSearchTerm(e.target.value)}
+                  />
+                </div>
+              )}
+
+              {safeContactSubmissions.length === 0 ? (
+                <div className="admin-empty-state glass-card" style={{ padding: '60px 20px', textAlign: 'center' }}>
+                  <div className="empty-state-icon" style={{ fontSize: '48px', marginBottom: '12px' }}>📩</div>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', margin: '0 0 6px 0' }}>No contact requests yet</h3>
+                  <p style={{ color: 'var(--color-text-light)', fontSize: '14px', margin: 0 }}>Customer submissions from your Contact page will instantly display here.</p>
                 </div>
               ) : (
-                <div className="admin-table-container glass-card">
-                  <table className="admin-table">
+                <div className="admin-table-container glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+                  <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
                     <thead>
-                      <tr>
-                        <th>Topic</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Message</th>
-                        <th>Submitted At</th>
+                      <tr style={{ background: 'var(--color-background-soft)', borderBottom: '1.5px solid var(--color-border)' }}>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Topic</th>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Sender</th>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Phone</th>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Message Preview</th>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Date & Time</th>
+                        <th style={{ padding: '14px 18px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.5px', textAlign: 'right' }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {contactSubmissions.map((submission) => (
-                        <tr key={submission.id}>
-                          <td>{submission.subject}</td>
-                          <td>{submission.name}</td>
-                          <td>{submission.email}</td>
-                          <td>{submission.phone || '—'}</td>
-                          <td className="contact-message-cell">{submission.message}</td>
-                          <td>{submission.submittedAt}</td>
-                        </tr>
-                      ))}
+                      {safeContactSubmissions
+                        .filter(sub => {
+                          if (!contactSearchTerm) return true;
+                          const term = contactSearchTerm.toLowerCase();
+                          return (
+                            (sub.name || '').toLowerCase().includes(term) ||
+                            (sub.email || '').toLowerCase().includes(term) ||
+                            (sub.subject || '').toLowerCase().includes(term) ||
+                            (sub.message || '').toLowerCase().includes(term)
+                          );
+                        })
+                        .map((submission, idx) => (
+                          <tr key={submission.id || submission._id || idx} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td style={{ padding: '14px 18px', whiteSpace: 'nowrap' }}>
+                              <span style={{ 
+                                background: 'rgba(231, 44, 131, 0.08)', 
+                                color: 'var(--color-primary)', 
+                                padding: '4px 10px', 
+                                borderRadius: '12px', 
+                                fontSize: '12px', 
+                                fontWeight: '700',
+                                border: '1px solid rgba(231, 44, 131, 0.15)'
+                              }}>
+                                {submission.subject || 'General Inquiry'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '14px 18px' }}>
+                              <div style={{ fontWeight: '700', fontSize: '13.5px', color: 'var(--color-text)' }}>{submission.name}</div>
+                              <a href={`mailto:${submission.email}`} style={{ fontSize: '12px', color: 'var(--color-text-light)', textDecoration: 'none' }}>
+                                {submission.email}
+                              </a>
+                            </td>
+                            <td style={{ padding: '14px 18px', fontSize: '13px', color: 'var(--color-text-muted)' }}>
+                              {submission.phone ? (
+                                <a href={`tel:${submission.phone}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                                  📞 {submission.phone}
+                                </a>
+                              ) : (
+                                '—'
+                              )}
+                            </td>
+                            <td style={{ padding: '14px 18px', maxWidth: '280px' }}>
+                              <p style={{ 
+                                margin: 0, 
+                                fontSize: '13px', 
+                                color: 'var(--color-text-muted)', 
+                                overflow: 'hidden', 
+                                textOverflow: 'ellipsis', 
+                                display: '-webkit-box', 
+                                WebkitLineClamp: 2, 
+                                WebkitBoxOrient: 'vertical',
+                                lineHeight: '1.4' 
+                              }}>
+                                {submission.message}
+                              </p>
+                              {submission.message && submission.message.length > 70 && (
+                                <button 
+                                  onClick={() => setSelectedContactModal(submission)} 
+                                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11.5px', fontWeight: '700', cursor: 'pointer', padding: 0, marginTop: '2px' }}
+                                >
+                                  Read full message →
+                                </button>
+                              )}
+                            </td>
+                            <td style={{ padding: '14px 18px', fontSize: '12px', color: 'var(--color-text-light)', whiteSpace: 'nowrap' }}>
+                              {submission.submittedAt || (submission.createdAt ? new Date(submission.createdAt).toLocaleString('en-NZ') : '—')}
+                            </td>
+                            <td style={{ padding: '14px 18px', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedContactModal(submission)}
+                                  className="btn btn-sm"
+                                  style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '700', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}
+                                  title="View Details"
+                                >
+                                  View
+                                </button>
+                                <a
+                                  href={`mailto:${submission.email}?subject=${encodeURIComponent(`Re: ${submission.subject || 'Lolly Shop Inquiry'}`)}`}
+                                  className="btn btn-sm btn-primary"
+                                  style={{ padding: '6px 12px', fontSize: '12px', fontWeight: '700', borderRadius: '8px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                >
+                                  Reply
+                                </a>
+                                {deleteContactSubmission && (
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      if (window.confirm(`Are you sure you want to delete contact request from ${submission.name}?`)) {
+                                        await deleteContactSubmission(submission.id || submission._id);
+                                      }
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '6px 8px', borderRadius: '6px' }}
+                                    title="Delete Submission"
+                                  >
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
+                </div>
+              )}
+
+              {/* Full Contact Inspector Modal */}
+              {selectedContactModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px' }}>
+                  <div style={{ background: 'var(--color-background)', borderRadius: '20px', maxWidth: '600px', width: '100%', padding: '28px', border: '1px solid var(--color-border)', boxShadow: '0 20px 40px rgba(0,0,0,0.2)', position: 'relative' }} className="animate-scale-up">
+                    <button 
+                      onClick={() => setSelectedContactModal(null)} 
+                      style={{ position: 'absolute', top: '16px', right: '16px', background: 'var(--color-background-soft)', border: '1px solid var(--color-border)', borderRadius: '50%', width: '32px', height: '32px', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', color: 'var(--color-text)' }}
+                    >✕</button>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '800', fontSize: '20px' }}>
+                        {(selectedContactModal.name || '?').charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>{selectedContactModal.name}</h3>
+                        <span style={{ fontSize: '12px', color: 'var(--color-primary)', fontWeight: '700' }}>
+                          Topic: {selectedContactModal.subject || 'General Inquiry'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', padding: '14px', borderRadius: '12px', background: 'var(--color-background-soft)', border: '1px solid var(--color-border)', marginBottom: '20px', fontSize: '13px' }}>
+                      <div>
+                        <span style={{ color: 'var(--color-text-light)', display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Email Address</span>
+                        <a href={`mailto:${selectedContactModal.email}`} style={{ color: 'var(--color-primary)', fontWeight: '700', textDecoration: 'none' }}>
+                          {selectedContactModal.email}
+                        </a>
+                      </div>
+                      <div>
+                        <span style={{ color: 'var(--color-text-light)', display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Phone Number</span>
+                        <span style={{ fontWeight: '700', color: 'var(--color-text)' }}>{selectedContactModal.phone || 'Not provided'}</span>
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <span style={{ color: 'var(--color-text-light)', display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Submitted On</span>
+                        <span style={{ fontWeight: '600', color: 'var(--color-text)' }}>
+                          {selectedContactModal.submittedAt || (selectedContactModal.createdAt ? new Date(selectedContactModal.createdAt).toLocaleString('en-NZ') : '—')}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div style={{ marginBottom: '24px' }}>
+                      <span style={{ color: 'var(--color-text-light)', display: 'block', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', marginBottom: '8px' }}>Full Customer Message</span>
+                      <div style={{ padding: '16px', borderRadius: '12px', background: 'var(--color-background-soft)', border: '1px solid var(--color-border)', fontSize: '14px', lineHeight: '1.6', color: 'var(--color-text)', whitespace: 'pre-wrap' }}>
+                        {selectedContactModal.message}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                      <button 
+                        type="button" 
+                        onClick={() => setSelectedContactModal(null)} 
+                        className="btn" 
+                        style={{ padding: '10px 20px', fontWeight: '700', fontSize: '13px' }}
+                      >
+                        Close
+                      </button>
+                      <a 
+                        href={`mailto:${selectedContactModal.email}?subject=${encodeURIComponent(`Re: ${selectedContactModal.subject || 'Lolly Shop Inquiry'}`)}`} 
+                        className="btn btn-primary" 
+                        style={{ padding: '10px 24px', fontWeight: '800', fontSize: '13px', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      >
+                        ✉️ Reply via Email
+                      </a>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

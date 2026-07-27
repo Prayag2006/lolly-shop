@@ -2542,7 +2542,8 @@ app.post('/api/contacts', async (req, res) => {
       email: String(email).trim().toLowerCase().slice(0, 100),
       phone: phone ? String(phone).trim().slice(0, 30) : '',
       subject: subject ? String(subject).trim().slice(0, 150) : 'General Inquiry',
-      message: String(message).trim().slice(0, 2000)
+      message: String(message).trim().slice(0, 2000),
+      submittedAt: req.body.submittedAt ? String(req.body.submittedAt).trim() : new Date().toLocaleString('en-NZ')
     };
 
     if (sqlAvailable()) {
@@ -2562,6 +2563,22 @@ app.post('/api/contacts', async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({ message: 'Error submitting contact form', error: error.message });
+  }
+});
+
+app.delete('/api/contacts/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (sqlAvailable()) {
+      await Contact.findByIdAndDelete(id);
+    } else {
+      let submissions = readLocalData('contacts.json', []);
+      submissions = submissions.filter(s => String(s.id || s._id) !== String(id));
+      writeLocalData('contacts.json', submissions);
+    }
+    res.json({ success: true, message: 'Contact submission removed' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting contact submission', error: error.message });
   }
 });
 

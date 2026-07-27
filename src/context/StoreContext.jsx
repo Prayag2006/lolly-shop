@@ -808,7 +808,7 @@ export const StoreProvider = ({ children }) => {
   const addContactSubmission = async (submission) => {
     const newSubmission = {
       ...submission,
-      submittedAt: new Date().toLocaleString('en-NZ')
+      submittedAt: submission.submittedAt || new Date().toLocaleString('en-NZ')
     };
 
     try {
@@ -819,8 +819,22 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       setContactSubmissions(prev => [data, ...prev]);
+      return { success: true, submission: data };
     } catch (error) {
       console.error('Error adding contact submission:', error);
+      return { error: error.message };
+    }
+  };
+
+  const deleteContactSubmission = async (id) => {
+    try {
+      const res = await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setContactSubmissions(prev => prev.filter(s => String(s.id || s._id) !== String(id)));
+        return { success: true };
+      }
+    } catch (error) {
+      console.error('Error deleting contact submission:', error);
     }
   };
 
@@ -1495,6 +1509,7 @@ export const StoreProvider = ({ children }) => {
         updateOrderStatus,
         contactSubmissions,
         addContactSubmission,
+        deleteContactSubmission,
         categories,
         addCategory,
         updateCategory,
