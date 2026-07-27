@@ -94,6 +94,8 @@ export const Footer = () => {
                 playsInline
                 style={{ maxHeight: '60px', width: 'auto', objectFit: 'contain', marginLeft: '20px' }}
               >
+                <source src="/logovideo.mp4" type='video/mp4; codecs="hvc1"' />
+                <source src="/logovideo.mp4" type="video/mp4" />
                 <source src="/logovideo.webm" type="video/webm" />
               </video>
             </Link>
