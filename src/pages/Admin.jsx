@@ -5435,6 +5435,58 @@ export const Admin = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* SMTP Credentials & Setup Guide Card */}
+                  <div className="glass-card" style={{ marginTop: '24px', padding: '24px', borderRadius: '16px', background: 'rgba(231, 44, 131, 0.03)', border: '1px solid rgba(231, 44, 131, 0.2)' }}>
+                    <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '800', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      🔑 Live Email & Gmail App Password Settings
+                    </h3>
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
+                      Configure your official Gmail address and 16-character App Password for sending live newsletter campaigns and customer notifications.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                      <div>
+                        <label style={{ fontWeight: '700', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Sender Gmail Address</label>
+                        <input
+                          type="email"
+                          placeholder="e.g. bestlollyshopnz@gmail.com"
+                          value={tempSettings?.smtpConfig?.user || 'bestlollyshopnz@gmail.com'}
+                          onChange={(e) => handleNestedFieldChange('smtpConfig', 'user', e.target.value)}
+                          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ fontWeight: '700', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Gmail App Password (16 Characters)</label>
+                        <input
+                          type="password"
+                          placeholder="e.g. abcd efgh ijkl mnop"
+                          value={tempSettings?.smtpConfig?.pass || ''}
+                          onChange={(e) => handleNestedFieldChange('smtpConfig', 'pass', e.target.value)}
+                          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ background: 'var(--color-background)', padding: '14px', borderRadius: '10px', border: '1px solid var(--color-border)', fontSize: '12.5px', lineHeight: '1.6', marginBottom: '16px' }}>
+                      <strong>📌 How to get a Gmail 16-character App Password:</strong>
+                      <ol style={{ margin: '6px 0 0 18px', padding: 0 }}>
+                        <li>Open <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>Google Account Security</a>.</li>
+                        <li>Ensure <strong>2-Step Verification</strong> is turned ON.</li>
+                        <li>Search for <strong>"App Passwords"</strong> or visit <code>myaccount.google.com/apppasswords</code>.</li>
+                        <li>Create a new password named <strong>"Lolly Shop"</strong>, copy the 16-letter code, and paste it above!</li>
+                      </ol>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={handleSaveSettings}
+                      style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '800' }}
+                    >
+                      💾 Save Email & SMTP Credentials
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>

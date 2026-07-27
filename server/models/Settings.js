@@ -219,6 +219,15 @@ const settingsSchema = new mongoose.Schema({
     formEnabled: { type: Boolean, default: true }
   },
 
+  // SMTP Email Settings
+  smtpConfig: {
+    user: { type: String, default: 'bestlollyshopnz@gmail.com' },
+    pass: { type: String, default: '' },
+    host: { type: String, default: 'smtp.gmail.com' },
+    port: { type: Number, default: 587 },
+    enabled: { type: Boolean, default: true }
+  },
+
   // Footer Settings
   footer: {
     description: { type: String, default: 'NZ\'s favorite online candy store. Hand-picked imported confections, luxury chocolates, and sour straps delivered directly to your doorstep.' },
