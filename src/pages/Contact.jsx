@@ -55,13 +55,13 @@ export const Contact = () => {
     setDropdownOpen(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       return;
     }
 
-    addContactSubmission({
+    await addContactSubmission({
       subject: topic,
       name: name.trim(),
       email: email.trim(),

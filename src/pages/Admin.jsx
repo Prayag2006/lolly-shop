@@ -959,7 +959,7 @@ export const Admin = () => {
               onClick={() => setActiveTab('contacts')}
             >
               <FileText size={18} />
-              <span>Contact Requests ({contactSubmissions.length})</span>
+              <span>Contact Requests ({safeContactSubmissions.length})</span>
             </button>
           )}
             {hasAccess('add-product') && (
