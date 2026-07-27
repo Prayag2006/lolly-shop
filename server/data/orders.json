@@ -1,5 +1,90 @@
 [
   {
+    "id": "ORD-184378",
+    "_id": "6a66f2d8c99638e612f375b6",
+    "date": "27 Jul 2026",
+    "customer": {
+      "name": "Prayag Kansara",
+      "email": "prayagkansara05@gmail.com",
+      "phone": "02108263626",
+      "address": "17 Braid Road, St Andrews",
+      "city": "Hamilton",
+      "postalCode": "3200",
+      "country": "New Zealand"
+    },
+    "items": [
+      {
+        "id": "p1",
+        "name": "Pascall Jaffas",
+        "weight": "250g",
+        "quantity": 2,
+        "price": 7.9
+      },
+      {
+        "id": "p2",
+        "name": "Fizzy Sour Rainbow Straps",
+        "weight": "500g",
+        "quantity": 1,
+        "price": 12.5
+      }
+    ],
+    "shipping": 0,
+    "subtotal": 28.3,
+    "total": 28.3,
+    "deliveryCompany": "Free Delivery - Hamilton",
+    "paymentMethod": "Credit Card (Stripe)",
+    "paymentStatus": "Paid",
+    "status": "Processing",
+    "createdAt": "2026-07-27T05:55:36.633Z",
+    "updatedAt": "2026-07-27T05:55:36.633Z"
+  },
+  {
+    "id": "L-810590",
+    "_id": "L-810590",
+    "orderId": "L-810590",
+    "customerName": "Prayag Kansara",
+    "customer": "Prayag Kansara",
+    "email": "prayagkansara05@gmail.com",
+    "customerEmail": "prayagkansara05@gmail.com",
+    "phone": "021 082 63626",
+    "address": "17 Braid Road, St Andrews",
+    "city": "Hamilton",
+    "zip": "3200",
+    "shippingAddress": {
+      "address": "17 Braid Road, St Andrews",
+      "city": "Hamilton",
+      "zip": "3200",
+      "country": "New Zealand"
+    },
+    "items": [
+      {
+        "id": "p1",
+        "name": "Pascall Jaffas",
+        "weight": "250g",
+        "quantity": 2,
+        "price": 7.9,
+        "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600"
+      },
+      {
+        "id": "p2",
+        "name": "Fizzy Sour Rainbow Straps",
+        "weight": "500g",
+        "quantity": 1,
+        "price": 12.5,
+        "image": "https://images.unsplash.com/photo-1582058091505-f87a2e55a40f?auto=format&fit=crop&q=80&w=600"
+      }
+    ],
+    "subtotal": 28.3,
+    "shippingFee": 0,
+    "total": 28.3,
+    "totalPrice": 28.3,
+    "status": "Processing",
+    "paymentMethod": "Credit Card / Stripe",
+    "paymentStatus": "Paid",
+    "createdAt": "2026-07-27T05:53:12.088Z",
+    "updatedAt": "2026-07-27T05:53:12.088Z"
+  },
+  {
     "id": "ORD-140501",
     "date": "10 Jul 2026",
     "items": [

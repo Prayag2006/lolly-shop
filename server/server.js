@@ -839,12 +839,23 @@ app.delete('/api/brands/:id', async (req, res) => {
 app.get('/api/orders', async (req, res) => {
   try {
     const isAdmin = isStaffAuthorized(req, 'orders');
-    let orders;
+    let dbOrders = [];
     if (sqlAvailable()) {
-      orders = await Order.find().sort({ createdAt: -1 });
-    } else {
-      orders = readLocalData('orders.json', []);
+      dbOrders = await Order.find().sort({ createdAt: -1 });
     }
+    const localOrders = readLocalData('orders.json', []);
+    
+    const combinedMap = new Map();
+    [...dbOrders, ...localOrders].forEach(o => {
+      const obj = o.toObject ? o.toObject() : o;
+      const key = obj.id || obj._id || String(obj._id);
+      if (key && !combinedMap.has(key)) {
+        combinedMap.set(key, obj);
+      }
+    });
+
+    let orders = Array.from(combinedMap.values());
+    orders.sort((a, b) => new Date(b.createdAt || b.date || 0) - new Date(a.createdAt || a.date || 0));
 
     if (!isAdmin) {
       orders = await Promise.all(orders.map(async (ord) => await sanitizeOrder(ord)));
@@ -1228,6 +1239,11 @@ app.post('/api/orders', async (req, res) => {
       sendOrderConfirmationEmail(dbOrder);
       
       const responseObj = dbOrder.toObject();
+
+      // Write to local json fallback so order is visible in all modes
+      const localOrders = readLocalData('orders.json', []);
+      localOrders.unshift(responseObj);
+      writeLocalData('orders.json', localOrders);
       delete responseObj.actualShipping;
       res.status(201).json(responseObj);
     } else {
