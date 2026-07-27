@@ -913,6 +913,10 @@ export const Admin = () => {
               <p style={{ fontSize: '11px', textTransform: 'uppercase', fontWeight: '700', color: 'var(--color-primary)', margin: '2px 0 0' }}>
                 {currentUser?.role ? currentUser.role.replace('_', ' ') : 'STAFF MEMBER'}
               </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '4px', fontSize: '10.5px', fontWeight: '800', color: '#10b981', letterSpacing: '0.5px' }}>
+                <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#10b981', display: 'inline-block', boxShadow: '0 0 8px #10b981' }}></span>
+                LIVE REALTIME ACTIVE
+              </div>
             </div>
           </div>
 

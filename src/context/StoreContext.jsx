@@ -140,13 +140,16 @@ export const StoreProvider = ({ children }) => {
     fetchStaffUsers();
     fetchSystemStatus();
 
-    // Poll for new orders, contacts, and logs in real-time
+    // Comprehensive real-time polling for admin & store updates (every 3s)
     const pollInterval = setInterval(() => {
       fetchOrders();
       fetchContacts();
+      fetchNewsletterSubscribers();
+      fetchProducts();
+      fetchTestimonials();
       fetchAuditLogs();
       fetchSystemStatus();
-    }, 5000);
+    }, 3000);
 
     return () => clearInterval(pollInterval);
   }, []);
