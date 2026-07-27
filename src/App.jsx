@@ -15,18 +15,20 @@ import Login from './pages/Login';
 import ResetPassword from './pages/ResetPassword';
 
 // Lazy load Pages (Code splitting)
-const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
-const Shop = lazy(() => import('./pages/Shop').then(m => ({ default: m.Shop })));
-const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout })));
-const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin })));
-const ProductDetails = lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails })));
-const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact })));
-const About = lazy(() => import('./pages/About').then(m => ({ default: m.About })));
-const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
-const TrackOrder = lazy(() => import('./pages/TrackOrder').then(m => ({ default: m.TrackOrder })));
-const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy })));
-const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService })));
-const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ })));
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home || m.default })));
+const Shop = lazy(() => import('./pages/Shop').then(m => ({ default: m.Shop || m.default })));
+const Checkout = lazy(() => import('./pages/Checkout').then(m => ({ default: m.Checkout || m.default })));
+const Admin = lazy(() => import('./pages/Admin').then(m => ({ default: m.Admin || m.default })));
+const ProductDetails = lazy(() => import('./pages/ProductDetails').then(m => ({ default: m.ProductDetails || m.default })));
+const Contact = lazy(() => import('./pages/Contact').then(m => ({ default: m.Contact || m.default })));
+const About = lazy(() => import('./pages/About').then(m => ({ default: m.About || m.default })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile || m.default })));
+const TrackOrder = lazy(() => import('./pages/TrackOrder').then(m => ({ default: m.TrackOrder || m.default })));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy').then(m => ({ default: m.PrivacyPolicy || m.default })));
+const TermsOfService = lazy(() => import('./pages/TermsOfService').then(m => ({ default: m.TermsOfService || m.default })));
+const FAQ = lazy(() => import('./pages/FAQ').then(m => ({ default: m.FAQ || m.default })));
+const CustomPage = lazy(() => import('./pages/CustomPage').then(m => ({ default: m.CustomPage || m.default })));
+const NotFound = lazy(() => import('./pages/NotFound').then(m => ({ default: m.NotFound || m.default })));
 
 // Global Error Boundary to prevent blank screens
 class ErrorBoundary extends React.Component {
@@ -198,12 +200,36 @@ function App() {
                   element={<PrivacyPolicy />} 
                 />
                 <Route 
+                  path="/privacy-policy" 
+                  element={<PrivacyPolicy />} 
+                />
+                <Route 
                   path="/terms" 
+                  element={<TermsOfService />} 
+                />
+                <Route 
+                  path="/terms-of-service" 
                   element={<TermsOfService />} 
                 />
                 <Route 
                   path="/faq" 
                   element={<FAQ />} 
+                />
+                <Route 
+                  path="/page/:slug" 
+                  element={<CustomPage />} 
+                />
+                <Route 
+                  path="/pages/:slug" 
+                  element={<CustomPage />} 
+                />
+                <Route 
+                  path="/:slug" 
+                  element={<CustomPage />} 
+                />
+                <Route 
+                  path="*" 
+                  element={<NotFound />} 
                 />
               </Routes>
             </Suspense>

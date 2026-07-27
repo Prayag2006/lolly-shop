@@ -822,3 +822,6 @@ export const Home = ({ onProductClick }) => {
     </div>
   );
 };
+
+export default Home;
+

@@ -662,3 +662,6 @@ export const Shop = ({ onProductClick }) => {
     </div>
   );
 };
+
+export default Shop;
+

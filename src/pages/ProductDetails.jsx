@@ -577,3 +577,6 @@ export const ProductDetails = () => {
     </div>
   );
 };
+
+export default ProductDetails;
+

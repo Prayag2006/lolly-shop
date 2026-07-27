@@ -643,3 +643,6 @@ export const TrackOrder = () => {
     </div>
   );
 };
+
+export default TrackOrder;
+

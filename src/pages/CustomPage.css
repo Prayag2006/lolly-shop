@@ -1,0 +1,121 @@
+.custom-cms-page {
+  padding: 120px 24px 80px;
+  min-height: calc(100vh - 77px);
+}
+
+.custom-cms-card {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+}
+
+.custom-cms-card h1 {
+  font-family: var(--font-heading);
+  font-size: 36px;
+  font-weight: 900;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 24px;
+  letter-spacing: -0.5px;
+}
+
+.custom-page-content-wrapper {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.custom-page-content-wrapper h2,
+.custom-page-content-wrapper h3 {
+  margin: 24px 0 12px;
+  color: var(--color-text);
+  text-transform: none;
+}
+
+.custom-page-content-wrapper p {
+  margin-bottom: 16px;
+  color: var(--color-text-light);
+}
+
+.custom-page-content-wrapper ul,
+.custom-page-content-wrapper ol {
+  padding-left: 24px;
+  margin-bottom: 20px;
+  color: var(--color-text-light);
+}
+
+.custom-page-content-wrapper li {
+  margin-bottom: 8px;
+}
+
+.custom-page-content-wrapper a {
+  color: var(--color-primary);
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* 404 Not Found Card Styling */
+.not-found-card {
+  text-align: center;
+  padding: 60px 30px;
+}
+
+.not-found-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: float 3s ease-in-out infinite;
+}
+
+.not-found-card h1 {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.not-found-card p {
+  color: var(--color-text-light);
+  font-size: 16px;
+  margin-bottom: 28px;
+}
+
+.not-found-card code {
+  background: rgba(231, 44, 131, 0.08);
+  color: var(--color-primary);
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.btn-home-link {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--primary-gradient);
+  color: #ffffff !important;
+  font-weight: 800;
+  border-radius: 30px;
+  text-decoration: none !important;
+  box-shadow: var(--shadow-md);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.btn-home-link:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--glow-primary);
+}
+
+@media (max-width: 768px) {
+  .custom-cms-page {
+    padding: 100px 16px 60px;
+  }
+
+  .custom-cms-card {
+    padding: 24px 20px;
+  }
+
+  .custom-cms-card h1 {
+    font-size: 28px;
+  }
+}

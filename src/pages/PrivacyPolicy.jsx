@@ -11,7 +11,7 @@ export const PrivacyPolicy = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  if (privacyPage) {
+  if (privacyPage && privacyPage.content?.trim()) {
     return (
       <div className="privacy-page container">
         <SEO title={privacyPage.seoTitle || privacyPage.title} description={privacyPage.seoDescription} />
@@ -110,3 +110,6 @@ export const PrivacyPolicy = () => {
     </div>
   );
 };
+
+export default PrivacyPolicy;
+

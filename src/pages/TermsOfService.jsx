@@ -11,7 +11,7 @@ export const TermsOfService = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  if (termsPage) {
+  if (termsPage && termsPage.content?.trim()) {
     return (
       <div className="terms-page container">
         <SEO title={termsPage.seoTitle || termsPage.title} description={termsPage.seoDescription} />
@@ -114,3 +114,6 @@ export const TermsOfService = () => {
     </div>
   );
 };
+
+export default TermsOfService;
+
