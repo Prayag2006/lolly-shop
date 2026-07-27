@@ -181,7 +181,7 @@ export const Contact = () => {
 
               {submitted && (
                 <div className="form-success-banner contact-success">
-                  Thank you! Your request is submitted and visible in the admin panel.
+                  Thank you! Your request is submitted.
                 </div>
               )}
             </form>
