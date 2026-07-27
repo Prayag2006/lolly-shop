@@ -916,11 +916,9 @@ app.delete('/api/orders', async (req, res) => {
 
     if (sqlAvailable()) {
       await Order.deleteMany({});
-      return res.json({ message: 'All orders deleted' });
-    } else {
-      writeLocalData('orders.json', []);
-      return res.json({ message: 'All orders deleted' });
     }
+    writeLocalData('orders.json', []);
+    return res.json({ message: 'All orders deleted permanently' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting orders', error: error.message });
   }
