@@ -5455,24 +5455,35 @@ export const Admin = () => {
                           
                           let generatedContent = '';
                           if (newsletterCampaign.heading?.trim()) {
-                            generatedContent += `<h1 style="color:#e72c83; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 16px; font-family: sans-serif;">${newsletterCampaign.heading.trim()}</h1>`;
+                            generatedContent += `
+                              <div style="text-align: center; margin-bottom: 24px;">
+                                <h1 style="color: #be185d; font-size: 24px; font-weight: 900; margin: 0 0 8px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: -0.3px; line-height: 1.3;">
+                                  ${newsletterCampaign.heading.trim()}
+                                </h1>
+                                <div style="height: 3px; width: 60px; background: linear-gradient(90deg, #be185d 0%, #f43f5e 100%); margin: 10px auto 0; border-radius: 3px;"></div>
+                              </div>
+                            `;
                           }
                           if (newsletterCampaign.imageUrl?.trim()) {
-                            generatedContent += `<div style="text-align: center; margin-bottom: 20px;"><img src="${newsletterCampaign.imageUrl.trim()}" alt="Newsletter Banner" style="max-width: 100%; max-height: 350px; border-radius: 12px; object-fit: cover;" /></div>`;
+                            generatedContent += `
+                              <div style="margin-bottom: 26px; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 30px rgba(0,0,0,0.09); border: 1px solid #e2e8f0; background-color: #fafafa; text-align: center; position: relative;">
+                                <img src="${newsletterCampaign.imageUrl.trim()}" alt="Newsletter Special Banner" style="width: 100%; max-height: 380px; object-fit: cover; display: block;" />
+                              </div>
+                            `;
                           }
                           if (newsletterCampaign.message?.trim()) {
                             const paragraphs = newsletterCampaign.message
                               .split('\n')
                               .filter(p => p.trim() !== '')
-                              .map(p => `<p style="font-size: 15px; line-height: 1.65; color: #475569; margin-bottom: 14px; font-family: sans-serif;">${p.trim()}</p>`)
+                              .map(p => `<p style="font-size: 15px; line-height: 1.7; color: #334155; margin-bottom: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">${p.trim()}</p>`)
                               .join('');
                             generatedContent += paragraphs;
                           }
                           if (newsletterCampaign.buttonText?.trim() && newsletterCampaign.buttonUrl?.trim()) {
                             generatedContent += `
-                              <div style="text-align: center; margin-top: 24px; margin-bottom: 12px;">
-                                <a href="${newsletterCampaign.buttonUrl.trim()}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%); color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; font-family: sans-serif;">
-                                  ${newsletterCampaign.buttonText.trim()}
+                              <div style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
+                                <a href="${newsletterCampaign.buttonUrl.trim()}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #be185d 0%, #e72c83 50%, #f43f5e 100%); color: #ffffff; padding: 15px 38px; border-radius: 50px; font-weight: 800; font-size: 15px; text-decoration: none; display: inline-block; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; letter-spacing: 0.5px; text-transform: uppercase; box-shadow: 0 10px 25px rgba(231,44,131,0.35);">
+                                  ${newsletterCampaign.buttonText.trim()} →
                                 </a>
                               </div>
                             `;
@@ -5644,7 +5655,8 @@ export const Admin = () => {
                         <div className="nl-email-card">
                           {/* Banner Header */}
                           <div className="nl-email-banner">
-                            <div className="nl-email-banner-icon">💌</div>
+                            <div className="nl-email-brand-badge">✨ BEST LOLLY SHOP NZ</div>
+                            <div className="nl-email-banner-icon">🍭</div>
                             <div className="nl-email-banner-title">Lolly Shop News</div>
                             <div className="nl-email-banner-sub">A sweet update for you</div>
                           </div>
@@ -5652,9 +5664,12 @@ export const Admin = () => {
                           {/* Email Body */}
                           <div className="nl-email-body">
                             {newsletterCampaign.heading ? (
-                              <h1 className="nl-email-heading">
-                                {newsletterCampaign.heading}
-                              </h1>
+                              <div className="nl-email-heading-wrapper">
+                                <h1 className="nl-email-heading">
+                                  {newsletterCampaign.heading}
+                                </h1>
+                                <div className="nl-email-heading-accent"></div>
+                              </div>
                             ) : (
                               <h1 className="nl-email-heading-placeholder">
                                 [Headline Title will appear here]
@@ -5682,10 +5697,17 @@ export const Admin = () => {
                             {newsletterCampaign.buttonText && (
                               <div className="nl-email-cta-preview">
                                 <span className="nl-email-cta-btn">
-                                  {newsletterCampaign.buttonText}
+                                  {newsletterCampaign.buttonText} →
                                 </span>
                               </div>
                             )}
+                          </div>
+
+                          {/* Trust Badges */}
+                          <div className="nl-email-trust-strip">
+                            <span>🚀 Fast NZ Shipping</span>
+                            <span>🍬 100% Fresh Lollies</span>
+                            <span>🔒 100% Secure</span>
                           </div>
 
                           <div className="nl-email-footer-notice">

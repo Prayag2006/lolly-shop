@@ -1017,27 +1017,46 @@ const getResponsiveEmailTemplate = ({ previewText, headerEmoji, headerTitle, hea
     <div style="display: none; max-height: 0px; overflow: hidden;">
       ${previewText}
     </div>
-    <div class="email-wrapper" style="background-color: #faf9fc; padding: 40px 20px; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;">
-      <div class="email-card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(79, 70, 229, 0.05); border: 1px solid #f1eff5; width: 100%;">
-        <!-- Brand Banner Header -->
-        <div class="email-header" style="background: ${headerGradient}; padding: 35px 20px; text-align: center;">
-          <span style="font-size: 40px; display: block; margin-bottom: 10px;">${headerEmoji}</span>
-          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">${headerTitle}</h1>
-          <p style="color: rgba(255,255,255,0.85); font-size: 13px; margin: 5px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">${headerSubtitle}</p>
+    <div class="email-wrapper" style="background-color: #f1f5f9; padding: 36px 12px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+      <div class="email-card" style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.08); border: 1px solid #e2e8f0; width: 100%;">
+        
+        <!-- Brand Header Top Bar -->
+        <div class="email-header" style="background: ${headerGradient || 'linear-gradient(135deg, #be185d 0%, #e72c83 50%, #f43f5e 100%)'}; padding: 36px 24px; text-align: center;">
+          <div style="background: rgba(255,255,255,0.22); backdrop-filter: blur(8px); display: inline-block; padding: 5px 16px; border-radius: 20px; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.35);">
+            ✨ BEST LOLLY SHOP NZ
+          </div>
+          <span style="font-size: 42px; display: block; margin-bottom: 6px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));">${headerEmoji || '🍭'}</span>
+          <h1 style="color: #ffffff; margin: 0; font-size: 26px; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; text-shadow: 0 2px 4px rgba(0,0,0,0.15);">${headerTitle}</h1>
+          <p style="color: rgba(255,255,255,0.92); font-size: 13px; margin: 6px 0 0 0; font-weight: 700; letter-spacing: 0.5px;">${headerSubtitle}</p>
         </div>
         
         <!-- Email Body Content -->
-        <div class="email-body" style="padding: 45px 35px;">
+        <div class="email-body" style="padding: 36px 30px; background-color: #ffffff;">
           ${bodyHtml}
+        </div>
+
+        <!-- Trust Perks Strip -->
+        <div style="background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 18px 20px; text-align: center;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td style="font-size: 12px; font-weight: 700; color: #475569; text-align: center;">🚀 Fast NZ Delivery</td>
+              <td style="font-size: 12px; font-weight: 700; color: #475569; text-align: center;">🍬 100% Fresh Lollies</td>
+              <td style="font-size: 12px; font-weight: 700; color: #475569; text-align: center;">🔒 100% Secure Checkout</td>
+            </tr>
+          </table>
         </div>
         
         <!-- Email Footer -->
-        <div style="background-color: #faf9fc; padding: 25px 35px; border-top: 1px solid #f1eff5; text-align: center;">
-          <p style="font-size: 11px; color: #b4afc4; margin: 0 0 8px 0; line-height: 1.5;">
-            Need help with your order? Reply directly to this email or contact us at <a href="mailto:BestLollyShop@gmail.com" style="color: #e72c83; text-decoration: none; font-weight: 600;">BestLollyShop@gmail.com</a>.
+        <div style="background-color: #0f172a; padding: 28px 24px; text-align: center; color: #94a3b8;">
+          <p style="font-size: 13px; font-weight: 800; color: #ffffff; margin: 0 0 6px 0;">
+            Best Lolly Shop New Zealand 🍬
           </p>
-          <p style="font-size: 11px; color: #b4afc4; margin: 0;">
-            © 2026 Lolly Shop New Zealand. All rights reserved.
+          <p style="font-size: 11.5px; color: #94a3b8; margin: 0 0 12px 0; line-height: 1.5;">
+            17 Braid Road, St Andrews, Hamilton 3200, New Zealand<br>
+            Questions? Contact us at <a href="mailto:bestlollyshopnz@gmail.com" style="color: #f43f5e; text-decoration: none; font-weight: 700;">bestlollyshopnz@gmail.com</a>
+          </p>
+          <p style="font-size: 10.5px; color: #64748b; margin: 0;">
+            © 2026 Best Lolly Shop NZ. All rights reserved. You are receiving this because you subscribed on our store.
           </p>
         </div>
       </div>
