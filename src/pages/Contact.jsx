@@ -181,7 +181,7 @@ export const Contact = () => {
 
               {submitted && (
                 <div className="form-success-banner contact-success">
-                  Thank you! Your request is submitted.
+                  Thank you for submitting your request
                 </div>
               )}
             </form>
