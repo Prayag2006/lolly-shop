@@ -3695,23 +3695,34 @@ app.get('/api/newsletter-subscribers', async (req, res) => {
 app.post('/api/newsletter-subscribers', async (req, res) => {
   try {
     const { email } = req.body;
+    if (!email || typeof email !== 'string' || !email.trim() || !email.includes('@')) {
+      return res.status(400).json({ message: 'Please enter a valid email address.' });
+    }
+    const cleanEmail = email.trim().toLowerCase();
     let sub;
     if (sqlAvailable()) {
-      const existing = await NewsletterSubscriber.findOne({ email });
-      if (existing) return res.json(existing);
-      sub = new NewsletterSubscriber({ email });
+      const existing = await NewsletterSubscriber.findOne({ 
+        email: new RegExp('^' + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') 
+      });
+      if (existing) {
+        const obj = existing.toObject ? existing.toObject() : existing;
+        return res.status(200).json({ ...obj, id: existing._id ? existing._id.toString() : existing.id, alreadySubscribed: true, message: 'You are already subscribed to our sweet newsletter! 🍭' });
+      }
+      sub = new NewsletterSubscriber({ email: cleanEmail, active: true });
       await sub.save();
     } else {
       const subs = readLocalData('subscribers.json', []);
-      const existing = subs.find(s => s.email === email);
-      if (existing) return res.json(existing);
-      sub = { id: `sub-${Date.now()}`, email, active: true, createdAt: new Date().toISOString() };
+      const existing = subs.find(s => (s.email || '').toLowerCase() === cleanEmail);
+      if (existing) {
+        return res.status(200).json({ ...existing, alreadySubscribed: true, message: 'You are already subscribed to our sweet newsletter! 🍭' });
+      }
+      sub = { id: `sub-${Date.now()}`, email: cleanEmail, active: true, createdAt: new Date().toISOString() };
       subs.push(sub);
       writeLocalData('subscribers.json', subs);
     }
     res.status(201).json(sub);
   } catch (error) {
-    res.status(400).json({ message: 'Error subscribing', error: error.message });
+    res.status(400).json({ message: 'Error subscribing: ' + error.message, error: error.message });
   }
 });
 
@@ -3719,10 +3730,13 @@ app.delete('/api/newsletter-subscribers/:id', checkPermission('newsletter'), asy
   try {
     let deleted;
     if (sqlAvailable()) {
-      deleted = await NewsletterSubscriber.findByIdAndDelete(req.params.id);
+      deleted = await NewsletterSubscriber.findByIdAndDelete(req.params.id).catch(() => null);
+      if (!deleted) {
+        deleted = await NewsletterSubscriber.findOneAndDelete({ email: req.params.id }).catch(() => null);
+      }
     } else {
       const subs = readLocalData('subscribers.json', []);
-      const idx = subs.findIndex(s => s.id === req.params.id);
+      const idx = subs.findIndex(s => String(s.id || s._id) === String(req.params.id) || s.email === req.params.id);
       if (idx !== -1) {
         deleted = subs[idx];
         subs.splice(idx, 1);

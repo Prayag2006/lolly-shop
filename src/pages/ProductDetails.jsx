@@ -24,7 +24,6 @@ export const ProductDetails = () => {
     }
     return '100g';
   });
-  const [activeAccordion, setActiveAccordion] = useState(null);
 
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
@@ -48,7 +47,6 @@ export const ProductDetails = () => {
       ? Object.keys(product.weightPrices)[0] 
       : '100g'
     );
-    setActiveAccordion(null);
     setReviewComment('');
     setReviewRating(5);
     setReviewError('');
@@ -98,10 +96,6 @@ export const ProductDetails = () => {
     }
   };
 
-  const toggleAccordion = (section) => {
-    setActiveAccordion(prev => (prev === section ? null : section));
-  };
-
   // Get recommendations (excluding current product, prioritizing same category)
   const recommendations = products
     .filter(p => p.id !== product.id)
@@ -111,13 +105,6 @@ export const ProductDetails = () => {
       return 0;
     })
     .slice(0, 5); // Display 5 recommendation cards
-
-  // Simulated Flavours
-  const flavoursSimulated = 
-    product.category === 'Chocolates' ? 'Milk Chocolate Ganache, Roasted Almond Crunch' :
-    product.category === 'Gummies' ? 'Tangy Sour Peach, Wild Raspberry, Green Apple' :
-    product.category === 'Lollipops' ? 'Sweet Cherry Swirl, Blue Raspberry Twist' :
-    'Original Sweets Fruity Blend';
 
   const seoTitle = `${product.name} NZ | Buy Online at Best Lolly Shop`;
   const seoDescription = `Buy premium ${product.name} online at Best Lolly Shop New Zealand. Available in sizes 100g, 250g, 500g, and 1kg with fast courier delivery.`;
@@ -260,8 +247,6 @@ export const ProductDetails = () => {
               <span className="details-amount">{currentPrice.toFixed(2)}</span>
             </div>
 
-            <p className="details-description" style={{ whiteSpace: 'pre-line', lineHeight: '1.7' }}>{product.description}</p>
-
             {/* Size Selector */}
             <div className="details-size-selector-section">
               <span className="details-section-label">Size</span>
@@ -328,57 +313,15 @@ export const ProductDetails = () => {
               </button>
             </div>
 
-            {/* Accordions */}
-            <div className="details-accordions">
-              {/* Product Overview / Long Description Accordion */}
-              <div className="details-accordion-item">
-                <button 
-                  type="button"
-                  className={`accordion-header ${activeAccordion === 'full_description' ? 'active' : ''}`}
-                  onClick={() => toggleAccordion('full_description')}
-                >
-                  <span>FULL PRODUCT DETAILS & STORY</span>
-                  <span className="header-icon">{activeAccordion === 'full_description' ? '−' : '+'}</span>
-                </button>
-                <div className={`accordion-content ${activeAccordion === 'full_description' ? 'open' : ''}`}>
-                  <div style={{ whiteSpace: 'pre-line', lineHeight: '1.7', color: 'var(--color-text)', fontSize: '14px' }}>
-                    {product.longDescription || product.description || "Indulge in our premium NZ confectionery selection, freshly packed for ultimate flavor and sweetness."}
-                  </div>
-                </div>
-              </div>
-
-              {/* Ingredients Accordion */}
-              <div className="details-accordion-item">
-                <button 
-                  type="button"
-                  className={`accordion-header ${activeAccordion === 'ingredients' ? 'active' : ''}`}
-                  onClick={() => toggleAccordion('ingredients')}
-                >
-                  <span>INGREDIENTS</span>
-                  <span className="header-icon">{activeAccordion === 'ingredients' ? '−' : '+'}</span>
-                </button>
-                <div className={`accordion-content ${activeAccordion === 'ingredients' ? 'open' : ''}`}>
-                  <p>{product.ingredients}</p>
-                </div>
-              </div>
-
-
-
-              {/* Flavours Accordion */}
-              <div className="details-accordion-item">
-                <button 
-                  type="button"
-                  className={`accordion-header ${activeAccordion === 'flavours' ? 'active' : ''}`}
-                  onClick={() => toggleAccordion('flavours')}
-                >
-                  <span>FLAVOURS</span>
-                  <span className="header-icon">{activeAccordion === 'flavours' ? '−' : '+'}</span>
-                </button>
-                <div className={`accordion-content ${activeAccordion === 'flavours' ? 'open' : ''}`}>
-                  <p>{flavoursSimulated}</p>
-                </div>
-              </div>
+            {/* Description Section */}
+            <div className="details-long-description">
+              <h3>DESCRIPTION</h3>
+              <p>
+                {product.longDescription || product.description || "Indulge in our premium NZ confectionery selection, freshly packed for ultimate flavor and sweetness."}
+              </p>
             </div>
+
+
 
             {/* Payment & Security Section */}
             <div className="details-payment-security">

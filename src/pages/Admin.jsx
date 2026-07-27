@@ -220,6 +220,7 @@ export const Admin = () => {
 
   // Enterprise Newsletter state
   const [newSubscriberEmail, setNewSubscriberEmail] = useState('');
+  const [subscriberSearchTerm, setSubscriberSearchTerm] = useState('');
   const [newsletterCampaign, setNewsletterCampaign] = useState({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
   const [uploadingNewsletterImage, setUploadingNewsletterImage] = useState(false);
   const [campaignSuccess, setCampaignSuccess] = useState('');
@@ -679,7 +680,7 @@ export const Admin = () => {
   }
 
   const handleSettingsSubmit = async (e) => {
-    e.preventDefault();
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
     try {
       await updateSettings(tempSettings);
       setSettingsSuccess('Settings and promotions updated successfully!');
@@ -688,6 +689,8 @@ export const Admin = () => {
       console.error('Error saving settings:', err);
     }
   };
+
+  const handleSaveSettings = handleSettingsSubmit;
 
   const handleNestedFieldChange = (section, field, value) => {
     setTempSettings(prev => ({
@@ -2377,50 +2380,6 @@ export const Admin = () => {
                         onChange={(e) => setNewProduct({ ...newProduct, collectionsText: e.target.value })}
                       />
                       <small className="field-note">Select from the options above or enter custom comma-separated tags.</small>
-                    </div>
-                  </div>
-
-                  <h3 className="form-section-title">Nutrition Facts (Per 100g)</h3>
-                  <div className="form-row four-cols">
-                    <div className="form-group">
-                      <label htmlFor="pcalories">Energy</label>
-                      <input
-                        type="text"
-                        id="pcalories"
-                        placeholder="140 kcal"
-                        value={newProduct.calories}
-                        onChange={(e) => setNewProduct({ ...newProduct, calories: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="psugar">Sugar</label>
-                      <input
-                        type="text"
-                        id="psugar"
-                        placeholder="25g"
-                        value={newProduct.sugar}
-                        onChange={(e) => setNewProduct({ ...newProduct, sugar: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="pfat">Fat</label>
-                      <input
-                        type="text"
-                        id="pfat"
-                        placeholder="0g"
-                        value={newProduct.fat}
-                        onChange={(e) => setNewProduct({ ...newProduct, fat: e.target.value })}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="pprotein">Protein</label>
-                      <input
-                        type="text"
-                        id="pprotein"
-                        placeholder="1g"
-                        value={newProduct.protein}
-                        onChange={(e) => setNewProduct({ ...newProduct, protein: e.target.value })}
-                      />
                     </div>
                   </div>
 
@@ -5164,312 +5123,431 @@ export const Admin = () => {
 
           {activeTab === 'newsletter' && (
             <div className="admin-tab-content animate-fade-in">
-              <h2>Mailing List & Newsletters</h2>
-              <p className="tab-subtitle">View your email subscribers, import subscriber emails, and send newsletter updates.</p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ margin: 0 }}>Mailing List & Newsletters</h2>
+                  <p className="tab-subtitle" style={{ margin: '4px 0 0' }}>Manage email subscribers, compose visual email updates, and dispatch campaigns.</p>
+                </div>
+                <span className="nl-count-badge">
+                  {(newsletterSubscribers || []).length} Active Subscriber{(newsletterSubscribers || []).length === 1 ? '' : 's'}
+                </span>
+              </div>
               
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '24px', alignItems: 'flex-start' }}>
-                {/* Subscriber List */}
-                <div className="glass-card" style={{ padding: '20px' }}>
-                  <h3>📧 Add Subscriber Manual</h3>
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    if (!newSubscriberEmail) return;
-                    await addNewsletterSubscriber(newSubscriberEmail);
-                    setNewSubscriberEmail('');
-                    alert('Subscriber added!');
-                  }} style={{ display: 'flex', gap: '8px', marginTop: '8px', marginBottom: '20px' }}>
-                    <input type="email" value={newSubscriberEmail} onChange={(e) => setNewSubscriberEmail(e.target.value)} placeholder="name@email.com" required style={{ flex: 1, padding: '8px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }} />
-                    <button type="submit" className="btn btn-primary" style={{ padding: '8px 12px', fontWeight: 'bold' }}>Add</button>
-                  </form>
+              <div className="nl-dashboard-grid">
+                {/* Left Panel: Subscriber List & Manual Add */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  {/* Card 1: Add Subscriber Manual */}
+                  <div className="nl-panel-card">
+                    <div className="nl-card-header">
+                      <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/></svg>
+                        Add Subscriber Manual
+                      </h3>
+                    </div>
 
-                  <h4>Newsletter Subscribers ({newsletterSubscribers ? newsletterSubscribers.length : 0})</h4>
-                  <div style={{ maxHeight: '300px', overflowY: 'auto', fontSize: '12px', marginTop: '10px' }}>
-                    <table className="admin-table">
-                      <thead>
-                        <tr>
-                          <th>Email</th>
-                          <th style={{ textAlign: 'right' }}>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {(newsletterSubscribers || []).map((s, idx) => (
-                          <tr key={s.id || s._id || idx}>
-                            <td>{s.email}</td>
-                            <td style={{ textAlign: 'right' }}><button onClick={async () => await deleteNewsletterSubscriber(s.id || s._id)} style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', fontWeight: 'bold' }}>Remove</button></td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                    <form 
+                      className="nl-quick-add-form"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!newSubscriberEmail) return;
+                        const res = await addNewsletterSubscriber(newSubscriberEmail);
+                        if (res && res.alreadySubscribed) {
+                          alert(res.message || 'Subscriber is already on the list! 🍭');
+                        } else if (res && !res.error) {
+                          alert('Subscriber successfully added! 📬');
+                          setNewSubscriberEmail('');
+                        } else {
+                          alert(res?.error || res?.message || 'Failed to add subscriber');
+                        }
+                      }}
+                    >
+                      <div className="nl-input-wrapper">
+                        <svg className="nl-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                        <input 
+                          type="email" 
+                          className="nl-form-input"
+                          value={newSubscriberEmail} 
+                          onChange={(e) => setNewSubscriberEmail(e.target.value)} 
+                          placeholder="subscriber@email.com" 
+                          required 
+                        />
+                      </div>
+                      <button type="submit" className="nl-add-btn">
+                        <span>Add</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Card 2: Subscriber List with Search Filter */}
+                  <div className="nl-panel-card">
+                    <div className="nl-card-header">
+                      <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        Subscribers List
+                      </h3>
+                      <span style={{ fontSize: '12px', color: 'var(--color-text-light)', fontWeight: '700' }}>
+                        {(newsletterSubscribers || []).length} total
+                      </span>
+                    </div>
+
+                    {(newsletterSubscribers || []).length > 4 && (
+                      <div className="nl-subscriber-search-box">
+                        <svg className="nl-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                        <input 
+                          type="text" 
+                          className="nl-search-input"
+                          placeholder="Filter subscribers..." 
+                          value={subscriberSearchTerm}
+                          onChange={(e) => setSubscriberSearchTerm(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    <div className="nl-subscribers-list">
+                      {(newsletterSubscribers || []).filter(s => !subscriberSearchTerm || (s.email || '').toLowerCase().includes(subscriberSearchTerm.toLowerCase())).length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '30px 10px', color: 'var(--color-text-light)', fontSize: '13px' }}>
+                          {subscriberSearchTerm ? 'No subscribers match your search filter.' : 'No subscribers found. Add one above!'}
+                        </div>
+                      ) : (
+                        (newsletterSubscribers || [])
+                          .filter(s => !subscriberSearchTerm || (s.email || '').toLowerCase().includes(subscriberSearchTerm.toLowerCase()))
+                          .map((s, idx) => {
+                            const initial = (s.email || '?').charAt(0).toUpperCase();
+                            return (
+                              <div className="nl-subscriber-row" key={s.id || s._id || idx}>
+                                <div className="nl-sub-info">
+                                  <div className="nl-avatar-circle">{initial}</div>
+                                  <div className="nl-sub-details">
+                                    <span className="nl-sub-email">{s.email}</span>
+                                    <span className="nl-sub-status">
+                                      <span className="nl-sub-status-dot"></span>
+                                      Active
+                                    </span>
+                                  </div>
+                                </div>
+                                <button 
+                                  type="button"
+                                  className="nl-remove-btn"
+                                  onClick={async () => {
+                                    if (window.confirm(`Are you sure you want to remove ${s.email} from newsletter list?`)) {
+                                      await deleteNewsletterSubscriber(s.id || s._id);
+                                    }
+                                  }} 
+                                  title={`Remove ${s.email}`}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                </button>
+                              </div>
+                            );
+                          })
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Visual Email Builder Campaign */}
-                <div className="glass-card" style={{ padding: '24px' }}>
-                  <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800' }}>✉️ Simple Visual Email Builder</h3>
-                    <p style={{ margin: '4px 0 0', fontSize: '13px', color: 'var(--color-text-light)' }}>
-                      Easily compose and send newsletters without writing any HTML code. Fill in the fields below and preview your email live!
-                    </p>
-                  </div>
+                {/* Right Panel: Visual Email Campaign Builder & Live Preview */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  <div className="nl-panel-card">
+                    <div className="nl-card-header">
+                      <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                        Visual Email Campaign Builder
+                      </h3>
+                      <span className="nl-count-badge">Live Preview Active</span>
+                    </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', alignItems: 'start' }}>
-                    {/* Form Side */}
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!newsletterCampaign.subject || (!newsletterCampaign.heading && !newsletterCampaign.message)) {
-                        alert('Please fill in the subject line and at least a title or message for your newsletter.');
-                        return;
-                      }
-                      try {
-                        setCampaignSuccess('Sending campaign...');
-                        
-                        // Auto-generate clean, responsive email HTML automatically
-                        let generatedContent = '';
-                        if (newsletterCampaign.heading?.trim()) {
-                          generatedContent += `<h1 style="color:#e72c83; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 16px; font-family: sans-serif;">${newsletterCampaign.heading.trim()}</h1>`;
+                    <div className="nl-builder-layout">
+                      {/* Left: Form Builder */}
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!newsletterCampaign.subject || (!newsletterCampaign.heading && !newsletterCampaign.message)) {
+                          alert('Please fill in the email subject line and at least a headline or message for your campaign.');
+                          return;
                         }
-                        if (newsletterCampaign.imageUrl?.trim()) {
-                          generatedContent += `<div style="text-align: center; margin-bottom: 20px;"><img src="${newsletterCampaign.imageUrl.trim()}" alt="Newsletter Banner" style="max-width: 100%; max-height: 350px; border-radius: 12px; object-fit: cover;" /></div>`;
-                        }
-                        if (newsletterCampaign.message?.trim()) {
-                          const paragraphs = newsletterCampaign.message
-                            .split('\n')
-                            .filter(p => p.trim() !== '')
-                            .map(p => `<p style="font-size: 15px; line-height: 1.65; color: #475569; margin-bottom: 14px; font-family: sans-serif;">${p.trim()}</p>`)
-                            .join('');
-                          generatedContent += paragraphs;
-                        }
-                        if (newsletterCampaign.buttonText?.trim() && newsletterCampaign.buttonUrl?.trim()) {
-                          generatedContent += `
-                            <div style="text-align: center; margin-top: 24px; margin-bottom: 12px;">
-                              <a href="${newsletterCampaign.buttonUrl.trim()}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%); color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; font-family: sans-serif;">
-                                ${newsletterCampaign.buttonText.trim()}
-                              </a>
-                            </div>
-                          `;
-                        }
+                        try {
+                          setCampaignSuccess('Dispatching campaign to all subscribers...');
+                          
+                          let generatedContent = '';
+                          if (newsletterCampaign.heading?.trim()) {
+                            generatedContent += `<h1 style="color:#e72c83; font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 16px; font-family: sans-serif;">${newsletterCampaign.heading.trim()}</h1>`;
+                          }
+                          if (newsletterCampaign.imageUrl?.trim()) {
+                            generatedContent += `<div style="text-align: center; margin-bottom: 20px;"><img src="${newsletterCampaign.imageUrl.trim()}" alt="Newsletter Banner" style="max-width: 100%; max-height: 350px; border-radius: 12px; object-fit: cover;" /></div>`;
+                          }
+                          if (newsletterCampaign.message?.trim()) {
+                            const paragraphs = newsletterCampaign.message
+                              .split('\n')
+                              .filter(p => p.trim() !== '')
+                              .map(p => `<p style="font-size: 15px; line-height: 1.65; color: #475569; margin-bottom: 14px; font-family: sans-serif;">${p.trim()}</p>`)
+                              .join('');
+                            generatedContent += paragraphs;
+                          }
+                          if (newsletterCampaign.buttonText?.trim() && newsletterCampaign.buttonUrl?.trim()) {
+                            generatedContent += `
+                              <div style="text-align: center; margin-top: 24px; margin-bottom: 12px;">
+                                <a href="${newsletterCampaign.buttonUrl.trim()}" target="_blank" rel="noopener noreferrer" style="background: linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%); color: #ffffff; padding: 12px 28px; border-radius: 30px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; font-family: sans-serif;">
+                                  ${newsletterCampaign.buttonText.trim()}
+                                </a>
+                              </div>
+                            `;
+                          }
 
-                        const res = await fetch('/api/newsletter/dispatch', {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'X-User-Role': currentUser?.role || '',
-                            'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
-                          },
-                          body: JSON.stringify({
-                            subject: newsletterCampaign.subject,
-                            content: generatedContent
-                          })
-                        });
-                        const data = await res.json();
-                        if (res.ok && data.success) {
-                          setCampaignSuccess(data.message || `Email campaign successfully dispatched to ${data.count} recipients! 📬`);
-                          setTimeout(() => setCampaignSuccess(''), 8000);
-                          setNewsletterCampaign({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
-                        } else {
-                          setCampaignSuccess(`❌ ${data.message || 'Error sending newsletter email.'}`);
+                          const res = await fetch('/api/newsletter/dispatch', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'X-User-Role': currentUser?.role || '',
+                              'X-User-Permissions': JSON.stringify(currentUser?.permissions || [])
+                            },
+                            body: JSON.stringify({
+                              subject: newsletterCampaign.subject,
+                              content: generatedContent
+                            })
+                          });
+                          const data = await res.json();
+                          if (res.ok && data.success) {
+                            setCampaignSuccess(data.message || `Email campaign successfully dispatched to ${data.count} recipients! 📬`);
+                            setTimeout(() => setCampaignSuccess(''), 8000);
+                            setNewsletterCampaign({ subject: '', heading: '', message: '', imageUrl: '', buttonText: '', buttonUrl: '' });
+                          } else {
+                            setCampaignSuccess(`❌ ${data.message || 'Error sending newsletter email.'}`);
+                          }
+                        } catch (err) {
+                          setCampaignSuccess('Failed to send campaign: ' + err.message);
                         }
-                      } catch (err) {
-                        setCampaignSuccess('Failed to send campaign: ' + err.message);
-                      }
-                    }} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-                      {/* 1. Campaign Subject */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontWeight: '700', fontSize: '13px' }}>📧 Email Subject Line <span style={{ color: '#dc2626' }}>*</span></label>
-                        <input 
-                          type="text" 
-                          value={newsletterCampaign.subject} 
-                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, subject: e.target.value})} 
-                          placeholder="e.g. 🎉 Sweet Easter Lolly Specials inside!" 
-                          required 
-                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px' }} 
-                        />
-                      </div>
-
-                      {/* 2. Headline / Title (H1) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontWeight: '700', fontSize: '13px' }}>🏷️ Main Title / Headline (H1)</label>
-                        <input 
-                          type="text" 
-                          value={newsletterCampaign.heading} 
-                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, heading: e.target.value})} 
-                          placeholder="e.g. Happy Holidays from Lolly Shop! 🍬" 
-                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px' }} 
-                        />
-                      </div>
-
-                      {/* 3. Image Selector */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontWeight: '700', fontSize: '13px' }}>🖼️ Newsletter Image (Optional)</label>
-                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      }}>
+                        {/* 1. Email Subject */}
+                        <div className="nl-field-group">
+                          <label>
+                            <span>📧 Email Subject Line</span>
+                            <span style={{ color: '#dc2626' }}>*</span>
+                          </label>
                           <input 
                             type="text" 
-                            value={newsletterCampaign.imageUrl} 
-                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, imageUrl: e.target.value})} 
-                            placeholder="Paste image URL (e.g. https://...)" 
-                            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }} 
+                            className="nl-field-input"
+                            value={newsletterCampaign.subject} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, subject: e.target.value})} 
+                            placeholder="e.g. 🎉 Sweet Easter Lolly Specials inside!" 
+                            required 
                           />
-                          <label style={{ background: 'var(--color-primary)', color: 'white', padding: '10px 14px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span>{uploadingNewsletterImage ? 'Uploading...' : '📁 Upload Image'}</span>
-                            <input 
-                              type="file" 
-                              accept="image/*" 
-                              onChange={handleNewsletterImageUpload} 
-                              disabled={uploadingNewsletterImage} 
-                              style={{ display: 'none' }} 
-                            />
-                          </label>
                         </div>
-                        {newsletterCampaign.imageUrl && (
-                          <div style={{ position: 'relative', width: '100px', height: '60px', marginTop: '6px', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--color-border)' }}>
-                            <img src={newsletterCampaign.imageUrl} alt="Thumbnail preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                            <button 
-                              type="button" 
-                              onClick={() => setNewsletterCampaign({...newsletterCampaign, imageUrl: ''})} 
-                              style={{ position: 'absolute', top: '2px', right: '2px', background: 'rgba(220,38,38,0.9)', color: 'white', border: 'none', borderRadius: '50%', width: '20px', height: '20px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} 
-                              title="Remove image"
-                            >✕</button>
+
+                        {/* 2. Main Headline */}
+                        <div className="nl-field-group">
+                          <label>🏷️ Main Title / Headline (H1)</label>
+                          <input 
+                            type="text" 
+                            className="nl-field-input"
+                            value={newsletterCampaign.heading} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, heading: e.target.value})} 
+                            placeholder="e.g. Happy Holidays from Lolly Shop! 🍬" 
+                          />
+                        </div>
+
+                        {/* 3. Image Selector */}
+                        <div className="nl-field-group">
+                          <label>🖼️ Newsletter Image (Optional)</label>
+                          <div className="nl-image-upload-wrapper">
+                            <input 
+                              type="text" 
+                              className="nl-field-input"
+                              value={newsletterCampaign.imageUrl} 
+                              onChange={(e) => setNewsletterCampaign({...newsletterCampaign, imageUrl: e.target.value})} 
+                              placeholder="Paste image URL (https://...)" 
+                              style={{ flex: 1 }}
+                            />
+                            <label className="nl-upload-trigger-btn">
+                              <span>{uploadingNewsletterImage ? 'Uploading...' : '📁 Upload'}</span>
+                              <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={handleNewsletterImageUpload} 
+                                disabled={uploadingNewsletterImage} 
+                                style={{ display: 'none' }} 
+                              />
+                            </label>
+                          </div>
+                          {newsletterCampaign.imageUrl && (
+                            <div className="nl-thumb-preview">
+                              <img src={newsletterCampaign.imageUrl} alt="Thumbnail preview" />
+                              <button 
+                                type="button" 
+                                className="nl-thumb-delete-btn"
+                                onClick={() => setNewsletterCampaign({...newsletterCampaign, imageUrl: ''})} 
+                                title="Remove image"
+                              >✕</button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 4. Message Content */}
+                        <div className="nl-field-group">
+                          <label>📝 Newsletter Message / Description</label>
+                          <textarea 
+                            className="nl-field-input"
+                            value={newsletterCampaign.message} 
+                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, message: e.target.value})} 
+                            placeholder="Write your email message here... (Line breaks automatically turn into clean paragraphs)" 
+                            rows="5" 
+                            style={{ lineHeight: '1.6', resize: 'vertical' }}
+                          ></textarea>
+                        </div>
+
+                        {/* 5. CTA Button Options */}
+                        <div className="nl-action-btn-box">
+                          <h4>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            Action Button (Optional)
+                          </h4>
+                          <div className="nl-two-col">
+                            <input 
+                              type="text" 
+                              className="nl-field-input"
+                              value={newsletterCampaign.buttonText} 
+                              onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonText: e.target.value})} 
+                              placeholder="Button Text (e.g. Shop 15% Off)" 
+                              style={{ padding: '9px 12px', fontSize: '13px' }}
+                            />
+                            <input 
+                              type="text" 
+                              className="nl-field-input"
+                              value={newsletterCampaign.buttonUrl} 
+                              onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonUrl: e.target.value})} 
+                              placeholder="Link URL (https://...)" 
+                              style={{ padding: '9px 12px', fontSize: '13px' }}
+                            />
+                          </div>
+                        </div>
+
+                        {campaignSuccess && (
+                          <div style={{ 
+                            padding: '12px 14px', 
+                            borderRadius: '12px', 
+                            background: campaignSuccess.includes('❌') ? 'rgba(220,38,38,0.1)' : 'rgba(16,185,129,0.1)', 
+                            color: campaignSuccess.includes('❌') ? '#dc2626' : '#059669', 
+                            fontWeight: '700', 
+                            fontSize: '13.5px',
+                            marginBottom: '14px',
+                            border: `1px solid ${campaignSuccess.includes('❌') ? 'rgba(220,38,38,0.2)' : 'rgba(16,185,129,0.2)'}` 
+                          }}>
+                            {campaignSuccess}
                           </div>
                         )}
-                      </div>
 
-                      {/* 4. Newsletter Message (Paragraphs) */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <label style={{ fontWeight: '700', fontSize: '13px' }}>📝 Newsletter Message / Description</label>
-                        <textarea 
-                          value={newsletterCampaign.message} 
-                          onChange={(e) => setNewsletterCampaign({...newsletterCampaign, message: e.target.value})} 
-                          placeholder="Write your email message here... (Line breaks will automatically turn into clean paragraphs)" 
-                          rows="5" 
-                          style={{ padding: '12px', borderRadius: '8px', border: '1.5px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', lineHeight: '1.5' }}
-                        ></textarea>
-                      </div>
+                        <button 
+                          type="submit" 
+                          className="nl-dispatch-btn"
+                          disabled={campaignSuccess === 'Dispatching campaign to all subscribers...'}
+                        >
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                          <span>Dispatch Newsletter Campaign</span>
+                        </button>
+                      </form>
 
-                      {/* 5. Call-to-Action Button Options */}
-                      <div style={{ background: 'rgba(231,44,131,0.03)', padding: '14px', borderRadius: '10px', border: '1px solid var(--color-border)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                        <label style={{ fontWeight: '700', fontSize: '12px', color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔘 Action Button (Optional)</label>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                          <input 
-                            type="text" 
-                            value={newsletterCampaign.buttonText} 
-                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonText: e.target.value})} 
-                            placeholder="Button Text (e.g. Shop 15% Off)" 
-                            style={{ padding: '9px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px', background: 'var(--color-background)', color: 'var(--color-text)' }} 
-                          />
-                          <input 
-                            type="text" 
-                            value={newsletterCampaign.buttonUrl} 
-                            onChange={(e) => setNewsletterCampaign({...newsletterCampaign, buttonUrl: e.target.value})} 
-                            placeholder="Link URL (e.g. https://...)" 
-                            style={{ padding: '9px', borderRadius: '6px', border: '1px solid var(--color-border)', fontSize: '13px', background: 'var(--color-background)', color: 'var(--color-text)' }} 
-                          />
-                        </div>
-                      </div>
-
-                      {campaignSuccess && (
-                        <div style={{ padding: '12px', borderRadius: '8px', background: campaignSuccess.includes('❌') ? 'rgba(220,38,38,0.1)' : 'rgba(16,185,129,0.1)', color: campaignSuccess.includes('❌') ? '#dc2626' : '#10b981', fontWeight: '700', fontSize: '13.5px' }}>
-                          {campaignSuccess}
-                        </div>
-                      )}
-
-                      <button type="submit" className="btn btn-primary" style={{ padding: '14px', fontWeight: '800', fontSize: '14px', marginTop: '4px' }}>
-                        🚀 Dispatch Newsletter Campaign
-                      </button>
-                    </form>
-
-                    {/* Live Email Preview Side */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px' }}>
-                        <span style={{ fontWeight: '800', fontSize: '12px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>👁️ Live Email Preview</span>
-                        <span style={{ fontSize: '11px', color: '#94a3b8', background: '#e2e8f0', padding: '2px 8px', borderRadius: '12px' }}>Inbox View</span>
-                      </div>
-
-                      {/* Simulated Inbox Card */}
-                      <div style={{ background: '#ffffff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #e2e8f0', boxShadow: '0 4px 14px rgba(0,0,0,0.06)' }}>
-                        {/* Email Header Banner */}
-                        <div style={{ background: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)', padding: '16px 20px', color: 'white', textAlign: 'center' }}>
-                          <div style={{ fontSize: '24px' }}>💌</div>
-                          <div style={{ fontWeight: '800', fontSize: '16px' }}>Lolly Shop News</div>
-                          <div style={{ fontSize: '12px', opacity: 0.9 }}>A sweet update for you</div>
+                      {/* Right: Live Realistic Email Device Preview */}
+                      <div className="nl-preview-window">
+                        <div className="nl-preview-header-bar">
+                          <div className="nl-window-dots">
+                            <span className="nl-dot red"></span>
+                            <span className="nl-dot yellow"></span>
+                            <span className="nl-dot green"></span>
+                          </div>
+                          <span className="nl-preview-badge">Live Email Preview</span>
                         </div>
 
-                        {/* Email Content Body */}
-                        <div style={{ padding: '20px' }}>
-                          {newsletterCampaign.heading ? (
-                            <h1 style={{ color: '#e72c83', fontSize: '18px', fontWeight: '800', margin: '0 0 14px 0' }}>
-                              {newsletterCampaign.heading}
-                            </h1>
-                          ) : (
-                            <h1 style={{ color: '#cbd5e1', fontSize: '15px', fontStyle: 'italic', margin: '0 0 14px 0' }}>
-                              [Headline Title will appear here]
-                            </h1>
-                          )}
+                        <div className="nl-email-card">
+                          {/* Banner Header */}
+                          <div className="nl-email-banner">
+                            <div className="nl-email-banner-icon">💌</div>
+                            <div className="nl-email-banner-title">Lolly Shop News</div>
+                            <div className="nl-email-banner-sub">A sweet update for you</div>
+                          </div>
 
-                          {newsletterCampaign.imageUrl && (
-                            <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                              <img src={newsletterCampaign.imageUrl} alt="Newsletter preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '8px', objectFit: 'cover' }} />
-                            </div>
-                          )}
+                          {/* Email Body */}
+                          <div className="nl-email-body">
+                            {newsletterCampaign.heading ? (
+                              <h1 className="nl-email-heading">
+                                {newsletterCampaign.heading}
+                              </h1>
+                            ) : (
+                              <h1 className="nl-email-heading-placeholder">
+                                [Headline Title will appear here]
+                              </h1>
+                            )}
 
-                          {newsletterCampaign.message ? (
-                            newsletterCampaign.message.split('\n').filter(p => p.trim() !== '').map((p, idx) => (
-                              <p key={idx} style={{ fontSize: '13.5px', lineHeight: '1.6', color: '#475569', margin: '0 0 10px 0' }}>
-                                {p}
+                            {newsletterCampaign.imageUrl && (
+                              <div className="nl-email-image-preview">
+                                <img src={newsletterCampaign.imageUrl} alt="Newsletter banner preview" />
+                              </div>
+                            )}
+
+                            {newsletterCampaign.message ? (
+                              newsletterCampaign.message.split('\n').filter(p => p.trim() !== '').map((p, idx) => (
+                                <p key={idx} className="nl-email-paragraph">
+                                  {p}
+                                </p>
+                              ))
+                            ) : (
+                              <p className="nl-email-paragraph-placeholder">
+                                [Your newsletter message text will appear here as clean paragraphs]
                               </p>
-                            ))
-                          ) : (
-                            <p style={{ fontSize: '13.5px', color: '#cbd5e1', fontStyle: 'italic', margin: '0 0 10px 0' }}>
-                              [Your newsletter message text will appear here as clean paragraphs]
-                            </p>
-                          )}
+                            )}
 
-                          {newsletterCampaign.buttonText && (
-                            <div style={{ textAlign: 'center', marginTop: '18px', marginBottom: '8px' }}>
-                              <span style={{ background: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)', color: '#ffffff', padding: '10px 22px', borderRadius: '24px', fontWeight: '700', fontSize: '13px', display: 'inline-block' }}>
-                                {newsletterCampaign.buttonText}
-                              </span>
-                            </div>
-                          )}
+                            {newsletterCampaign.buttonText && (
+                              <div className="nl-email-cta-preview">
+                                <span className="nl-email-cta-btn">
+                                  {newsletterCampaign.buttonText}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="nl-email-footer-notice">
+                            Sent with ❤️ by Best Lolly Shop NZ • Hamilton, New Zealand
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* SMTP Credentials & Setup Guide Card */}
-                  <div className="glass-card" style={{ marginTop: '24px', padding: '24px', borderRadius: '16px', background: 'rgba(231, 44, 131, 0.03)', border: '1px solid rgba(231, 44, 131, 0.2)' }}>
-                    <h3 style={{ margin: '0 0 8px 0', fontSize: '16px', fontWeight: '800', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      🔑 Live Email & Gmail App Password Settings
-                    </h3>
-                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '16px', lineHeight: '1.5' }}>
-                      Configure your official Gmail address and 16-character App Password for sending live newsletter campaigns and customer notifications.
+                  <div className="nl-panel-card" style={{ background: 'rgba(231, 44, 131, 0.02)', borderColor: 'rgba(231, 44, 131, 0.2)' }}>
+                    <div className="nl-card-header">
+                      <h3>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                        Live Email & Gmail App Password Settings
+                      </h3>
+                    </div>
+                    
+                    <p style={{ fontSize: '13px', color: 'var(--color-text-light)', marginBottom: '18px', lineHeight: '1.5' }}>
+                      Configure your official Gmail address and 16-character App Password for sending live newsletter campaigns and customer notifications directly into subscribers' inboxes.
                     </p>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-                      <div>
-                        <label style={{ fontWeight: '700', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Sender Gmail Address</label>
+                    <div className="nl-two-col" style={{ marginBottom: '16px' }}>
+                      <div className="nl-field-group">
+                        <label>Sender Gmail Address</label>
                         <input
                           type="email"
+                          className="nl-field-input"
                           placeholder="e.g. bestlollyshopnz@gmail.com"
                           value={tempSettings?.smtpConfig?.user || 'bestlollyshopnz@gmail.com'}
                           onChange={(e) => handleNestedFieldChange('smtpConfig', 'user', e.target.value)}
-                          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
                         />
                       </div>
-                      <div>
-                        <label style={{ fontWeight: '700', fontSize: '12px', display: 'block', marginBottom: '6px' }}>Gmail App Password (16 Characters)</label>
+                      <div className="nl-field-group">
+                        <label>Gmail App Password (16 Characters)</label>
                         <input
                           type="password"
+                          className="nl-field-input"
                           placeholder="e.g. abcd efgh ijkl mnop"
                           value={tempSettings?.smtpConfig?.pass || ''}
                           onChange={(e) => handleNestedFieldChange('smtpConfig', 'pass', e.target.value)}
-                          style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px' }}
                         />
                       </div>
                     </div>
 
-                    <div style={{ background: 'var(--color-background)', padding: '14px', borderRadius: '10px', border: '1px solid var(--color-border)', fontSize: '12.5px', lineHeight: '1.6', marginBottom: '16px' }}>
-                      <strong>📌 How to get a Gmail 16-character App Password:</strong>
+                    <div style={{ background: 'var(--color-background)', padding: '14px 16px', borderRadius: '12px', border: '1px solid var(--color-border)', fontSize: '12.5px', lineHeight: '1.6', marginBottom: '18px' }}>
+                      <strong>📌 How to generate a Gmail 16-character App Password:</strong>
                       <ol style={{ margin: '6px 0 0 18px', padding: 0 }}>
                         <li>Open <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}>Google Account Security</a>.</li>
                         <li>Ensure <strong>2-Step Verification</strong> is turned ON.</li>
@@ -5482,9 +5560,9 @@ export const Admin = () => {
                       type="button"
                       className="btn btn-primary"
                       onClick={handleSaveSettings}
-                      style={{ padding: '10px 20px', fontSize: '13px', fontWeight: '800' }}
+                      style={{ padding: '12px 24px', fontSize: '13.5px', fontWeight: '800', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
                     >
-                      💾 Save Email & SMTP Credentials
+                      <span>💾 Save Email & SMTP Credentials</span>
                     </button>
                   </div>
                 </div>

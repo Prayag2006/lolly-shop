@@ -346,10 +346,28 @@
   box-shadow: none;
 }
 
-/* Accordions */
-.details-accordions {
+/* Long Description */
+.details-long-description {
+  margin-top: 24px;
+  margin-bottom: 28px;
+  padding-top: 20px;
   border-top: 1px solid var(--color-border);
-  margin-bottom: 40px;
+}
+
+.details-long-description h3 {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.details-long-description p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--color-text-light);
+  white-space: pre-line;
 }
 
 .details-accordion-item {

@@ -1,11 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Sparkles, Send } from 'lucide-react';
+import { Mail, Phone, MapPin, Sparkles, Send, Loader2 } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import './Footer.css';
 
 export const Footer = () => {
   const { settings, categories, addNewsletterSubscriber } = useStore();
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterStatus, setNewsletterStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const footerSettings = settings?.footer || {
     description: "NZ's favorite online candy store. Hand-picked imported confections, luxury chocolates, and sour straps delivered directly to your doorstep.",
@@ -39,13 +42,31 @@ export const Footer = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const emailInput = e.target.querySelector('input[type="email"]');
-    if (emailInput && emailInput.value) {
+    const emailToSubmit = newsletterEmail.trim();
+    if (!emailToSubmit || !emailToSubmit.includes('@')) {
+      setNewsletterStatus({ type: 'error', text: 'Please enter a valid email address.' });
+      return;
+    }
+    
+    setIsSubmitting(true);
+    setNewsletterStatus(null);
+
+    try {
       if (addNewsletterSubscriber) {
-        await addNewsletterSubscriber(emailInput.value);
+        const res = await addNewsletterSubscriber(emailToSubmit);
+        if (res && res.alreadySubscribed) {
+          setNewsletterStatus({ type: 'info', text: res.message || 'You are already subscribed to our sweet newsletter! 🍭' });
+        } else if (res && !res.error) {
+          setNewsletterStatus({ type: 'success', text: 'Thank you for subscribing to our sweet newsletter! 🍭' });
+          setNewsletterEmail('');
+        } else {
+          setNewsletterStatus({ type: 'error', text: res?.error || res?.message || 'Subscription failed. Please try again.' });
+        }
       }
-      alert('Thank you for subscribing to our sweet newsletter! 🍭');
-      e.target.reset();
+    } catch (err) {
+      setNewsletterStatus({ type: 'error', text: 'An unexpected error occurred. Please try again.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -160,12 +181,25 @@ export const Footer = () => {
                 type="email"
                 placeholder="Enter your email"
                 className="newsletter-input"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                disabled={isSubmitting}
                 required
               />
-              <button type="submit" className="newsletter-submit-btn" aria-label="Subscribe">
-                <Send size={16} />
+              <button 
+                type="submit" 
+                className={`newsletter-submit-btn ${isSubmitting ? 'loading' : ''}`} 
+                aria-label="Subscribe"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? <Loader2 size={16} className="spin-icon" /> : <Send size={16} />}
               </button>
             </form>
+            {newsletterStatus && (
+              <div className={`newsletter-status-msg ${newsletterStatus.type}`}>
+                {newsletterStatus.text}
+              </div>
+            )}
           </div>
         </div>
 

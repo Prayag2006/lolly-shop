@@ -82,30 +82,6 @@ export const ProductModal = ({ product, onClose }) => {
 
             <p className="modal-description">{product.description}</p>
 
-            {/* Nutrition Information Grid */}
-            <div className="nutrition-section">
-              <h4>Nutritional Value (Per 100g)</h4>
-              <div className="nutrition-grid">
-                <div className="nutrition-pill">
-                  <span className="n-label">Energy</span>
-                  <span className="n-val">{product.nutrition?.calories || 'N/A'}</span>
-                </div>
-                <div className="nutrition-pill">
-                  <span className="n-label">Sugar</span>
-                  <span className="n-val">{product.nutrition?.sugar || 'N/A'}</span>
-                </div>
-                <div className="nutrition-pill">
-                  <span className="n-label">Fat</span>
-                  <span className="n-val">{product.nutrition?.fat || 'N/A'}</span>
-                </div>
-                <div className="nutrition-pill">
-                  <span className="n-label">Protein</span>
-                  <span className="n-val">{product.nutrition?.protein || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
-
-
             {/* Select Weight Option */}
             <div className="modal-weight-section">
               <h4>Select Weight</h4>

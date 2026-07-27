@@ -1188,18 +1188,23 @@ export const StoreProvider = ({ children }) => {
 
   const addNewsletterSubscriber = async (email) => {
     try {
+      const cleanEmail = (email || '').trim().toLowerCase();
       const res = await fetch('/api/newsletter-subscribers', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email: cleanEmail })
       });
       const data = await res.json();
       if (res.ok) {
-        setNewsletterSubscribers(prev => [data, ...prev]);
+        if (!data.alreadySubscribed) {
+          setNewsletterSubscribers(prev => [data, ...(prev || []).filter(s => (s.email || '').toLowerCase() !== cleanEmail)]);
+        }
         return data;
       }
+      return { error: data.message || 'Failed to subscribe' };
     } catch (e) {
       console.error(e);
+      return { error: 'Network error. Please try again.' };
     }
   };
 
@@ -1215,11 +1220,14 @@ export const StoreProvider = ({ children }) => {
         }
       });
       if (res.ok) {
-        setNewsletterSubscribers(prev => prev.filter(s => s.id !== id));
+        setNewsletterSubscribers(prev => (prev || []).filter(s => String(s.id || s._id) !== String(id)));
         return true;
       }
+      const data = await res.json();
+      return { error: data.message || 'Error deleting subscriber' };
     } catch (e) {
       console.error(e);
+      return { error: 'Network error.' };
     }
   };
 

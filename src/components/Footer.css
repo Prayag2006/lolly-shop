@@ -138,8 +138,51 @@
   transition: transform var(--transition-fast);
 }
 
-.newsletter-submit-btn:hover {
+.newsletter-submit-btn:hover:not(:disabled) {
   transform: scale(1.05);
+}
+
+.newsletter-submit-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spin-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Newsletter inline status feedback */
+.newsletter-status-msg {
+  margin-top: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.newsletter-status-msg.success {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.newsletter-status-msg.info {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.newsletter-status-msg.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 /* Bottom copyright info */
