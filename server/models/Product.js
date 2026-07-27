@@ -16,6 +16,7 @@ const productSchema = new mongoose.Schema({
   rating: { type: Number, default: 5.0 },
   reviewsCount: { type: Number, default: 1 },
   description: { type: String, default: '' },
+  longDescription: { type: String, default: '' },
   ingredients: { type: String, default: '' },
   nutrition: {
     calories: { type: String, default: 'N/A' },

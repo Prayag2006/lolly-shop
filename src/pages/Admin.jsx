@@ -154,6 +154,7 @@ export const Admin = () => {
     gradient: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)',
     image: 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
     description: '',
+    longDescription: '',
     ingredients: '',
     collectionsText: '',
     calories: '120 kcal',
@@ -742,6 +743,7 @@ export const Admin = () => {
       gradient: product.gradient,
       image: product.image,
       description: product.description,
+      longDescription: product.longDescription || product.description || '',
       ingredients: product.ingredients,
       collectionsText: Array.isArray(product.collections) ? product.collections.join(', ') : (product.collections || ''),
       calories: product.nutrition?.calories || '120 kcal',
@@ -782,6 +784,7 @@ export const Admin = () => {
       gradient: newProduct.gradient,
       image: newProduct.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
       description: newProduct.description || 'Delicious gourmet treats for sweet lovers.',
+      longDescription: newProduct.longDescription || newProduct.description || 'Delicious gourmet treats for sweet lovers.',
       ingredients: '',
       collections: (newProduct.collectionsText || '')
         .split(',')
@@ -2226,14 +2229,29 @@ export const Admin = () => {
                   </button>
 
                   <div className="form-row">
-                    <div className="form-group">
-                      <label htmlFor="pdesc">Product Description</label>
+                    <div className="form-group" style={{ width: '100%' }}>
+                      <label htmlFor="pdesc">Short Product Highlight (Card & Quick View)</label>
                       <textarea
                         id="pdesc"
                         rows="3"
-                        placeholder="Enter sweet description details..."
+                        placeholder="Enter short highlight description for product cards..."
                         value={newProduct.description}
                         onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group" style={{ width: '100%' }}>
+                      <label htmlFor="plongdesc">📖 Detailed Long Description & Story (Supports multi-paragraph text, taste notes, storage tips)</label>
+                      <textarea
+                        id="plongdesc"
+                        rows="6"
+                        placeholder="Write full multi-paragraph product description here... Press Enter for new paragraphs!"
+                        value={newProduct.longDescription || ''}
+                        onChange={(e) => setNewProduct({ ...newProduct, longDescription: e.target.value })}
+                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical', whiteSpace: 'pre-line' }}
                       ></textarea>
                     </div>
                   </div>

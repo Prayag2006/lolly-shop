@@ -260,7 +260,7 @@ export const ProductDetails = () => {
               <span className="details-amount">{currentPrice.toFixed(2)}</span>
             </div>
 
-            <p className="details-description">{product.description}</p>
+            <p className="details-description" style={{ whiteSpace: 'pre-line', lineHeight: '1.7' }}>{product.description}</p>
 
             {/* Size Selector */}
             <div className="details-size-selector-section">
@@ -330,6 +330,23 @@ export const ProductDetails = () => {
 
             {/* Accordions */}
             <div className="details-accordions">
+              {/* Product Overview / Long Description Accordion */}
+              <div className="details-accordion-item">
+                <button 
+                  type="button"
+                  className={`accordion-header ${activeAccordion === 'full_description' ? 'active' : ''}`}
+                  onClick={() => toggleAccordion('full_description')}
+                >
+                  <span>FULL PRODUCT DETAILS & STORY</span>
+                  <span className="header-icon">{activeAccordion === 'full_description' ? '−' : '+'}</span>
+                </button>
+                <div className={`accordion-content ${activeAccordion === 'full_description' ? 'open' : ''}`}>
+                  <div style={{ whiteSpace: 'pre-line', lineHeight: '1.7', color: 'var(--color-text)', fontSize: '14px' }}>
+                    {product.longDescription || product.description || "Indulge in our premium NZ confectionery selection, freshly packed for ultimate flavor and sweetness."}
+                  </div>
+                </div>
+              </div>
+
               {/* Ingredients Accordion */}
               <div className="details-accordion-item">
                 <button 
