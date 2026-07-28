@@ -162,11 +162,17 @@ export const Home = ({ onProductClick }) => {
     }
   }, [currentUser]);
 
-  // Filter 4 popular products for "Forever Favourites"
-  const popularProducts = products.filter((p) => p.isPopular).slice(0, 4);
+  // Filter popular products for "Forever Favourites" with fallback if isPopular is unset
+  const popularFiltered = products.filter((p) => p.isPopular);
+  const popularProducts = popularFiltered.length > 0 
+    ? popularFiltered.slice(0, 4) 
+    : products.slice(0, 4);
 
-  // Filter 4 new/standard products for "Sweet Discoveries"
-  const discoveries = products.filter((p) => !p.isPopular).slice(0, 4);
+  // Filter discoveries for "Sweet Discoveries" with fallback
+  const discoveriesFiltered = products.filter((p) => !p.isPopular);
+  const discoveries = discoveriesFiltered.length > 0 
+    ? discoveriesFiltered.slice(0, 4) 
+    : products.slice(4, 8);
 
   const faqs = [
     {

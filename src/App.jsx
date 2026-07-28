@@ -104,12 +104,17 @@ const PageLoadingFallback = () => (
 
 function App() {
   const [showSplash, setShowSplash] = useState(() => {
-    // Bypass splash screen if already shown in this session
-    if (typeof window !== 'undefined' && sessionStorage.getItem('lolly_shop_splash_shown') === 'true') {
-      return false;
-    }
-    // Bypass splash screen entirely on auth, admin, checkout, profile and reset-password routes
     if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      // Allow URL parameter ?splash=true or ?intro=true to force intro video display
+      if (search.includes('splash=true') || search.includes('intro=true')) {
+        return true;
+      }
+      // Bypass splash screen if already shown in this session
+      if (sessionStorage.getItem('lolly_shop_splash_shown') === 'true') {
+        return false;
+      }
+      // Bypass splash screen entirely on auth, admin, checkout, profile and reset-password routes
       const pathname = window.location.pathname;
       if (['/login', '/reset-password', '/admin', '/checkout', '/profile'].some(path => pathname.startsWith(path))) {
         return false;
@@ -120,17 +125,26 @@ function App() {
       const isBot = /bot|googlebot|crawler|spider|robot|crawling/i.test(navigator.userAgent);
       if (isBot) return false;
     }
-    // Bypass splash screen entirely on slow connections (2G, 3G, or saveData active)
+    // Bypass splash screen on very slow network conditions (slow-2g, 2g)
     const conn = typeof navigator !== 'undefined' && (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
     if (conn) {
       if (conn.saveData) return false;
-      const slowTypes = ['slow-2g', '2g', '3g'];
+      const slowTypes = ['slow-2g', '2g'];
       if (slowTypes.includes(conn.effectiveType)) return false;
     }
     return true; // Show on full page load
   });
   const [cartOpen, setCartOpen] = useState(false);
   const [activeModalProduct, setActiveModalProduct] = useState(null);
+
+  React.useEffect(() => {
+    const handleTriggerIntro = () => {
+      sessionStorage.removeItem('lolly_shop_splash_shown');
+      setShowSplash(true);
+    };
+    window.addEventListener('trigger-lolly-intro', handleTriggerIntro);
+    return () => window.removeEventListener('trigger-lolly-intro', handleTriggerIntro);
+  }, []);
 
   if (showSplash) {
     return <VideoSplash onComplete={() => setShowSplash(false)} />;

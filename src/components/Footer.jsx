@@ -199,6 +199,26 @@ export const Footer = () => {
         <div className="footer-bottom">
           <p>{footerSettings.copyright || `© ${new Date().getFullYear()} Best Lolly Shop. All rights reserved.`}</p>
           <div className="footer-bottom-links">
+            <button 
+              onClick={() => window.dispatchEvent(new Event('trigger-lolly-intro'))}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'inherit',
+                font: 'inherit',
+                cursor: 'pointer',
+                opacity: 0.85,
+                transition: 'opacity 0.2s',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.opacity = '1'}
+              onMouseOut={(e) => e.currentTarget.style.opacity = '0.85'}
+              title="Watch Intro Video"
+            >
+              🎬 Watch Intro
+            </button>
             {(footerSettings.policies || []).map((pol, idx) => (
               <Link key={`foot-pol-${idx}`} to={pol.link || '#'}>{pol.label}</Link>
             ))}

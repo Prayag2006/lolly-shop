@@ -1,9 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { fallbackProducts } from '../data/fallbackProducts';
 
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
-  const [products, setProducts] = useState([]);
+  const [products, setProducts] = useState(fallbackProducts);
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
   const [brands, setBrands] = useState([]);
@@ -195,9 +196,11 @@ export const StoreProvider = ({ children }) => {
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setProducts(data);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProducts(data);
+        }
       }
     } catch (err) {
       console.error('Error fetching products from server:', err);
