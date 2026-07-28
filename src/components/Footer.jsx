@@ -87,15 +87,7 @@ export const Footer = () => {
           {/* Brand Info */}
           <div className="footer-brand-side">
             <Link to="/" className="logo-link footer-logo">
-              <video
-                autoPlay
-                loop
-                muted
-                playsInline
-                style={{ maxHeight: '60px', width: 'auto', objectFit: 'contain', marginLeft: '20px' }}
-              >
-                <source src="/Logo.mp4" type="video/mp4" />
-              </video>
+              <img src="/logo.png" alt="Best Lolly Shop" className="logo-img" style={{ maxHeight: '60px', width: 'auto', objectFit: 'contain', marginLeft: '20px' }} />
             </Link>
             <p className="footer-desc">
               {footerSettings.description}

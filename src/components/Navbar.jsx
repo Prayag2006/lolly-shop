@@ -109,15 +109,7 @@ export const Navbar = ({ onCartOpen }) => {
       <div className="container nav-container">
         {/* Logo */}
         <Link to="/" className="logo-link">
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="logo-video"
-          >
-            <source src="/Logo.mp4" type="video/mp4" />
-          </video>
+          <img src="/logo.png" alt="Best Lolly Shop" className="logo-img" style={{ maxHeight: '75px', width: 'auto', objectFit: 'contain' }} />
         </Link>
 
         {/* Desktop Nav Links */}
