@@ -353,45 +353,56 @@
   padding: 16px 20px;
   border-radius: 20px;
   border: 1px solid var(--color-border);
-  background: var(--color-background);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.03);
+  background: var(--color-card-bg, #ffffff);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+  position: relative;
+  z-index: 2;
 }
 
-.testimonial-header {
+.mockup-testimonial-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
 }
 
-.stars {
+.mockup-testimonial-card .stars {
   font-size: 12px;
   letter-spacing: 2px;
 }
 
-.time {
+.mockup-testimonial-card .time {
   font-size: 11px;
-  color: var(--color-text-muted);
+  color: var(--color-text-light);
   font-weight: 700;
 }
 
-.testimonial-quote {
-  font-size: 13px;
+.mockup-testimonial-quote {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  opacity: 1 !important;
+  font-size: 13px !important;
   font-style: italic;
-  line-height: 1.5;
-  color: var(--color-text-light);
-  margin: 0 0 8px 0;
+  line-height: 1.5 !important;
+  color: var(--color-text-dark, #2d3748) !important;
+  margin: 0 0 8px 0 !important;
+  display: block !important;
 }
 
-.testimonial-author {
+.mockup-testimonial-author {
   font-size: 12px;
   font-weight: 800;
-  color: var(--color-text-dark);
+  color: var(--color-text-dark, #1a202c);
   margin: 0;
 }
 
-[data-theme='dark'] .testimonial-author {
-  color: var(--color-text);
+[data-theme='dark'] .mockup-testimonial-quote {
+  color: var(--color-text, #f3effa) !important;
+}
+
+[data-theme='dark'] .mockup-testimonial-author {
+  color: var(--color-text, #f3effa);
 }
 
 /* Mission & Vision Section */

@@ -176,6 +176,14 @@ export const Home = ({ onProductClick }) => {
 
   const faqs = [
     {
+      q: 'Why is Best Lolly Shop considered the best lolly shop in NZ?',
+      a: 'Best Lolly Shop is rated the best lolly shop in NZ because we offer New Zealand\'s largest online lollyshop selection of imported candy, pick & mix lollies, freeze dried treats, and chocolate in NZ with ultra-fast nationwide shipping.'
+    },
+    {
+      q: 'Do you deliver premium chocolate in NZ?',
+      a: 'Yes! We deliver local and international chocolate in NZ straight to your door across New Zealand with temperature-controlled packaging to guarantee absolute freshness.'
+    },
+    {
       q: 'What are your delivery charges?',
       a: 'We offer FREE delivery in Hamilton, New Zealand! For other NZ locations, free delivery applies on all orders above $50 NZD. For orders below $50 NZD, a minimal delivery charge of $5 applies. We deliver across New Zealand within 3-5 business days.'
     },
@@ -316,8 +324,9 @@ export const Home = ({ onProductClick }) => {
   ];
 
   const seoHome = settings?.seoOverrides?.home || settings?.seoOverrides?.['/'] || {
-    title: "Buy Lollies Online NZ | Best Lolly Shop | bestlollyshop.co.nz",
-    description: "Shop New Zealand's best online lolly shop! Buy bulk lollies, retro kiwi candy, pick & mix sweets, and chocolates online. Fast delivery NZ-wide."
+    title: "Best Lolly Shop in NZ | #1 Online Lollyshop & Chocolates in NZ",
+    description: "Looking for the best lolly shop in NZ? Shop at Best Lolly Shop — New Zealand's premier online lollyshop for pick & mix lollies, sour sweets, and chocolate in NZ.",
+    keywords: "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, buy lollies online nz, imported candy nz, pick and mix lollies, freeze dried candy, bulk lollies nz"
   };
 
   return (
@@ -742,38 +751,35 @@ export const Home = ({ onProductClick }) => {
             <div className="seo-text-block" style={{ maxWidth: '900px', margin: '0 auto' }}>
               <span className="badge" style={{ marginBottom: '1rem', textTransform: 'uppercase', fontSize: '0.8rem', letterSpacing: '1px' }}>Confectionery Guide</span>
               <h2 style={{ fontSize: '2.4rem', fontWeight: '800', marginBottom: '1.5rem', lineHeight: '1.2', background: 'var(--primary-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                New Zealand's Ultimate Online Lolly Shop & Candy Store
+                New Zealand's Best Lolly Shop & #1 Online Lollyshop
               </h2>
               
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Welcome to <strong>Best Lolly Shop</strong>, your premier destination for all things sweet, sour, and chocolatey in New Zealand! As the nation’s leading online lolly shop, we are dedicated to bringing the joy of high-quality, delicious confectionery directly to your doorstep. Whether you’re looking to satisfy a personal craving, planning a massive birthday celebration, organizing wedding candy buffets, or setting up corporate gifts, we have the perfect sweet treats for every single occasion.
+                Welcome to <strong>Best Lolly Shop</strong>, proud to be rated as the <strong>best lolly shop in NZ</strong>! Whether you are searching for a trusted <strong>lolly shop in nz</strong>, looking for imported <strong>chocolate in nz</strong>, or browsing an online <strong>lollyshop</strong> with nationwide delivery, we bring the joy of high-quality sweets directly to your doorstep.
               </p>
 
               <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
-                Satisfy Your Cravings with the Best Lollies Online in NZ
+                Why We Are the Best Lolly Shop for All Your Sweet Cravings
               </h3>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                At Best Lolly Shop, we believe that life is better with a little sweetness. That’s why we’ve curated an extensive selection of the finest confections from New Zealand and around the globe. From classic Kiwi favourites like jet planes and milk bottles to imported American candy and traditional British sweets, our digital shelves are stocked to delight candy lovers of all ages.
+                At Best Lolly Shop, we believe every sweet tooth deserves the very best. We have curated an extensive collection of confectionery from New Zealand and around the world. As a top-tier <strong>lollyshop</strong>, we stock iconic Kiwi favourites like jet planes, milk bottles, and sour straps alongside imported American candy and British sweets.
               </p>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Buying lollies online in NZ has never been easier. Skip the supermarket queues and browse our clean, user-friendly online sweet shop from the comfort of your home. With just a few clicks, you can fill your cart with gourmet quality gummies, rich chocolates, spicy sour lollies, and everything in between. We pack each order with care in our food-grade facilities and provide fast, reliable shipping across the country—from Cape Reinga to the Bluff.
+                Finding a reliable <strong>lolly shop in nz</strong> has never been easier. With fast dispatch, food-grade packing, and free delivery on eligible orders, we make buying lollies and <strong>chocolate in nz</strong> effortless—from Auckland and Hamilton to Christchurch and Dunedin.
               </p>
 
               <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
-                Premium Pick and Mix Lollies Customized for You
+                Premium Pick & Mix Sweets & Chocolate in NZ
               </h3>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Why settle for a pre-packaged bag of mixed sweets when you can create your own custom candy masterpiece? Our signature <strong>Pick and Mix Lollies</strong> experience puts you in the driver’s seat. Choose from over 100 varieties of loose candy, including fizzy sour straps, sweet marshmallow drops, gummy bears, chewable licorice, and classic hard candies.
-              </p>
-              <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Our custom pick and mix builder is perfect for creating personalized gift bags, party favours, or simply treating yourself to your exact favourite combinations. Select your bag size, add your favourite treats, and let us do the rest! It’s the ultimate way to enjoy a candy store experience online.
+                Build your ideal treat with our signature <strong>Pick and Mix Lollies</strong>. Choose from over 100 varieties including sour straps, gummy bears, soft licorice, and gourmet <strong>chocolates</strong>. We also offer curated gift boxes that make the ultimate sweet surprise for birthdays, weddings, or corporate events.
               </p>
 
               <h3 style={{ fontSize: '1.5rem', fontWeight: '700', marginTop: '2.5rem', marginBottom: '1rem', color: 'var(--text-color)' }}>
-                Save Big with Bulk Lollies NZ
+                Wholesale Bulk Lollies NZ & Speciality Treats
               </h3>
               <p style={{ fontSize: '1.05rem', lineHeight: '1.8', color: 'var(--text-muted)', marginBottom: '1.8rem' }}>
-                Hosting a major event or just want to stock up and save? Our <strong>Bulk Lollies NZ</strong> section offers wholesale prices on large quantities of New Zealand's favourite sweets. We stock 1kg, 2kg, and larger bulk bags of gummies, chocolates, and party mixes, making us the go-to supplier for:
+                Planning a party or corporate event? Our <strong>Bulk Lollies NZ</strong> range provides 1kg, 2kg, and wholesale bags at incredible value. Stock up on popular gummies, freeze dried candies, and premium <strong>chocolates in NZ</strong> for candy buffets and school fundraisers.
               </p>
               <ul style={{ listStyleType: 'disc', paddingLeft: '1.5rem', color: 'var(--text-muted)', fontSize: '1.05rem', lineHeight: '1.8', marginBottom: '1.8rem' }}>
                 <li style={{ marginBottom: '0.5rem' }}><strong>Birthday Parties</strong>: Colorful candy arrangements to match any theme.</li>

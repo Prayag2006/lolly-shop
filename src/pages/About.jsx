@@ -17,8 +17,8 @@ export const About = () => {
     vision: 'To become the premier confection hub in the Southern Hemisphere, known for unique imported varieties and premium local packaging.',
     images: ['/about_showcase1.png'],
     gallery: [],
-    seoTitle: 'About Best Lolly Shop - Premium NZ Sweets',
-    seoDescription: 'Read our story and mission. Learn how Best Lolly Shop became New Zealand\'s favourite online sweet candy store.'
+    seoTitle: 'About Best Lolly Shop - The Best Lolly Shop in NZ & Online Lollyshop',
+    seoDescription: 'Read our story and mission. Discover how Best Lolly Shop became the best lolly shop in NZ for lollies, sweets, and chocolate in NZ.'
   };
 
   const values = [
@@ -138,12 +138,12 @@ export const About = () => {
                     </div>
                     
                     <div className="mockup-testimonial-card glass-card">
-                      <div className="testimonial-header">
+                      <div className="mockup-testimonial-header">
                         <span className="stars">⭐⭐⭐⭐⭐</span>
                         <span className="time">Auckland</span>
                       </div>
-                      <p className="testimonial-quote">"The best sour lollies in New Zealand! Incredibly fresh and fast shipping."</p>
-                      <h6 className="testimonial-author">— James T.</h6>
+                      <p className="mockup-testimonial-quote">"The best sour lollies in New Zealand! Incredibly fresh and fast shipping."</p>
+                      <h6 className="mockup-testimonial-author">— James T.</h6>
                     </div>
                   </div>
                 </div>

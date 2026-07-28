@@ -4,10 +4,10 @@ import { useEffect } from 'react';
  * Dynamic SEO component that updates document head tags
  * and injects structured JSON-LD schemas inside a React SPA.
  */
-export const SEO = ({ title, description, canonicalUrl, ogType, ogImage, schema }) => {
+export const SEO = ({ title, description, keywords, canonicalUrl, ogType, ogImage, schema }) => {
   useEffect(() => {
     // 1. Update Document Title
-    document.title = title || "Best Lolly Shop - New Zealand's Favourite Online Lolly Shop";
+    document.title = title || "Best Lolly Shop - Best Lolly Shop in NZ & Chocolates in NZ";
 
     // 2. Update Meta Description
     let metaDescription = document.querySelector('meta[name="description"]');
@@ -16,7 +16,16 @@ export const SEO = ({ title, description, canonicalUrl, ogType, ogImage, schema 
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', description || "Shop the finest selection of lollies, sour gummies, imported chocolates and sweets online in New Zealand.");
+    metaDescription.setAttribute('content', description || "Looking for the best lolly shop in NZ? Shop at Best Lolly Shop for lollies, sour sweets, pick & mix, and chocolate in NZ.");
+
+    // 2b. Update Meta Keywords
+    let metaKeywords = document.querySelector('meta[name="keywords"]');
+    if (!metaKeywords) {
+      metaKeywords = document.createElement('meta');
+      metaKeywords.setAttribute('name', 'keywords');
+      document.head.appendChild(metaKeywords);
+    }
+    metaKeywords.setAttribute('content', keywords || "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, buy lollies online nz, imported candy nz");
 
     // 3. Update Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');

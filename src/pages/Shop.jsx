@@ -44,16 +44,16 @@ const parentGroups = {
 
 const categorySeoData = {
   'All Products': {
-    title: "Shop All Lollies & Candy Online | Best Lolly Shop NZ",
-    description: "Browse our entire collection of premium candy, chocolates, gummies, and bulk lollies. Find imported sweets and Kiwi classics online with fast NZ delivery.",
-    h1: "Shop All Lollies, Sweets & Chocolates",
-    intro: "Explore the complete confectionery universe at Best Lolly Shop! Our 'Shop All' catalog is your passport to an incredible selection of sweets, chocolates, and imported treats. We gather the finest candies from local manufacturers and top global brands so you can find exactly what you're craving in one convenient location."
+    title: "Best Lolly Shop in NZ | Complete Online Lollyshop & Chocolates in NZ",
+    description: "Browse the best lolly shop in NZ! Shop our entire collection of lollies, gummies, freeze dried candy, and chocolate in NZ with fast nationwide delivery.",
+    h1: "Shop All Lollies, Sweets & Chocolate in NZ",
+    intro: "Welcome to New Zealand's favourite lollyshop! Explore our complete candy catalog featuring local Kiwi sweets, sour lollies, bulk party bags, and premium chocolate in NZ."
   },
   'All': {
-    title: "Shop All Lollies & Candy Online | Best Lolly Shop NZ",
-    description: "Browse our entire collection of premium candy, chocolates, gummies, and bulk lollies. Find imported sweets and Kiwi classics online with fast NZ delivery.",
-    h1: "Shop All Lollies, Sweets & Chocolates",
-    intro: "Explore the complete confectionery universe at Best Lolly Shop! Our 'Shop All' catalog is your passport to an incredible selection of sweets, chocolates, and imported treats. We gather the finest candies from local manufacturers and top global brands so you can find exactly what you're craving in one convenient location."
+    title: "Best Lolly Shop in NZ | Complete Online Lollyshop & Chocolates in NZ",
+    description: "Browse the best lolly shop in NZ! Shop our entire collection of lollies, gummies, freeze dried candy, and chocolate in NZ with fast nationwide delivery.",
+    h1: "Shop All Lollies, Sweets & Chocolate in NZ",
+    intro: "Welcome to New Zealand's favourite lollyshop! Explore our complete candy catalog featuring local Kiwi sweets, sour lollies, bulk party bags, and premium chocolate in NZ."
   },
   'Gummies': {
     title: "Gummy Bears & Jelly Sweets Online NZ | Best Lolly Shop",
@@ -68,10 +68,10 @@ const categorySeoData = {
     intro: "Craving a sour kick? Browse our intense collection of sour belts, fizzy straps, and sour drops. Perfect for those who love a mouth-puckering candy experience!"
   },
   'Chocolates': {
-    title: "Premium Chocolates Online NZ | Best Lolly Shop",
-    description: "Indulge in gourmet milk, dark, and white chocolates. Shop local NZ confections and imported chocolate bars online with fast delivery.",
-    h1: "Premium Chocolates & Sweet Cacao Treats",
-    intro: "Treat yourself to rich, creamy chocolates. From single-origin dark chocolate bars to fun milk chocolate drops, our selection is a chocolate lover's dream come true."
+    title: "Buy Premium Chocolate in NZ | Best Lolly Shop NZ",
+    description: "Indulge in rich milk, dark, white, and imported chocolate in NZ. Shop local confections and gourmet chocolate online at Best Lolly Shop with fast NZ delivery.",
+    h1: "Buy Premium Chocolate in NZ",
+    intro: "Treat yourself to the best chocolate in NZ! From creamy milk chocolate bars and hazelnut drops to imported European and American chocolates, our collection is a chocolate lover's dream come true."
   },
   'Licorice': {
     title: "Traditional Black & Red Licorice NZ | Best Lolly Shop",
