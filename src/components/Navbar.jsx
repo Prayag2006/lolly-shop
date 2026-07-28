@@ -116,6 +116,7 @@ export const Navbar = ({ onCartOpen }) => {
             playsInline
             className="logo-video"
           >
+            <source src="/logo.mp4" type="video/mp4" />
             <source src="/Logo.mp4" type="video/mp4" />
           </video>
         </Link>
