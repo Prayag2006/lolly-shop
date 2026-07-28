@@ -45,99 +45,99 @@ const parentGroups = {
 const categorySeoData = {
   'All Products': {
     title: "Best Lolly Shop in NZ | Complete Online Lollyshop & Chocolates in NZ",
-    description: "Browse the best lolly shop in NZ! Shop our entire collection of lollies, gummies, freeze dried candy, and chocolate in NZ with fast nationwide delivery.",
+    description: "Browse the best lolly shop in NZ! Buy lollies online new zealand, imported american candy, uk sweets, freeze dried lollies, pick and mix bulk bags, and chocolate in NZ.",
     h1: "Shop All Lollies, Sweets & Chocolate in NZ",
-    intro: "Welcome to New Zealand's favourite lollyshop! Explore our complete candy catalog featuring local Kiwi sweets, sour lollies, bulk party bags, and premium chocolate in NZ."
+    intro: "Welcome to New Zealand's favourite online lollyshop! Explore our complete candy store catalog featuring classic kiwi lollies, sour rainbow belts, 1kg lolly bags, and premium chocolates in NZ."
   },
   'All': {
     title: "Best Lolly Shop in NZ | Complete Online Lollyshop & Chocolates in NZ",
-    description: "Browse the best lolly shop in NZ! Shop our entire collection of lollies, gummies, freeze dried candy, and chocolate in NZ with fast nationwide delivery.",
+    description: "Browse the best lolly shop in NZ! Buy lollies online new zealand, imported american candy, uk sweets, freeze dried lollies, pick and mix bulk bags, and chocolate in NZ.",
     h1: "Shop All Lollies, Sweets & Chocolate in NZ",
-    intro: "Welcome to New Zealand's favourite lollyshop! Explore our complete candy catalog featuring local Kiwi sweets, sour lollies, bulk party bags, and premium chocolate in NZ."
+    intro: "Welcome to New Zealand's favourite online lollyshop! Explore our complete candy store catalog featuring classic kiwi lollies, sour rainbow belts, 1kg lolly bags, and premium chocolates in NZ."
   },
   'Gummies': {
-    title: "Gummy Bears & Jelly Sweets Online NZ | Best Lolly Shop",
-    description: "Buy delicious gummy bears, jelly babies, and fruit gummies online. Fresh stock, great prices, and fast shipping across New Zealand.",
-    h1: "Delicious Gummy Bears & Fruit Gummy Sweets",
-    intro: "Discover our massive range of chewy, soft, and delicious fruit gummies! From classic gummy bears and jelly worms to exotic fruit flavors, we stock the freshest range of jelly sweets in NZ."
+    title: "Gummy Bears NZ & Gummy Worms Online | Best Lolly Shop",
+    description: "Buy delicious gummy bears nz, gummy worms, jelly babies, and fruit gummies online. Fresh stock, great prices, and fast sweets delivery NZ nationwide.",
+    h1: "Gummy Bears NZ & Fruit Gummy Sweets",
+    intro: "Discover our massive range of chewy gummy bears nz, gummy worms, and jelly sweets! From classic fruit gummies to exotic flavours, we stock the freshest range of lollies in NZ."
   },
   'Sour Lollies': {
-    title: "Sour Candy & Fizzy Straps NZ | Best Lolly Shop",
-    description: "Supercharge your tastebuds with our sour lollies, fizzy straps, and sour belts. Order online today for fast, secure delivery in NZ.",
-    h1: "Super Sour Lollies, Straps & Fizzy Candies",
-    intro: "Craving a sour kick? Browse our intense collection of sour belts, fizzy straps, and sour drops. Perfect for those who love a mouth-puckering candy experience!"
+    title: "Sour Lollies NZ & Sour Rainbow Belts | Best Lolly Shop",
+    description: "Supercharge your tastebuds with sour lollies nz, sour straps nz, fizzy sour lollies, and sour rainbow belts. Order candy online nz with fast delivery.",
+    h1: "Fizzy Sour Lollies, Sour Straps & Rainbow Belts",
+    intro: "Craving an intense sour kick? Browse sour lollies nz, fizzy sour straps, and sour rainbow belts. Perfect for candy lovers looking for a mouth-puckering rush!"
   },
   'Chocolates': {
-    title: "Buy Premium Chocolate in NZ | Best Lolly Shop NZ",
-    description: "Indulge in rich milk, dark, white, and imported chocolate in NZ. Shop local confections and gourmet chocolate online at Best Lolly Shop with fast NZ delivery.",
-    h1: "Buy Premium Chocolate in NZ",
-    intro: "Treat yourself to the best chocolate in NZ! From creamy milk chocolate bars and hazelnut drops to imported European and American chocolates, our collection is a chocolate lover's dream come true."
+    title: "Buy Chocolate Online NZ | Milk, Dark & Belgian Chocolates NZ",
+    description: "Buy chocolate online nz! Indulge in milk chocolate bars nz, dark chocolate nz, belgian chocolates nz, cadbury lollies, and whitakers chocolate nz with fast shipping.",
+    h1: "Buy Chocolate Online NZ | Milk & Dark Chocolates",
+    intro: "Treat yourself to the finest chocolate in NZ! Shop imported chocolates nz, milk chocolate bars, dark chocolate, belgian chocolates, cadbury lollies, and chocolate gift boxes online."
   },
   'Licorice': {
-    title: "Traditional Black & Red Licorice NZ | Best Lolly Shop",
-    description: "Shop traditional soft eating black licorice, red licorice, and filled licorice logs. Order online with quick shipping across NZ.",
-    h1: "Traditional Black & Red Licorice Collection",
-    intro: "Enjoy the bold flavor of traditional soft-eating black licorice, raspberry red licorice, and gourmet filled logs. Fresh, chewy, and highly satisfying."
+    title: "Licorice Lollies NZ & Black Licorice NZ | Best Lolly Shop",
+    description: "Shop licorice lollies nz and traditional black licorice nz online. Soft eating black and red licorice logs delivered fast across New Zealand.",
+    h1: "Licorice Lollies NZ & Black Licorice Collection",
+    intro: "Enjoy the bold flavor of traditional soft-eating black licorice nz, red licorice, and gourmet filled logs. Fresh, chewy, and highly satisfying."
   },
   'Hard Lollies': {
-    title: "Hard Candies, Rock & Lollipops NZ | Best Lolly Shop",
-    description: "Buy classic hard-boiled candies, lollipops, and traditional rock candy online. Perfect for party bags and wedding favours in NZ.",
-    h1: "Classic Hard-Boiled Candies & Lollipops",
-    intro: "Discover nostalgic hard-boiled sweets, travel drops, and gourmet lollipops. Perfect for slow-sucking sweetness that lasts."
+    title: "Hard Boiled Candies NZ & Lollipops NZ | Best Lolly Shop",
+    description: "Buy hard boiled candies nz, lollipops nz, and traditional rock candy online. Perfect for party bag lollies nz and wedding candy buffets.",
+    h1: "Hard Boiled Candies NZ & Lollipops Collection",
+    intro: "Discover nostalgic hard boiled candies nz, travel drops, and gourmet lollipops nz. Perfect for slow-sucking sweetness that lasts."
   },
   'Marshmallows': {
-    title: "Soft Marshmallows & Fluffy Sweets NZ | Best Lolly Shop",
-    description: "Buy fluffy pink & white marshmallows, toasted mallows, and chocolate-coated marshmallows online. Quick delivery throughout NZ.",
-    h1: "Fluffy Marshmallows & Sweet Clouds",
-    intro: "Light, pillowy, and meltingly soft! Shop our classic pink and white marshmallows, ideal for hot chocolates, baking, campfire toasting, or party bowls."
+    title: "Marshmallows NZ & Fluffy Sweets | Best Lolly Shop",
+    description: "Buy fluffy pink & white marshmallows nz, toasted mallows, and chocolate-coated marshmallows online. Quick sweets delivery NZ nationwide.",
+    h1: "Fluffy Marshmallows NZ & Soft Sweets",
+    intro: "Light, pillowy, and meltingly soft! Shop our classic pink and white marshmallows nz, ideal for hot chocolates, baking, campfire toasting, or party bowls."
   },
   'Pick and Mix': {
-    title: "Create Custom Pick & Mix Lollies NZ | Best Lolly Shop",
-    description: "Build your dream candy bag online with our custom Pick and Mix lollies. Choose from 100+ gummies, sours, and chocolates. Fast shipping.",
-    h1: "Build Your Custom Pick and Mix Candy Bag",
-    intro: "Mix and match your absolute favourite sweets! Select your bag size and fill it with our premium selection of gummies, sours, chocolates, and chews."
+    title: "Pick and Mix Bulk Bags & Custom Lollies NZ | Best Lolly Shop",
+    description: "Build your custom pick and mix bulk bags online! Choose from 100+ gummies, sour straps, chocolates, and chewy lollies. Fast courier shipping.",
+    h1: "Build Your Custom Pick and Mix Bulk Bags",
+    intro: "Mix and match your absolute favourite sweets! Select your bag size and fill it with our premium selection of gummies, sour lollies nz, and imported chocolates."
   },
   'American': {
-    title: "Imported American Candy & Soda NZ | Best Lolly Shop",
-    description: "Shop famous USA candies: Reese's, Hershey's, Jolly Ranchers, and Nerds. Order imported American sweets online for delivery in NZ.",
-    h1: "Imported American Candy, Chocolates & Sweets",
-    intro: "Experience the famous flavors of the USA! We import authentic American candy, including peanut butter cups, sour candy boxes, and classic chocolate bars."
+    title: "American Candy NZ & Imported American Lollies | Best Lolly Shop",
+    description: "Shop famous american candy nz: Reese's, Hershey's, Jolly Ranchers, and Nerds. Order imported american lollies online for fast delivery in NZ.",
+    h1: "American Candy NZ & Imported American Lollies",
+    intro: "Experience the famous flavors of the USA! We stock american candy nz, imported american lollies, peanut butter cups, and rare imported candy."
   },
   'British': {
-    title: "British Sweets & UK Confectionery NZ | Best Lolly Shop",
-    description: "Buy authentic English sweets, sherbets, and UK chocolates online in New Zealand. Fast dispatch and secure delivery for British favourites.",
-    h1: "Authentic British Sweets & UK Classics",
-    intro: "Bring back sweet memories of the UK with our range of traditional British sweets, boiled sherbets, and popular English chocolate bars."
+    title: "UK Sweets NZ & British Lollies NZ | Best Lolly Shop",
+    description: "Buy authentic uk sweets nz, british lollies nz, and english sherbet sweets online in New Zealand. Fast dispatch and secure delivery.",
+    h1: "Authentic UK Sweets NZ & British Lollies NZ",
+    intro: "Bring back sweet memories of the UK with our range of traditional uk sweets nz, british lollies nz, english sherbet sweets, and UK chocolate bars."
   },
   'Bulk': {
-    title: "Buy Bulk Lollies & Party Candy NZ | Best Lolly Shop",
-    description: "Save money with wholesale bulk lollies. Buy 1kg+ bags of gummies, party mixes, and chocolates online. Fast courier delivery in NZ.",
-    h1: "Wholesale Bulk Lollies for Parties & Events",
-    intro: "Stock up and save with our bulk candy bags! Ideal for weddings, large events, corporate branding, or party favour bag filling. Great value per kilogram."
+    title: "Bulk Lollies NZ, Wholesale Candy & 1kg Lolly Bags | Best Lolly Shop",
+    description: "Save money with bulk lollies nz, wholesale candy nz, 1kg lolly bags nz, and cheap bulk sweets. Perfect for party bag lollies and weddings.",
+    h1: "Bulk Lollies NZ, Wholesale Candy & 1kg Bags",
+    intro: "Stock up and save with bulk lollies nz and 1kg lolly bags! Ideal for wedding candy buffet lollies, corporate lolly boxes, or birthday party bag lollies."
   },
   'Sugar Free': {
-    title: "Sugar Free Candy & Diabetic Sweets NZ | Best Lolly Shop",
-    description: "Shop guilt-free sugar free lollies, diabetic sweets, and chocolates online. Delicious taste with zero added sugar. Fast shipping in NZ.",
-    h1: "Guilt-Free Sugar Free Candy & Sweets",
-    intro: "Enjoy all the sweetness with none of the sugar! Perfect for diabetics or those watching their sugar intake. Delicious taste, zero compromise."
+    title: "Sugar Free Lollies NZ & Diabetic Candy | Best Lolly Shop",
+    description: "Shop sugar free lollies nz and diabetic candy online. Delicious taste with zero added sugar. Fast sweets delivery NZ nationwide.",
+    h1: "Sugar Free Lollies NZ & Diabetic Candy",
+    intro: "Enjoy all the sweetness with none of the sugar! Perfect for diabetics watching their sugar intake. Shop sugar free lollies nz with zero compromise."
   },
   'Vegan': {
-    title: "Vegan Lollies & Gelatine Free Sweets NZ | Best Lolly Shop",
-    description: "Shop plant-based, gelatine-free vegan lollies online. Delicious organic and natural fruit gummies delivered fast across New Zealand.",
-    h1: "Plant-Based Vegan & Gelatine-Free Lollies",
-    intro: "Deliciously plant-based! Browse our range of vegan confections, crafted without gelatine, artificial colors, or dairy. Natural, sweet, and ethical."
+    title: "Vegan Lollies NZ & Gelatine Free Sweets | Best Lolly Shop",
+    description: "Shop plant-based vegan lollies nz and gelatine free sweets online. Delicious organic and natural fruit gummies delivered fast across New Zealand.",
+    h1: "Vegan Lollies NZ & Gelatine Free Sweets",
+    intro: "Deliciously plant-based! Browse vegan lollies nz and gelatine free sweets, crafted without animal products, artificial colors, or dairy."
   },
   'Lollies': {
-    title: "Buy Lollies Online NZ | Premium Sweet Confectionery",
-    description: "Shop the best selection of NZ lollies online. Chewies, gummies, hard candies, and nostalgic sweets. Fast delivery throughout New Zealand.",
-    h1: "Premium New Zealand Lollies & Confectionery",
-    intro: "Browse New Zealand's finest lollies! From traditional Kiwi classics to international favourites, find everything to satisfy your sweet tooth here."
+    title: "Buy Lollies Online New Zealand | Premium Sweet Confectionery",
+    description: "Buy lollies online new zealand! Shop chewy lollies nz, gummies, hard candies, and nostalgic sweets. Fast delivery throughout New Zealand.",
+    h1: "Buy Lollies Online New Zealand",
+    intro: "Browse New Zealand's finest lollies! From traditional Kiwi classics to international favourites, find cheap lollies online nz to satisfy your sweet tooth."
   },
   'NZ Lollies': {
-    title: "Kiwi Classics & Traditional NZ Lollies | Best Lolly Shop",
-    description: "Shop nostalgic New Zealand lollies online. Jet planes, pineapple lumps, milk bottles and Mayceys. Fast nationwide courier delivery.",
-    h1: "Kiwi Classics & Traditional NZ Lollies",
-    intro: "Take a trip down memory lane! Our NZ Lollies collection features your all-time favourite Kiwiana confections, freshly packed and delivered across New Zealand."
+    title: "Kiwi Lollies & Classic Kiwi Lollies NZ | Best Lolly Shop",
+    description: "Shop iconic kiwi lollies and classic kiwi lollies online: jet plane lollies, milk bottle lollies, pineapple lumps, and Mayceys. Fast delivery in NZ.",
+    h1: "Kiwi Lollies & Classic Kiwi Lollies NZ",
+    intro: "Take a trip down memory lane! Our Kiwi Lollies collection features your all-time favourite classic kiwi lollies, jet plane lollies, and milk bottle lollies."
   },
   'Soft Lollies': {
     title: "Chewy Soft Lollies & Gummies NZ | Best Lolly Shop",

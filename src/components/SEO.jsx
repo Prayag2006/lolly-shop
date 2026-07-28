@@ -25,7 +25,7 @@ export const SEO = ({ title, description, keywords, canonicalUrl, ogType, ogImag
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', keywords || "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, buy lollies online nz, imported candy nz");
+    metaKeywords.setAttribute('content', keywords || "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, lolly shop hamilton, candy shop auckland, lolly store christchurch, online lolly shop wellington, kiwi lollies, sour lollies nz, sour straps nz, gummy bears nz, jet plane lollies, buy chocolate online nz, imported chocolates nz, american candy nz, uk sweets nz, freeze dried candy nz, lolly gift box nz, bulk lollies nz, vegan lollies nz, sugar free lollies nz, buy lollies online new zealand");
 
     // 3. Update Canonical URL
     let canonical = document.querySelector('link[rel="canonical"]');

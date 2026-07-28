@@ -18,7 +18,7 @@ export const About = () => {
     images: ['/about_showcase1.png'],
     gallery: [],
     seoTitle: 'About Best Lolly Shop - The Best Lolly Shop in NZ & Online Lollyshop',
-    seoDescription: 'Read our story and mission. Discover how Best Lolly Shop became the best lolly shop in NZ for lollies, sweets, and chocolate in NZ.'
+    seoDescription: 'Read our story and mission. Learn how Best Lolly Shop became New Zealand\'s favourite online lollyshop to buy lollies online new zealand, american candy, and chocolate in NZ.'
   };
 
   const values = [

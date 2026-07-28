@@ -177,27 +177,27 @@ export const Home = ({ onProductClick }) => {
   const faqs = [
     {
       q: 'Why is Best Lolly Shop considered the best lolly shop in NZ?',
-      a: 'Best Lolly Shop is rated the best lolly shop in NZ because we offer New Zealand\'s largest online lollyshop selection of imported candy, pick & mix lollies, freeze dried treats, and chocolate in NZ with ultra-fast nationwide shipping.'
+      a: 'Best Lolly Shop is rated the best lolly shop in NZ because we offer New Zealand\'s largest online lollyshop selection of imported candy, classic kiwi lollies, pick & mix lollies, freeze dried treats, and chocolate in NZ with ultra-fast nationwide shipping.'
     },
     {
-      q: 'Do you deliver premium chocolate in NZ?',
-      a: 'Yes! We deliver local and international chocolate in NZ straight to your door across New Zealand with temperature-controlled packaging to guarantee absolute freshness.'
+      q: 'Do you deliver lollies & chocolates nationwide across New Zealand?',
+      a: 'Yes! We provide fast sweets delivery NZ nationwide including Hamilton candy delivery, candy shop orders in Auckland, lolly store shipments to Christchurch, and online lolly shop delivery to Wellington.'
+    },
+    {
+      q: 'Do you offer vegan, sugar-free, gluten-free, or halal lollies?',
+      a: 'Absolutely! We stock vegan lollies NZ (gelatine free sweets), sugar free lollies NZ (diabetic candy), gluten free lollies, and halal certified lollies so everyone can enjoy sweet treats.'
+    },
+    {
+      q: 'Can I order bulk lollies for birthday parties, weddings, and corporate events?',
+      a: 'Yes! Our bulk lollies NZ section offers 1kg lolly bags, wholesale candy, and pick and mix bulk bags perfect for birthday lolly mixes, wedding candy buffet lollies, christmas lolly gifts, and corporate lolly boxes.'
     },
     {
       q: 'What are your delivery charges?',
-      a: 'We offer FREE delivery in Hamilton, New Zealand! For other NZ locations, free delivery applies on all orders above $50 NZD. For orders below $50 NZD, a minimal delivery charge of $5 applies. We deliver across New Zealand within 3-5 business days.'
+      a: 'We offer FREE same day lolly delivery on qualifying orders in Hamilton, New Zealand! For other NZ locations, free delivery applies on all orders above $50 NZD. For orders below $50 NZD, a minimal delivery charge of $5 applies.'
     },
     {
       q: 'How do you ensure product freshness?',
-      a: 'We maintain strict quality control and work directly with manufacturers to ensure all products are fresh. Most items have a minimum shelf life of 3-6 months when delivered. We store all products in temperature-controlled facilities.'
-    },
-    {
-      q: 'Can I return or exchange products?',
-      a: 'Due to the nature of food items, we cannot accept returns or exchanges unless the product is damaged or defective upon delivery. Please contact our support within 24 hours of delivery with photos of the package.'
-    },
-    {
-      q: 'Do you offer bulk or wholesale pricing?',
-      a: 'Yes! We offer special pricing for bulk orders, corporate gifting, and parties. Please contact us at bestlollyshopnz@gmail.com or call +64 21 123 4567 to discuss your custom sweet requests!'
+      a: 'We maintain strict quality control and store all products in temperature-controlled facilities to ensure your chocolates in NZ and imported sweets arrive fresh and delicious.'
     }
   ];
 
@@ -324,9 +324,9 @@ export const Home = ({ onProductClick }) => {
   ];
 
   const seoHome = settings?.seoOverrides?.home || settings?.seoOverrides?.['/'] || {
-    title: "Best Lolly Shop in NZ | #1 Online Lollyshop & Chocolates in NZ",
-    description: "Looking for the best lolly shop in NZ? Shop at Best Lolly Shop — New Zealand's premier online lollyshop for pick & mix lollies, sour sweets, and chocolate in NZ.",
-    keywords: "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, buy lollies online nz, imported candy nz, pick and mix lollies, freeze dried candy, bulk lollies nz"
+    title: "Best Lolly Shop NZ | #1 Online Lollyshop, Sweets & Chocolate in NZ",
+    description: "Best lolly shop in NZ! Buy lollies online new zealand, imported american candy, uk sweets, freeze dried candy, pick and mix bulk lollies & chocolate in NZ with fast nationwide delivery.",
+    keywords: "Best lolly shop in nz, lolly shop in nz, chocolate in nz, lollyshop, best lolly shop, chcolate in nz, lolly shop hamilton, candy shop auckland, lolly store christchurch, online lolly shop wellington, sweets delivery nz nationwide, kiwi lolly shop online, hamilton candy delivery, kiwi lollies, classic kiwi lollies, sour lollies nz, fizzy sour lollies, sour straps nz, sour rainbow belts, gummy bears nz, gummy worms, jet plane lollies, milk bottle lollies, chewy lollies nz, hard boiled candies nz, licorice lollies nz, black licorice nz, marshmallows nz, lollipops nz, buy chocolate online nz, imported chocolates nz, milk chocolate bars nz, dark chocolate nz, belgian chocolates nz, cadbury lollies nz, whitakers chocolate nz, chocolate gift box nz, chocolate coated nuts nz, american candy nz, imported american lollies, uk sweets nz, british lollies nz, english sherbet sweets, freeze dried candy nz, freeze dried lollies, tiktok viral lollies nz, peel me lollies nz, rare imported candy, lolly gift box nz, sweet gift hampers, candy box delivery nz, birthday lolly mix, wedding candy buffet lollies, party bag lollies nz, christmas lolly gifts, corporate lolly boxes nz, bulk lollies nz, wholesale candy nz, 1kg lolly bags nz, cheap bulk sweets nz, pick and mix bulk bags, vegan lollies nz, gelatine free sweets, sugar free lollies nz, diabetic candy, gluten free lollies nz, halal certified lollies nz, buy lollies online new zealand, order candy online nz, cheap lollies online nz, same day lolly delivery hamilton, best place to buy lollies online in nz"
   };
 
   return (
