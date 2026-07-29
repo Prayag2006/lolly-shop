@@ -20,6 +20,7 @@
     "express": "^4.19.2",
     "firebase": "^12.15.0",
     "framer-motion": "^12.42.2",
+    "html2pdf.js": "^0.14.0",
     "lucide-react": "^1.23.0",
     "mongoose": "^8.24.1",
     "nodemailer": "^9.0.3",

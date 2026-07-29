@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "id": "ORD-979920",
+    "date": "29 Jul 2026",
+    "items": [
+      {
+        "id": "p-1",
+        "name": "Pascall Pineapple Lumps",
+        "price": 8.5,
+        "selectedWeight": "100g",
+        "quantity": 2,
+        "image": "https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600",
+        "_id": "6a69f5532149e9b133eb76d9"
+      },
+      {
+        "id": "p-2",
+        "name": "Whittaker's Peanut Slab",
+        "price": 4.5,
+        "selectedWeight": "50g",
+        "quantity": 3,
+        "image": "https://images.unsplash.com/photo-1541781774459-bb2af2f05b55?auto=format&fit=crop&q=80&w=600",
+        "_id": "6a69f5532149e9b133eb76da"
+      }
+    ],
+    "total": 49.5,
+    "shipping": 19,
+    "actualShipping": 19,
+    "freeShippingApplied": false,
+    "freeShippingReason": "",
+    "customer": {
+      "name": "Sarah Jenkins",
+      "email": "sarah.j@example.com",
+      "phone": "0219876543",
+      "address": "42 Victoria Street",
+      "city": "Auckland",
+      "postalCode": "1010"
+    },
+    "status": "Pending",
+    "deliveryCompany": "NZ Post Express",
+    "deliveryReference": "",
+    "_id": "6a69f5532149e9b133eb76d8",
+    "createdAt": "2026-07-29T12:42:59.937Z",
+    "updatedAt": "2026-07-29T12:42:59.937Z",
+    "__v": 0
+  }
+]

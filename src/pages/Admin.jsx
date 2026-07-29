@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import html2pdf from 'html2pdf.js';
 import { Navigate } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
 import { 
@@ -241,6 +242,9 @@ export const Admin = () => {
   // Enterprise Media modification states
   const [editingMediaFile, setEditingMediaFile] = useState(null);
   const [mediaResizePercent, setMediaResizePercent] = useState(100);
+
+  // Invoice modal state
+  const [selectedInvoiceOrder, setSelectedInvoiceOrder] = useState(null);
 
   // Brand form state
   const [newBrandName, setNewBrandName] = useState('');
@@ -1738,7 +1742,7 @@ export const Admin = () => {
                                     <CheckCircle2 size={16} /> Delivered
                                   </span>
                                 ) : ord.status === 'Cancelled' ? (
-                                  <span className="cancelled-tag" style={{ color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
+                                    <span className="cancelled-tag" style={{ color: '#ef4444', fontWeight: '700', fontSize: '13px' }}>
                                     Cancelled
                                   </span>
                                 ) : (
@@ -1746,6 +1750,27 @@ export const Admin = () => {
                                     Active
                                   </span>
                                 )}
+                                <button
+                                   title="Preview & Print Invoice"
+                                   onClick={() => setSelectedInvoiceOrder(ord)}
+                                   style={{
+                                     background: 'rgba(231, 44, 131, 0.08)',
+                                     border: '1.5px solid rgba(231, 44, 131, 0.3)',
+                                     borderRadius: '8px',
+                                     color: 'var(--color-primary)',
+                                     padding: '4px 10px',
+                                     display: 'flex',
+                                     alignItems: 'center',
+                                     gap: '4px',
+                                     cursor: 'pointer',
+                                     fontSize: '12px',
+                                     fontWeight: '700',
+                                     transition: 'all 0.2s ease',
+                                     flexShrink: 0
+                                   }}
+                                 >
+                                   🧾 Invoice
+                                 </button>
                                 <button
                                   title="Delete this order"
                                   onClick={() => {
@@ -6201,50 +6226,11 @@ export const Admin = () => {
                     </div>
                     <button onClick={() => {
                       const selId = document.getElementById('invoice-order-select').value;
-                      const orderObj = safeOrders.find(o => o.id === selId);
+                      const orderObj = safeOrders.find(o => (o.id === selId || o._id === selId));
                       if (orderObj) {
-                        const printWindow = window.open('', '_blank');
-                        printWindow.document.write(`
-                          <html>
-                            <head>
-                              <title>Invoice - \${orderObj.id}</title>
-                              <style>
-                                body { font-family: sans-serif; padding: 40px; color: #333; }
-                                .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e72c83; padding-bottom: 10px; margin-bottom: 20px; }
-                                .details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                                th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-                                th { background-color: #fcecef; color: #e72c83; }
-                                .total { text-align: right; font-size: 18px; margin-top: 20px; font-weight: bold; }
-                              </style>
-                            </head>
-                            <body>
-                              <div class="header">
-                                <div><h2>BEST LOLLY SHOP NZ</h2><p>Hamilton 3200, New Zealand</p></div>
-                                <div><h1>INVOICE</h1><p>Order: \${orderObj.id}</p><p>Date: \${orderObj.date}</p></div>
-                              </div>
-                              <div class="details">
-                                <div><strong>Billed To:</strong><p>\${orderObj.customer?.name}</p><p>\${orderObj.customer?.email}</p><p>\${orderObj.customer?.phone}</p></div>
-                                <div><strong>Ship To Delivery:</strong><p>\${orderObj.customer?.address}</p><p>\${orderObj.customer?.city}, \${orderObj.customer?.postalCode}</p></div>
-                              </div>
-                              <table>
-                                <thead>
-                                  <tr><th>Item Product</th><th>Pack Weight</th><th>Qty</th><th>Price</th></tr>
-                                </thead>
-                                <tbody>
-                                  \${orderObj.items.map(item => \`
-                                    <tr><td>\${item.name}</td><td>\${item.selectedWeight}</td><td>\${item.quantity}</td><td>$\${item.price}</td></tr>
-                                  \`).join('')}
-                                </tbody>
-                              </table>
-                              <div class="total">Total Paid Amount: $\${orderObj.total} (includes GST)</div>
-                              <script>window.print();</script>
-                            </body>
-                          </html>
-                        `);
-                        printWindow.document.close();
+                        setSelectedInvoiceOrder(orderObj);
                       }
-                    }} className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Generate & Print Invoice PDF</button>
+                    }} className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Generate & Preview Invoice PDF</button>
                   </div>
                 </div>
               </div>
@@ -6252,6 +6238,174 @@ export const Admin = () => {
           )}
         </main>
       </div>
+
+      {/* Interactive Invoice Preview Modal */}
+      {selectedInvoiceOrder && (
+        <div 
+          className="invoice-modal-overlay" 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(6px)',
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px'
+          }}
+          onClick={() => setSelectedInvoiceOrder(null)}
+        >
+          <div 
+            className="invoice-modal-card glass-card"
+            style={{
+              width: '100%',
+              maxWidth: '780px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              background: '#ffffff',
+              color: '#1e293b',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              padding: '36px',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Actions Header */}
+            <div className="no-print" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', borderBottom: '1px solid #e2e8f0', paddingBottom: '16px' }}>
+              <h3 style={{ margin: 0, color: '#e72c83', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '18px' }}>
+                🧾 Order Invoice & Packing Slip Preview
+              </h3>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  onClick={() => {
+                    const element = document.getElementById('printable-invoice-area');
+                    if (!element) return;
+                    const orderId = selectedInvoiceOrder?.id || selectedInvoiceOrder?._id || 'order';
+                    const opt = {
+                      margin: [10, 10, 10, 10],
+                      filename: `Invoice_${orderId}.pdf`,
+                      image: { type: 'jpeg', quality: 0.98 },
+                      html2canvas: { scale: 2, useCORS: true, logging: false },
+                      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(element).save();
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 4px 12px rgba(16,185,129,0.3)'
+                  }}
+                >
+                  📥 Download PDF File
+                </button>
+                <button
+                  onClick={() => setSelectedInvoiceOrder(null)}
+                  style={{
+                    background: '#f1f5f9',
+                    color: '#64748b',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    padding: '8px 14px',
+                    fontWeight: '700',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕ Close
+                </button>
+              </div>
+            </div>
+
+            {/* Printable Content */}
+            <div id="printable-invoice-area" style={{ color: '#1e293b', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '3px solid #e72c83', paddingBottom: '16px', marginBottom: '24px' }}>
+                <div>
+                  <h2 style={{ margin: 0, color: '#e72c83', fontSize: '24px', fontWeight: '800', letterSpacing: '0.5px' }}>BEST LOLLY SHOP NZ</h2>
+                  <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#64748b' }}>Hamilton 3200, New Zealand</p>
+                  <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#64748b' }}>Email: support@lollyshop.co.nz</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <h1 style={{ margin: 0, fontSize: '28px', color: '#0f172a', letterSpacing: '1px' }}>INVOICE</h1>
+                  <p style={{ margin: '4px 0 0', fontSize: '14px', color: '#475569' }}><strong>Order ID:</strong> {selectedInvoiceOrder.id || selectedInvoiceOrder._id}</p>
+                  <p style={{ margin: '2px 0 0', fontSize: '13px', color: '#64748b' }}><strong>Date:</strong> {selectedInvoiceOrder.date || (selectedInvoiceOrder.createdAt ? new Date(selectedInvoiceOrder.createdAt).toLocaleDateString('en-NZ') : new Date().toLocaleDateString('en-NZ'))}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', background: '#f8fafc', padding: '16px 20px', borderRadius: '10px', border: '1px solid #e2e8f0', marginBottom: '24px' }}>
+                <div>
+                  <h4 style={{ margin: '0 0 6px', color: '#e72c83', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Billed To</h4>
+                  <p style={{ margin: '2px 0', fontSize: '14px', fontWeight: '700', color: '#0f172a' }}>{selectedInvoiceOrder.customer?.name || 'Valued Customer'}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px', color: '#475569' }}>{selectedInvoiceOrder.customer?.email || 'N/A'}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px', color: '#475569' }}>{selectedInvoiceOrder.customer?.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <h4 style={{ margin: '0 0 6px', color: '#e72c83', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Ship To Delivery</h4>
+                  <p style={{ margin: '2px 0', fontSize: '13px', color: '#334155' }}>{selectedInvoiceOrder.customer?.address || 'N/A'}</p>
+                  <p style={{ margin: '2px 0', fontSize: '13px', color: '#334155' }}>{[selectedInvoiceOrder.customer?.city, selectedInvoiceOrder.customer?.postalCode || selectedInvoiceOrder.customer?.zip].filter(Boolean).join(', ')}</p>
+                  <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b' }}><strong>Method:</strong> {selectedInvoiceOrder.deliveryCompany || 'Standard Delivery'}</p>
+                </div>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '16px' }}>
+                <thead>
+                  <tr style={{ background: '#fcecef', borderBottom: '2px solid #f43f5e' }}>
+                    <th style={{ padding: '10px 12px', textTransform: 'uppercase', fontSize: '11px', color: '#be185d', textAlign: 'left' }}>Item Product</th>
+                    <th style={{ padding: '10px 12px', textTransform: 'uppercase', fontSize: '11px', color: '#be185d', textAlign: 'left' }}>Pack Weight</th>
+                    <th style={{ padding: '10px 12px', textTransform: 'uppercase', fontSize: '11px', color: '#be185d', textAlign: 'center' }}>Qty</th>
+                    <th style={{ padding: '10px 12px', textTransform: 'uppercase', fontSize: '11px', color: '#be185d', textAlign: 'right' }}>Unit Price</th>
+                    <th style={{ padding: '10px 12px', textTransform: 'uppercase', fontSize: '11px', color: '#be185d', textAlign: 'right' }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(selectedInvoiceOrder.items || []).map((item, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#1e293b', fontWeight: '600' }}>{item.name || 'Product'}</td>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#64748b' }}>{item.selectedWeight || 'Default'}</td>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#1e293b', textAlign: 'center' }}>{item.quantity || 1}</td>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#475569', textAlign: 'right' }}>${Number(item.price || 0).toFixed(2)}</td>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#0f172a', fontWeight: '700', textAlign: 'right' }}>${(Number(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ width: '260px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#475569' }}>
+                    <span>Subtotal:</span>
+                    <span>${Math.max(0, Number(selectedInvoiceOrder.total || 0) - Number(selectedInvoiceOrder.shipping !== undefined ? selectedInvoiceOrder.shipping : 19)).toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', fontSize: '13px', color: '#475569' }}>
+                    <span>Shipping Fee:</span>
+                    <span>${Number(selectedInvoiceOrder.shipping !== undefined ? selectedInvoiceOrder.shipping : 19).toFixed(2)}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0 4px', fontSize: '16px', fontWeight: '800', color: '#0f172a', borderTop: '2px solid #0f172a', marginTop: '6px' }}>
+                    <span>Total Paid:</span>
+                    <span>${Number(selectedInvoiceOrder.total || 0).toFixed(2)} NZD</span>
+                  </div>
+                  <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#94a3b8', textAlign: 'right' }}>(Includes GST 15%)</p>
+                </div>
+              </div>
+
+              <div style={{ marginTop: '36px', textAlign: 'center', fontSize: '12px', color: '#94a3b8', borderTop: '1px solid #e2e8f0', paddingTop: '16px' }}>
+                Thank you for shopping with Best Lolly Shop NZ! 🍬
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -885,45 +885,234 @@ export const AdminEnterpriseTabs = ({ activeTab, handleUndo }) => {
                 const selId = document.getElementById('invoice-order-select').value;
                 const orderObj = safeOrders.find(o => (o.id === selId || o._id === selId));
                 if (orderObj) {
+                  const items = orderObj.items || [];
+                  const itemsRows = items.map(item => `
+                    <tr>
+                      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.name || 'Product'}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0;">${item.selectedWeight || 'Default'}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${item.quantity || 1}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right;">$${Number(item.price || 0).toFixed(2)}</td>
+                      <td style="padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: right; font-weight: 600;">$${(Number(item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                    </tr>
+                  `).join('');
+
+                  const orderId = orderObj.id || orderObj._id || 'N/A';
+                  const orderDate = orderObj.date || (orderObj.createdAt ? new Date(orderObj.createdAt).toLocaleDateString('en-NZ') : new Date().toLocaleDateString('en-NZ'));
+                  const customerName = orderObj.customer?.name || 'Valued Customer';
+                  const customerEmail = orderObj.customer?.email || 'N/A';
+                  const customerPhone = orderObj.customer?.phone || 'N/A';
+                  const customerAddress = orderObj.customer?.address || 'N/A';
+                  const customerCity = orderObj.customer?.city || '';
+                  const customerZip = orderObj.customer?.postalCode || orderObj.customer?.zip || '';
+                  const deliveryCompany = orderObj.deliveryCompany || 'Standard Delivery';
+                  const shippingCost = Number(orderObj.shipping !== undefined ? orderObj.shipping : 19).toFixed(2);
+                  const totalPaid = Number(orderObj.total || 0).toFixed(2);
+                  const subtotal = Math.max(0, Number(orderObj.total || 0) - Number(orderObj.shipping || 0)).toFixed(2);
+
                   const printWindow = window.open('', '_blank');
-                  printWindow.document.write(`
-                    <html>
-                      <head>
-                        <title>Invoice - ${orderObj.id || orderObj._id}</title>
-                        <style>
-                          body { font-family: sans-serif; padding: 40px; color: #333; }
-                          .header { display: flex; justify-content: space-between; border-bottom: 2px solid #e72c83; padding-bottom: 10px; margin-bottom: 20px; }
-                          .details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
-                          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                          th, td { padding: 10px; border-bottom: 1px solid #ddd; text-align: left; }
-                          th { background-color: #fcecef; color: #e72c83; }
-                          .total { text-align: right; font-size: 18px; margin-top: 20px; font-weight: bold; }
-                        </style>
-                      </head>
-                      <body>
-                        <div class="header">
-                          <div><h2>BEST LOLLY SHOP NZ</h2><p>Hamilton 3200, New Zealand</p></div>
-                          <div><h1>INVOICE</h1><p>Order: ${orderObj.id || orderObj._id}</p><p>Date: ${orderObj.date}</p></div>
-                        </div>
-                        <div class="details">
-                          <div><strong>Billed To:</strong><p>${orderObj.customer?.name}</p><p>${orderObj.customer?.email}</p><p>${orderObj.customer?.phone}</p></div>
-                          <div><strong>Ship To Delivery:</strong><p>${orderObj.customer?.address}</p><p>${orderObj.customer?.city}, ${orderObj.customer?.postalCode}</p></div>
-                        </div>
-                        <table>
-                          <thead>
-                            <tr><th>Item Product</th><th>Pack Weight</th><th>Qty</th><th>Price</th></tr>
-                          </thead>
-                          <tbody>
-                            ${(orderObj.items || []).map(item => `
-                              <tr><td>${item.name}</td><td>${item.selectedWeight || 'Default'}</td><td>${item.quantity}</td><td>$${item.price}</td></tr>
-                            `).join('')}
-                          </tbody>
-                        </table>
-                        <div class="total">Total Paid Amount: $${orderObj.total} (includes GST)</div>
-                        <script>window.print();</script>
-                      </body>
-                    </html>
-                  `);
+                  printWindow.document.write(`<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Invoice - ${orderId}</title>
+    <style>
+      @media print {
+        body { padding: 0; }
+        .no-print { display: none; }
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        padding: 40px;
+        color: #1e293b;
+        max-width: 800px;
+        margin: 0 auto;
+        line-height: 1.5;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 3px solid #e72c83;
+        padding-bottom: 20px;
+        margin-bottom: 30px;
+      }
+      .brand h2 {
+        margin: 0;
+        font-size: 24px;
+        color: #e72c83;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 800;
+      }
+      .brand p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: #64748b;
+      }
+      .inv-title {
+        text-align: right;
+      }
+      .inv-title h1 {
+        margin: 0;
+        font-size: 32px;
+        color: #0f172a;
+        letter-spacing: 2px;
+      }
+      .inv-title p {
+        margin: 4px 0 0;
+        font-size: 14px;
+        color: #475569;
+      }
+      .details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 30px;
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+      }
+      .details-box h4 {
+        margin: 0 0 8px 0;
+        color: #e72c83;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .details-box p {
+        margin: 3px 0;
+        font-size: 14px;
+        color: #334155;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th {
+        background-color: #fcecef;
+        color: #be185d;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        padding: 12px;
+        text-align: left;
+        border-bottom: 2px solid #f43f5e;
+      }
+      .total-container {
+        margin-top: 30px;
+        display: flex;
+        justify-content: flex-end;
+      }
+      .total-table {
+        width: 300px;
+      }
+      .total-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        font-size: 14px;
+        color: #475569;
+      }
+      .total-row.grand {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+        border-top: 2px solid #0f172a;
+        padding-top: 10px;
+        margin-top: 6px;
+      }
+      .gst-note {
+        font-size: 12px;
+        color: #64748b;
+        text-align: right;
+        margin-top: 4px;
+      }
+      .footer-note {
+        margin-top: 50px;
+        text-align: center;
+        font-size: 13px;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+        padding-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <div class="brand">
+        <h2>BEST LOLLY SHOP NZ</h2>
+        <p>Hamilton 3200, New Zealand</p>
+        <p>Email: support@lollyshop.co.nz</p>
+      </div>
+      <div class="inv-title">
+        <h1>INVOICE</h1>
+        <p><strong>Order ID:</strong> ${orderId}</p>
+        <p><strong>Date:</strong> ${orderDate}</p>
+      </div>
+    </div>
+
+    <div class="details">
+      <div class="details-box">
+        <h4>Billed To</h4>
+        <p><strong>${customerName}</strong></p>
+        <p>${customerEmail}</p>
+        <p>${customerPhone}</p>
+      </div>
+      <div class="details-box">
+        <h4>Ship To Delivery</h4>
+        <p>${customerAddress}</p>
+        <p>${[customerCity, customerZip].filter(Boolean).join(', ')}</p>
+        <p><strong>Method:</strong> ${deliveryCompany}</p>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Item Product</th>
+          <th>Pack Weight</th>
+          <th style="text-align: center;">Qty</th>
+          <th style="text-align: right;">Unit Price</th>
+          <th style="text-align: right;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${itemsRows}
+      </tbody>
+    </table>
+
+    <div class="total-container">
+      <div class="total-table">
+        <div class="total-row">
+          <span>Subtotal:</span>
+          <span>$${subtotal}</span>
+        </div>
+        <div class="total-row">
+          <span>Shipping Fee:</span>
+          <span>$${shippingCost}</span>
+        </div>
+        <div class="total-row grand">
+          <span>Total Paid:</span>
+          <span>$${totalPaid} NZD</span>
+        </div>
+        <div class="gst-note">(Includes GST 15%)</div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Thank you for shopping with Best Lolly Shop NZ! 🍬
+    </div>
+
+    <script>
+      window.onload = function() {
+        window.print();
+      };
+    </script>
+  </body>
+</html>`);
                   printWindow.document.close();
                 }
               }} className="btn btn-primary" style={{ padding: '10px', fontWeight: 'bold' }}>Generate & Print Invoice PDF</button>

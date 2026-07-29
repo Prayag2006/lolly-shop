@@ -350,3 +350,64 @@ img, video, canvas, svg {
     min-height: 44px;
   }
 }
+
+/* Print Media Styles for Clean PDF / Invoice Export */
+@media print {
+  /* Completely collapse & hide background website/admin elements */
+  body > *:not(#root),
+  .admin-page,
+  .admin-sidebar,
+  .admin-header,
+  header,
+  footer,
+  nav,
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .invoice-modal-overlay {
+    position: static !important;
+    display: block !important;
+    background: #ffffff !important;
+    backdrop-filter: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .invoice-modal-card {
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  #printable-invoice-area {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  @page {
+    margin: 10mm;
+    size: portrait;
+  }
+}
