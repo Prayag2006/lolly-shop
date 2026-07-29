@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Search, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ProductCard } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
 import { CustomDropdown } from '../components/CustomDropdown';
@@ -175,6 +175,33 @@ export const Shop = ({ onProductClick }) => {
   const [bestSellersOnly, setBestSellersOnly] = useState(false);
   const [selectedCollections, setSelectedCollections] = useState([]);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  // Category Bar Scroll Handling
+  const categoryRowRef = React.useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = () => {
+    if (categoryRowRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = categoryRowRef.current;
+      setCanScrollLeft(scrollLeft > 4);
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const handleResize = () => checkScroll();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const scrollCategories = (direction) => {
+    if (categoryRowRef.current) {
+      const scrollAmount = direction === 'left' ? -280 : 280;
+      categoryRowRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Dynamically calculate the highest product price
   const dynamicMaxPrice = React.useMemo(() => {
@@ -408,20 +435,48 @@ export const Shop = ({ onProductClick }) => {
 
       <div className="container shop-container">
         {/* Horizontal Grouped Categories Bar */}
-        <div className="shop-collections-bar">
-          <div className="parent-categories-row">
-            {Object.entries(parentGroups).map(([key, group]) => (
-              <button
-                key={key}
-                type="button"
-                className={`parent-category-card ${selectedParent === key ? 'active' : ''}`}
-                onClick={() => handleParentSelect(key)}
-              >
-                <span className="parent-emoji">{group.emoji}</span>
-                <span className="parent-name">{group.name}</span>
-              </button>
-            ))}
+        <div className="shop-collections-bar-container">
+          {canScrollLeft && (
+            <button
+              type="button"
+              className="category-scroll-btn scroll-btn-left"
+              onClick={() => scrollCategories('left')}
+              aria-label="Scroll categories left"
+            >
+              <ChevronLeft size={18} />
+            </button>
+          )}
+
+          <div className={`shop-collections-bar ${canScrollLeft ? 'has-left-shadow' : ''} ${canScrollRight ? 'has-right-shadow' : ''}`}>
+            <div
+              className="parent-categories-row"
+              ref={categoryRowRef}
+              onScroll={checkScroll}
+            >
+              {Object.entries(parentGroups).map(([key, group]) => (
+                <button
+                  key={key}
+                  type="button"
+                  className={`parent-category-card ${selectedParent === key ? 'active' : ''}`}
+                  onClick={() => handleParentSelect(key)}
+                >
+                  <span className="parent-emoji">{group.emoji}</span>
+                  <span className="parent-name">{group.name}</span>
+                </button>
+              ))}
+            </div>
           </div>
+
+          {canScrollRight && (
+            <button
+              type="button"
+              className="category-scroll-btn scroll-btn-right"
+              onClick={() => scrollCategories('right')}
+              aria-label="Scroll categories right"
+            >
+              <ChevronRight size={18} />
+            </button>
+          )}
         </div>
 
         {/* Subcategories Horizontal Scroll Row */}
