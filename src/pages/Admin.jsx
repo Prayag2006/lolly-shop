@@ -1165,41 +1165,9 @@ export const Admin = () => {
         {/* Main Content Side */}
         <main className="admin-content-area">
           {/* Enterprise Top Bar */}
-          <div className="admin-top-bar glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 24px', marginBottom: '24px', borderRadius: '12px', gap: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flex: 1 }}>
-              <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
-                <input 
-                  type="text" 
-                  placeholder="Search everywhere..." 
-                  style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '13px', outline: 'none' }}
-                  onChange={(e) => {
-                    const term = e.target.value.toLowerCase();
-                    // Set a quick tab search helper if needed
-                  }}
-                />
-              </div>
-              <button 
-                onClick={handleUndo} 
-                className="btn btn-secondary" 
-                style={{ padding: '8px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
-                disabled={undoStack.length === 0}
-              >
-                ↩️ Undo
-              </button>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-              <button 
-                onClick={toggleTheme} 
-                className="btn btn-secondary" 
-                style={{ padding: '10px 16px', borderRadius: '30px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}
-              >
-                {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
-              </button>
-              
-              <div className="admin-user-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 'bold', fontSize: '12px' }}>
-                <span>👤 {currentUser?.name} ({currentUser?.role})</span>
-              </div>
+          <div className="admin-top-bar glass-card" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: '16px 24px', marginBottom: '24px', borderRadius: '12px' }}>
+            <div className="admin-user-badge" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', borderRadius: '20px', background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 'bold', fontSize: '12px' }}>
+              <span>👤 {currentUser?.name} ({currentUser?.role})</span>
             </div>
           </div>
 
