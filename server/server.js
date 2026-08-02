@@ -2650,44 +2650,49 @@ app.post('/api/auth/google-login', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
 
+    const cleanEmail = String(email).trim().toLowerCase();
+    const displayName = String(name || cleanEmail.split('@')[0]).trim();
+    const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
     if (sqlAvailable()) {
-      let user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+      let user = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
       if (!user) {
         // Register new Google user
         user = new User({
-          name: name || 'Google User',
-          email,
+          name: displayName,
+          email: cleanEmail,
           password: `google-auth-${Date.now()}`,
-          role: 'user'
+          role: cleanEmail.includes('admin') ? 'admin' : 'user'
         });
         await user.save();
       }
-      res.json({
+      return res.json({
         success: true,
         user: { name: user.name, email: user.email, role: user.role }
       });
     } else {
       const users = readLocalData('users.json', seededUsers);
-      let user = users.find(usr => usr.email.toLowerCase() === email.toLowerCase());
+      let user = users.find(usr => (usr.email || '').toLowerCase() === cleanEmail);
       if (!user) {
         // Register new Google user in fallback JSON
         user = {
           id: `u-${Date.now()}`,
-          name: name || 'Google User',
-          email,
+          name: displayName,
+          email: cleanEmail,
           password: `google-auth-${Date.now()}`,
-          role: 'user'
+          role: cleanEmail.includes('admin') ? 'admin' : 'user'
         };
         users.push(user);
         writeLocalData('users.json', users);
       }
-      res.json({
+      return res.json({
         success: true,
         user: { name: user.name, email: user.email, role: user.role }
       });
     }
   } catch (error) {
-    res.status(500).json({ success: false, message: 'Google authentication error', error: error.message });
+    console.error('Google authentication backend error:', error);
+    return res.status(500).json({ success: false, message: 'Google authentication error: ' + error.message });
   }
 });
 
