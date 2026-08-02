@@ -22,7 +22,7 @@ export const FAQ = () => {
     },
     {
       q: "What is your delivery charge?",
-      a: "We offer completely FREE delivery in Hamilton, New Zealand! For other NZ locations, standard shipping is free for all orders over $50 NZD. For orders under $50 NZD, a flat delivery fee of $5 NZD is applied at checkout.",
+      a: "We offer completely FREE delivery in Hamilton, New Zealand! For North Island deliveries outside Hamilton, we have a fixed delivery rate of $19.00 NZD. For South Island deliveries, we have a fixed delivery rate of $39.00 NZD.",
       category: "Delivery & Shipping"
     },
     {

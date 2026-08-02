@@ -1307,7 +1307,39 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// Calculate shipping rates (Flat Rate)
+// Address region validation helpers
+function isHamiltonAddress(city, zip) {
+  const normZip = (zip || '').trim().replace(/\s+/g, '');
+  const c = (city || '').trim().toLowerCase();
+  const cityMatch = c === 'hamilton';
+  const isHamiltonPostcode = /^32\d{2}$/.test(normZip);
+  return cityMatch || isHamiltonPostcode;
+}
+
+function isSouthIslandAddress(city, zip) {
+  const normZip = (zip || '').trim().replace(/\s+/g, '');
+  const c = (city || '').trim().toLowerCase();
+  const isSouthIslandZip = /^[789]\d{3}$/.test(normZip);
+  const southIslandCities = [
+    'christchurch', 'dunedin', 'queenstown', 'nelson', 'blenheim', 'timaru',
+    'invercargill', 'greymouth', 'hokitika', 'ashburton', 'oamaru', 'wanaka',
+    'alexandra', 'westport', 'rangiora', 'kaiapoi', 'gore', 'picton', 'motueka',
+    'south island', 'canterbury', 'otago', 'southland', 'marlborough', 'tasman', 'west coast'
+  ];
+  return isSouthIslandZip || southIslandCities.some(name => c.includes(name));
+}
+
+function getDeliveryRate(city, zip) {
+  if (isHamiltonAddress(city, zip)) {
+    return { isHamilton: true, isSouthIsland: false, price: 0.00, name: 'Free Delivery - Hamilton', eta: '1-2 business days' };
+  }
+  if (isSouthIslandAddress(city, zip)) {
+    return { isHamilton: false, isSouthIsland: true, price: 39.00, name: 'South Island Courier Delivery', eta: '2-4 business days' };
+  }
+  return { isHamilton: false, isSouthIsland: false, price: 19.00, name: 'North Island Standard Delivery', eta: '1-3 business days' };
+}
+
+// Calculate shipping rates (Hamilton $0, South Island $39, North Island $19)
 app.post('/api/calculate-shipping', async (req, res) => {
   try {
     const { address, city, zip } = req.body;
@@ -1316,41 +1348,26 @@ app.post('/api/calculate-shipping', async (req, res) => {
       return res.status(400).json({ message: 'Address, city, and postcode are required to calculate shipping.' });
     }
 
-    if (isHamiltonAddress(city, zip)) {
-      return res.json({
-        mode: 'hamilton_free',
-        rates: [
-          {
-            id: 'hamilton_free_delivery',
-            name: 'Free Delivery - Hamilton',
-            price: 0.00,
-            eta: '1-2 business days'
-          }
-        ],
-        isHamilton: true,
-        freeShippingApplied: true,
-        freeShippingReason: 'Hamilton Free Delivery',
-        validatedCity: 'Hamilton'
-      });
-    }
-
-    let dynamicShipping = 19.00;
-    try {
-      const settings = await Settings.findOne({ key: 'main_settings' });
-      if (settings?.shipping?.flatRate !== undefined) dynamicShipping = settings.shipping.flatRate;
-    } catch (err) {}
+    const rateInfo = getDeliveryRate(city, zip);
 
     return res.json({
-      mode: 'flat_rate',
+      mode: rateInfo.isHamilton ? 'hamilton_free' : (rateInfo.isSouthIsland ? 'south_island' : 'north_island'),
       rates: [
         {
-          id: 'standard_delivery',
-          name: 'Standard Delivery',
-          price: dynamicShipping,
-          eta: '1-3 business days'
+          id: rateInfo.isHamilton ? 'hamilton_free_delivery' : (rateInfo.isSouthIsland ? 'south_island_delivery' : 'north_island_delivery'),
+          name: rateInfo.name,
+          price: rateInfo.price,
+          eta: rateInfo.eta
         }
       ],
-      message: `🚚 Flat shipping rate: NZ$${dynamicShipping} for deliveries outside Hamilton.`
+      isHamilton: rateInfo.isHamilton,
+      isSouthIsland: rateInfo.isSouthIsland,
+      freeShippingApplied: rateInfo.isHamilton,
+      freeShippingReason: rateInfo.isHamilton ? 'Hamilton Free Delivery' : '',
+      validatedCity: rateInfo.isHamilton ? 'Hamilton' : city,
+      message: rateInfo.isHamilton 
+        ? '🎉 Free delivery in Hamilton!'
+        : (rateInfo.isSouthIsland ? '🚚 South Island fixed delivery charge: NZ$39.00' : '🚚 North Island fixed delivery charge: NZ$19.00')
     });
 
   } catch (error) {
@@ -1361,12 +1378,8 @@ app.post('/api/calculate-shipping', async (req, res) => {
 
 // Helper to calculate actual uncapped shipping cost
 async function calculateActualShippingCost(address, city, zip, items, deliveryCompany) {
-  let dynamicShipping = 19.00;
-  try {
-    const settings = await Settings.findOne({ key: 'main_settings' });
-    if (settings?.shipping?.flatRate !== undefined) dynamicShipping = settings.shipping.flatRate;
-  } catch (err) {}
-  return dynamicShipping;
+  const rateInfo = getDeliveryRate(city, zip);
+  return rateInfo.price;
 }
 
 // Helper to sanitize order data
@@ -1375,12 +1388,6 @@ const sanitizeOrder = async (order) => {
   let obj = (typeof order.toObject === 'function') ? order.toObject() : { ...order };
   delete obj.actualShipping;
   
-  let maxShipping = 19.00;
-  try {
-    const settings = await Settings.findOne({ key: 'main_settings' });
-    if (settings?.shipping?.flatRate !== undefined) maxShipping = settings.shipping.flatRate;
-  } catch (err) {}
-
   if (obj.freeShippingApplied === undefined) {
     const isHamilton = isHamiltonAddress(obj.customer?.city, obj.customer?.postalCode || obj.customer?.zip);
     obj.freeShippingApplied = isHamilton;
@@ -1389,19 +1396,8 @@ const sanitizeOrder = async (order) => {
   
   if (obj.freeShippingApplied) {
     obj.shipping = 0.00;
-  } else if (obj.shipping > maxShipping) {
-    obj.shipping = maxShipping;
   }
   return obj;
-}
-
-// Hamilton address validation helper
-function isHamiltonAddress(city, zip) {
-  const normZip = (zip || '').trim().replace(/\s+/g, '');
-  const freeCity = (defaultSettings.shippingSettings?.freeCity || 'Hamilton').toLowerCase();
-  const cityMatch = (city || '').trim().toLowerCase() === freeCity;
-  const isHamiltonPostcode = /^32\d{2}$/.test(normZip);
-  return cityMatch || isHamiltonPostcode;
 }
 
 // Phone number validation helper (accepts only New Zealand numbers)
@@ -1424,10 +1420,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
     const orderId = `ORD-${Date.now().toString().slice(-6)}`;
 
     // Recalculate actual and capped shipping costs on server for security
-    const isHamilton = isHamiltonAddress(customerDetails.city, customerDetails.zip);
-    const settings = await Settings.findOne({ key: 'main_settings' });
-    const dynamicShipping = settings?.shipping?.flatRate ?? 19.00;
-    const cappedShipping = isHamilton ? 0.00 : (Number(shippingFee) === 0 ? 0 : Math.min(Number(shippingFee || dynamicShipping), dynamicShipping));
+    const rateInfo = getDeliveryRate(customerDetails.city, customerDetails.zip);
+    const isHamilton = rateInfo.isHamilton;
+    const cappedShipping = rateInfo.price;
     
     // For actual shipping, calculate what NZ Post would charge normally (non-free)
     const matchingServiceForActual = isHamilton ? 'Standard Delivery' : deliveryCompany;
@@ -1451,7 +1446,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
       total: Number(finalTotal),
       shipping: cappedShipping,
       actualShipping: actualShipping,
-      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (deliveryCompany || 'Standard Delivery'),
+      deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (rateInfo.isSouthIsland ? 'South Island Delivery' : 'North Island Delivery'),
       freeShippingApplied: isHamilton,
       freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : '',
       customer: {

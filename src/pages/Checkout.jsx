@@ -175,6 +175,7 @@ export const Checkout = () => {
   const [loadingShipping, setLoadingShipping] = useState(false);
   const [shippingError, setShippingError] = useState('');
   const [isHamilton, setIsHamilton] = useState(false);
+  const [isSouthIsland, setIsSouthIsland] = useState(false);
 
   // All Hamilton NZ postcodes (32xx range)
   const HAMILTON_POSTCODES = [
@@ -193,6 +194,19 @@ export const Checkout = () => {
     return (z.length === 4 && isHamiltonPostcode(z)) || z.startsWith('32') || c === 'hamilton';
   };
 
+  const isSouthIslandAddressCheck = (city, zip) => {
+    const z = (zip || '').trim();
+    const c = (city || '').trim().toLowerCase();
+    const isSouthIslandZip = /^[789]\d{3}$/.test(z);
+    const southIslandCities = [
+      'christchurch', 'dunedin', 'queenstown', 'nelson', 'blenheim', 'timaru',
+      'invercargill', 'greymouth', 'hokitika', 'ashburton', 'oamaru', 'wanaka',
+      'alexandra', 'westport', 'rangiora', 'kaiapoi', 'gore', 'picton', 'motueka',
+      'south island', 'canterbury', 'otago', 'southland', 'marlborough', 'tasman', 'west coast'
+    ];
+    return isSouthIslandZip || southIslandCities.some(name => c.includes(name));
+  };
+
   // Fetch Shipping Rates from backend
   const fetchShippingRates = async (address, city, zip) => {
     setLoadingShipping(true);
@@ -207,77 +221,97 @@ export const Checkout = () => {
         throw new Error('Failed to fetch courier prices.');
       }
       const data = await response.json();
-      if (data.isHamilton || isHamiltonAddressCheck(city, zip)) {
-        setIsHamilton(true);
-        setShippingFee(0);
-        if (data.validatedCity && shippingForm.city !== data.validatedCity) {
-          setShippingForm(prev => ({ ...prev, city: data.validatedCity }));
-        }
-      } else {
-        setIsHamilton(false);
-      }
+      setIsHamilton(Boolean(data.isHamilton));
+      setIsSouthIsland(Boolean(data.isSouthIsland));
+
       if (data.rates && data.rates.length > 0) {
         setShippingOptions(data.rates);
         const firstOption = data.rates[0];
         setSelectedOption(firstOption);
-        setShippingFee(data.isHamilton ? 0 : firstOption.price);
+        setShippingFee(firstOption.price);
       } else {
         throw new Error('No shipping options returned.');
       }
     } catch (err) {
       console.error('Error fetching shipping rates:', err);
-      setShippingError('Could not calculate shipping rates automatically. Using flat rate.');
-      setIsHamilton(false);
-      setShippingOptions([]);
-      setSelectedOption(null);
-      setShippingFee(defaultShippingFee);
+      const isHam = isHamiltonAddressCheck(city, zip);
+      const isSouth = isSouthIslandAddressCheck(city, zip);
+      setIsHamilton(isHam);
+      setIsSouthIsland(!isHam && isSouth);
+      const fallbackFee = isHam ? 0 : (isSouth ? 39.00 : 19.00);
+      setShippingOptions([{
+        id: isHam ? 'hamilton_free' : (isSouth ? 'south_island' : 'north_island'),
+        name: isHam ? 'Free Delivery — Hamilton' : (isSouth ? 'South Island Delivery' : 'North Island Delivery'),
+        price: fallbackFee,
+        eta: isHam ? '1-2 business days' : (isSouth ? '2-4 business days' : '1-3 business days')
+      }]);
+      setShippingFee(fallbackFee);
     } finally {
       setLoadingShipping(false);
     }
   };
 
-  // ─── Instant Hamilton vs Non-Hamilton Shipping Fee Detection ───
+  // ─── Instant Shipping Fee Detection (Hamilton $0, South Island $39, North Island $19) ───
   useEffect(() => {
     const isHam = isHamiltonAddressCheck(shippingForm.city, shippingForm.zip);
+    const isSouth = isSouthIslandAddressCheck(shippingForm.city, shippingForm.zip);
+
     if (isHam) {
       setIsHamilton(true);
+      setIsSouthIsland(false);
       setShippingFee(0);
-      setShippingOptions([{
+      const hamOpt = {
         id: 'hamilton_free_delivery',
         name: 'Free Delivery — Hamilton, NZ 🎉',
         price: 0,
         eta: '1-2 business days'
-      }]);
-      setSelectedOption({
-        id: 'hamilton_free_delivery',
-        name: 'Free Delivery — Hamilton, NZ 🎉',
-        price: 0,
-        eta: '1-2 business days'
-      });
+      };
+      setShippingOptions([hamOpt]);
+      setSelectedOption(hamOpt);
+      setShippingError('');
+    } else if (isSouth) {
+      setIsHamilton(false);
+      setIsSouthIsland(true);
+      setShippingFee(39.00);
+      const southOpt = {
+        id: 'south_island_delivery',
+        name: 'South Island Courier Delivery — NZ$39.00 🚛',
+        price: 39.00,
+        eta: '2-4 business days'
+      };
+      setShippingOptions([southOpt]);
+      setSelectedOption(southOpt);
       setShippingError('');
     } else {
       setIsHamilton(false);
-      setShippingFee(prev => (prev === 0 ? defaultShippingFee : (prev ?? defaultShippingFee)));
+      setIsSouthIsland(false);
+      setShippingFee(19.00);
+      const northOpt = {
+        id: 'north_island_delivery',
+        name: 'North Island Standard Delivery — NZ$19.00 🚚',
+        price: 19.00,
+        eta: '1-3 business days'
+      };
+      setShippingOptions([northOpt]);
+      setSelectedOption(northOpt);
+      setShippingError('');
     }
-  }, [shippingForm.zip, shippingForm.city, defaultShippingFee]);
+  }, [shippingForm.zip, shippingForm.city]);
 
-  // Automatically recalculate shipping when full address is typed (non-Hamilton)
+  // Automatically recalculate shipping when full address is typed
   useEffect(() => {
-    const isHam = isHamiltonAddressCheck(shippingForm.city, shippingForm.zip);
-    if (isShippingValid() && !isHam) {
+    if (isShippingValid()) {
       const delayDebounce = setTimeout(() => {
         fetchShippingRates(shippingForm.address, shippingForm.city, shippingForm.zip);
       }, 600);
       return () => clearTimeout(delayDebounce);
-    } else if (!isHam) {
-      setShippingFee(defaultShippingFee);
     }
-  }, [shippingForm.address, shippingForm.city, shippingForm.zip, defaultShippingFee]);
+  }, [shippingForm.address, shippingForm.city, shippingForm.zip]);
 
   // Pricing math
   const subtotal = getCartTotal();
   const discountAmt = (subtotal * discountPercent) / 100 + flatDiscount;
-  const activeShippingFee = isHamilton ? 0 : (shippingFee !== null && shippingFee !== undefined ? shippingFee : defaultShippingFee);
+  const activeShippingFee = isHamilton ? 0 : (isSouthIsland ? 39.00 : (shippingFee !== null && shippingFee !== undefined ? shippingFee : 19.00));
   const finalTotal = Math.max(0, subtotal - discountAmt) + activeShippingFee;
 
   // Coupon apply
@@ -309,6 +343,15 @@ export const Checkout = () => {
       setDiscountPercent(10);
       setCouponSuccess('SWEET10 coupon applied! 10% discount subtracted.');
     } else {
+      const sweetMatch = couponCode.toUpperCase().match(/^(?:SWEET|SAVE|DISCOUNT)(\d+)$/);
+      if (sweetMatch) {
+        const pct = parseInt(sweetMatch[1], 10);
+        if (pct > 0 && pct <= 100) {
+          setDiscountPercent(pct);
+          setCouponSuccess(`${couponCode.toUpperCase()} applied! ${pct}% discount subtracted.`);
+          return;
+        }
+      }
       setCouponError('Invalid coupon code. Please try again.');
     }
   };
@@ -1073,13 +1116,13 @@ export const Checkout = () => {
                 </div>
                 {discountAmt > 0 && (
                   <div className="b-row discount-row">
-                    <span>Discount (10%)</span>
+                    <span>Discount ({discountPercent > 0 ? `${discountPercent}%` : `$${flatDiscount.toFixed(2)}`})</span>
                     <span>-${discountAmt.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="b-row">
                   <span>Shipping</span>
-                  <span>{isHamilton ? 'Free Delivery — Hamilton 🎉' : `$${activeShippingFee.toFixed(2)}`}</span>
+                  <span>{isHamilton ? 'Free Delivery — Hamilton 🎉' : (isSouthIsland ? '$39.00 (South Island)' : '$19.00 (North Island)')}</span>
                 </div>
                 <div className="summary-divider"></div>
                 <div className="b-row final-row">
