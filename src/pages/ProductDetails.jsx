@@ -25,6 +25,23 @@ export const ProductDetails = () => {
     return '100g';
   });
 
+  const productImages = React.useMemo(() => {
+    if (!product) return [];
+    const list = [];
+    if (product.image) list.push(product.image);
+    if (Array.isArray(product.images)) {
+      product.images.forEach(img => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    }
+    if (list.length === 0) {
+      list.push('https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600');
+    }
+    return list;
+  }, [product]);
+
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -43,6 +60,7 @@ export const ProductDetails = () => {
   // Reset details state on product change
   useEffect(() => {
     setQuantity(1);
+    setActiveImageIndex(0);
     setSelectedWeight(product && product.weightPrices && Object.keys(product.weightPrices).length > 0 
       ? Object.keys(product.weightPrices)[0] 
       : '100g'
@@ -224,8 +242,30 @@ export const ProductDetails = () => {
           <div className="details-visual-column">
             <div className="details-image-wrapper glass-card">
               <div className="details-mesh-grid"></div>
+              
+              {productImages.length > 1 && (
+                <>
+                  <button 
+                    type="button" 
+                    className="gallery-nav-btn prev-btn"
+                    onClick={() => setActiveImageIndex((prev) => (prev === 0 ? productImages.length - 1 : prev - 1))}
+                    title="Previous Image"
+                  >
+                    ❮
+                  </button>
+                  <button 
+                    type="button" 
+                    className="gallery-nav-btn next-btn"
+                    onClick={() => setActiveImageIndex((prev) => (prev === productImages.length - 1 ? 0 : prev + 1))}
+                    title="Next Image"
+                  >
+                    ❯
+                  </button>
+                </>
+              )}
+
               <img 
-                src={product.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600'} 
+                src={productImages[activeImageIndex] || productImages[0]} 
                 alt={`${product.name} - Premium Candy from Best Lolly Shop New Zealand`} 
                 className="details-main-image"
                 onError={(e) => {
@@ -233,7 +273,37 @@ export const ProductDetails = () => {
                   e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
                 }}
               />
+
+              {productImages.length > 1 && (
+                <div className="gallery-counter-badge">
+                  {activeImageIndex + 1} / {productImages.length}
+                </div>
+              )}
             </div>
+
+            {/* Thumbnails Gallery */}
+            {productImages.length > 1 && (
+              <div className="details-thumbnails-gallery">
+                {productImages.map((img, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    className={`gallery-thumb-btn ${idx === activeImageIndex ? 'active' : ''}`}
+                    onClick={() => setActiveImageIndex(idx)}
+                    onMouseEnter={() => setActiveImageIndex(idx)}
+                  >
+                    <img 
+                      src={img} 
+                      alt={`${product.name} thumbnail ${idx + 1}`} 
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+                      }}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column: Order Selection details */}

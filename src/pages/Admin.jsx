@@ -176,6 +176,7 @@ export const Admin = () => {
     { weight: '1kg', price: '' }
   ]);
   const [productImageSource, setProductImageSource] = useState('url'); // 'url' | 'upload'
+  const [extraImageUrlInput, setExtraImageUrlInput] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
@@ -401,6 +402,7 @@ export const Admin = () => {
       { weight: '500g', price: '' },
       { weight: '1kg', price: '' }
     ]);
+    setExtraImageUrlInput('');
     setNewProduct({
       name: '',
       category: '',
@@ -412,6 +414,7 @@ export const Admin = () => {
       price1kg: '',
       gradient: 'linear-gradient(135deg, #e72c83 0%, #ed5a9e 100%)',
       image: 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
+      images: [],
       description: '',
       ingredients: '',
       collectionsText: '',
@@ -751,6 +754,9 @@ export const Admin = () => {
       price1kg: product.weightPrices?.['1kg']?.toString() || '',
       gradient: product.gradient,
       image: product.image,
+      images: Array.isArray(product.images) && product.images.length > 0 
+        ? product.images 
+        : (product.image ? [product.image] : []),
       description: product.description,
       longDescription: product.longDescription || product.description || '',
       ingredients: product.ingredients,
@@ -787,6 +793,11 @@ export const Admin = () => {
       }
     });
 
+    const payloadImages = Array.isArray(newProduct.images) && newProduct.images.length > 0 
+      ? newProduct.images 
+      : (newProduct.image ? [newProduct.image] : []);
+    const coverImg = newProduct.image || payloadImages[0] || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+
     const payload = {
       name: newProduct.name,
       category: newProduct.category || newProduct.mainCategory || 'General',
@@ -794,7 +805,8 @@ export const Admin = () => {
       price: Number(newProduct.price),
       weightPrices: weightPricesMap,
       gradient: newProduct.gradient,
-      image: newProduct.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
+      image: coverImg,
+      images: payloadImages,
       description: newProduct.description || 'Delicious gourmet treats for sweet lovers.',
       longDescription: newProduct.longDescription || newProduct.description || 'Delicious gourmet treats for sweet lovers.',
       ingredients: newProduct.ingredients || '',
@@ -2248,14 +2260,13 @@ export const Admin = () => {
                       />
                     </div>
                     <div className="form-group">
-                      <label htmlFor="pimage-src">Product Image Source</label>
+                      <label htmlFor="pimage-src">Main Cover Image Source</label>
                       <select
                         id="pimage-src"
                         className="admin-select"
                         value={productImageSource}
                         onChange={(e) => {
                           setProductImageSource(e.target.value);
-                          setNewProduct(prev => ({ ...prev, image: '' }));
                         }}
                       >
                         <option value="url">Online Image URL</option>
@@ -2263,34 +2274,190 @@ export const Admin = () => {
                       </select>
                     </div>
                     <div className="form-group">
-                      <label htmlFor="pimage">Product Image</label>
+                      <label htmlFor="pimage">Main Cover Image</label>
                       {productImageSource === 'upload' ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           <input
                             type="file"
                             id="pimage-file"
                             accept="image/*"
-                            onChange={(e) => handleFileChange(e, (base64) => setNewProduct(prev => ({ ...prev, image: base64 })))}
+                            onChange={(e) => handleFileChange(e, (base64) => {
+                              setNewProduct(prev => {
+                                const currentImages = Array.isArray(prev.images) ? prev.images : [];
+                                const updatedImages = currentImages.includes(base64) ? currentImages : [base64, ...currentImages];
+                                return { ...prev, image: base64, images: updatedImages };
+                              });
+                            })}
                             style={{ display: 'block', fontSize: '13px' }}
                           />
-                          {newProduct.image && (
-                            <img 
-                              src={newProduct.image} 
-                              alt="Preview" 
-                              style={{ width: '80px', height: '80px', borderRadius: '8px', objectFit: 'cover', border: '1px solid var(--color-border)' }} 
-                            />
-                          )}
                         </div>
                       ) : (
                         <input
                           type="url"
                           id="pimage"
-                          placeholder="Paste image URL here"
-                          value={newProduct.image}
-                          onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                          placeholder="Paste main cover image URL here..."
+                          value={newProduct.image || ''}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setNewProduct(prev => {
+                              const currentImages = Array.isArray(prev.images) ? prev.images : [];
+                              const updatedImages = val && !currentImages.includes(val) ? [val, ...currentImages] : currentImages;
+                              return { ...prev, image: val, images: updatedImages };
+                            });
+                          }}
                         />
                       )}
                     </div>
+                  </div>
+
+                  {/* Multiple Product Images Upload & Gallery Manager */}
+                  <div className="form-group" style={{ marginTop: '14px', marginBottom: '24px' }}>
+                    <label style={{ fontSize: '13px', fontWeight: '700', marginBottom: '8px', display: 'block', color: 'var(--color-text)' }}>
+                      📸 Additional Product Images (Upload multiple photos for product gallery)
+                    </label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginBottom: '14px' }}>
+                      <label 
+                        className="btn"
+                        style={{
+                          background: 'rgba(231, 44, 131, 0.1)',
+                          color: 'var(--color-primary)',
+                          border: '1px solid rgba(231, 44, 131, 0.3)',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '600',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        📁 Choose Multiple Images
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files || []);
+                            if (!files.length) return;
+                            let loadedCount = 0;
+                            const newBase64s = [];
+                            files.forEach(file => {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                if (reader.result) newBase64s.push(reader.result);
+                                loadedCount++;
+                                if (loadedCount === files.length) {
+                                  setNewProduct(prev => {
+                                    const existing = Array.isArray(prev.images) ? prev.images : (prev.image ? [prev.image] : []);
+                                    const combined = [...existing, ...newBase64s];
+                                    return {
+                                      ...prev,
+                                      images: combined,
+                                      image: prev.image || combined[0] || ''
+                                    };
+                                  });
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            });
+                          }}
+                        />
+                      </label>
+
+                      <div style={{ display: 'flex', gap: '8px', flex: 1, minWidth: '260px' }}>
+                        <input
+                          type="url"
+                          placeholder="Or paste extra image URL..."
+                          value={extraImageUrlInput}
+                          onChange={(e) => setExtraImageUrlInput(e.target.value)}
+                          style={{ flex: 1, padding: '8px 12px', fontSize: '13px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}
+                        />
+                        <button
+                          type="button"
+                          className="btn"
+                          style={{ padding: '8px 14px', fontSize: '13px', whiteSpace: 'nowrap', background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+                          onClick={() => {
+                            if (!extraImageUrlInput || !extraImageUrlInput.trim()) return;
+                            const url = extraImageUrlInput.trim();
+                            setNewProduct(prev => {
+                              const existing = Array.isArray(prev.images) ? prev.images : (prev.image ? [prev.image] : []);
+                              const combined = [...existing, url];
+                              return {
+                                ...prev,
+                                images: combined,
+                                image: prev.image || combined[0] || ''
+                              };
+                            });
+                            setExtraImageUrlInput('');
+                          }}
+                        >
+                          + Add URL
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Image Cards Preview Grid */}
+                    {Array.isArray(newProduct.images) && newProduct.images.length > 0 && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '12px', marginTop: '10px' }}>
+                        {newProduct.images.map((imgSrc, index) => {
+                          const isCover = newProduct.image === imgSrc;
+                          return (
+                            <div 
+                              key={index} 
+                              style={{ 
+                                position: 'relative', 
+                                borderRadius: '12px', 
+                                border: `2px solid ${isCover ? 'var(--color-primary)' : 'var(--color-border)'}`, 
+                                overflow: 'hidden', 
+                                background: 'var(--color-surface)',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                padding: '6px'
+                              }}
+                            >
+                              <img 
+                                src={imgSrc} 
+                                alt={`Product preview ${index + 1}`} 
+                                style={{ width: '100%', height: '80px', objectFit: 'contain', borderRadius: '6px' }} 
+                              />
+                              {isCover && (
+                                <span style={{ position: 'absolute', top: '4px', left: '4px', background: 'var(--color-primary)', color: 'white', fontSize: '9px', fontWeight: 'bold', padding: '2px 6px', borderRadius: '4px' }}>
+                                  COVER
+                                </span>
+                              )}
+                              <div style={{ display: 'flex', gap: '4px', marginTop: '6px', width: '100%' }}>
+                                {!isCover && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setNewProduct(prev => ({ ...prev, image: imgSrc }))}
+                                    style={{ flex: 1, background: 'rgba(231, 44, 131, 0.1)', color: 'var(--color-primary)', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', padding: '3px 0', cursor: 'pointer' }}
+                                  >
+                                    Set Cover
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setNewProduct(prev => {
+                                      const filtered = prev.images.filter((_, i) => i !== index);
+                                      const nextCover = prev.image === imgSrc ? (filtered[0] || '') : prev.image;
+                                      return { ...prev, images: filtered, image: nextCover };
+                                    });
+                                  }}
+                                  style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', cursor: 'pointer', marginLeft: isCover ? 'auto' : 0 }}
+                                  title="Delete Image"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
 
                   <div className="form-row two-cols">
