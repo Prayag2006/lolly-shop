@@ -496,7 +496,17 @@ app.get('/api/products/:id', async (req, res) => {
         product = await Product.findById(targetId);
       }
       if (!product) {
-        product = await Product.findOne({ $or: [{ id: targetId }, { _id: targetId }] });
+        product = await Product.findOne({
+          $or: [
+            { id: targetId },
+            { sku: targetId },
+            { name: targetId }
+          ]
+        });
+      }
+      if (!product) {
+        const allProds = await Product.find();
+        product = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
       }
       if (!product) return res.status(404).json({ message: 'Product not found' });
       res.json(product);
@@ -569,7 +579,20 @@ app.put('/api/products/:id', async (req, res) => {
         updated = await Product.findByIdAndUpdate(targetId, req.body, { new: true });
       }
       if (!updated) {
-        updated = await Product.findOneAndUpdate({ $or: [{ id: targetId }, { _id: targetId }] }, req.body, { new: true });
+        updated = await Product.findOneAndUpdate({
+          $or: [
+            { id: targetId },
+            { sku: targetId },
+            { name: targetId }
+          ]
+        }, req.body, { new: true });
+      }
+      if (!updated) {
+        const allProds = await Product.find();
+        const found = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
+        if (found) {
+          updated = await Product.findByIdAndUpdate(found._id, req.body, { new: true });
+        }
       }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
       res.json(updated);
@@ -602,7 +625,20 @@ app.delete('/api/products/:id', async (req, res) => {
         deleted = await Product.findByIdAndDelete(targetId);
       }
       if (!deleted) {
-        deleted = await Product.findOneAndDelete({ $or: [{ id: targetId }, { _id: targetId }] });
+        deleted = await Product.findOneAndDelete({
+          $or: [
+            { id: targetId },
+            { sku: targetId },
+            { name: targetId }
+          ]
+        });
+      }
+      if (!deleted) {
+        const allProds = await Product.find();
+        const found = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
+        if (found) {
+          deleted = await Product.findByIdAndDelete(found._id);
+        }
       }
       if (!deleted) return res.status(404).json({ message: 'Product not found' });
       res.json({ message: 'Product successfully deleted' });

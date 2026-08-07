@@ -13,6 +13,7 @@ reviewSchema.set('toJSON', { virtuals: true });
 reviewSchema.set('toObject', { virtuals: true });
 
 const productSchema = new mongoose.Schema({
+  id: { type: String, default: '' },
   name: { type: String, required: true },
   category: { type: String, required: true },
   mainCategory: { type: String, default: '' },
