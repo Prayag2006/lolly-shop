@@ -877,14 +877,21 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username: username || '', password: password || '' })
       });
-      const data = await res.json();
+      let data;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { success: false, message: text || `HTTP ${res.status}` };
+      }
       if (data.success) {
         setCurrentUser(data.user);
         return { success: true, user: data.user };
       }
-      return { success: false, message: data.message };
+      return { success: false, message: data.message || 'Invalid username or password' };
     } catch (error) {
       console.error('Authentication request error:', error);
       return { success: false, message: 'Server connection error during login' };

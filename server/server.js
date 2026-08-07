@@ -2704,41 +2704,49 @@ app.delete('/api/contacts/:id', async (req, res) => {
 // ── AUTH API ──
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const u = username.trim().toLowerCase();
+    await ensureMongoConnected();
+    const { username, password } = req.body || {};
+    const u = String(username || '').trim().toLowerCase();
+    const pass = String(password || '');
+
+    if (!u || !pass) {
+      return res.status(400).json({ success: false, message: 'Username and password are required' });
+    }
 
     let queryEmail = u;
     if (u === 'admin') queryEmail = 'admin@lollyshop.co.nz';
     if (u === 'user') queryEmail = 'john@gmail.com';
 
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const user = await User.findOne({ email: { $regex: new RegExp(`^${queryEmail}$`, 'i') } });
-      if (!user || !verifyPassword(password, user.password)) {
+      if (!user || !verifyPassword(pass, user.password)) {
         return res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
-      res.json({
-        success: true,
-        user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
-      });
-    } else {
-      const users = readLocalData('users.json', seededUsers);
-      const user = users.find(usr => usr.email.toLowerCase() === queryEmail.toLowerCase());
-      if (!user || !verifyPassword(password, user.password)) {
-        return res.status(401).json({ success: false, message: 'Invalid username or password' });
-      }
-      res.json({
+      return res.json({
         success: true,
         user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
       });
     }
+
+    const users = readLocalData('users.json', seededUsers);
+    const user = users.find(usr => (usr.email || '').toLowerCase() === queryEmail.toLowerCase());
+    if (!user || !verifyPassword(pass, user.password)) {
+      return res.status(401).json({ success: false, message: 'Invalid username or password' });
+    }
+    return res.json({
+      success: true,
+      user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
+    });
   } catch (error) {
+    console.error('Login authentication error:', error);
     res.status(500).json({ success: false, message: 'Server authentication error', error: error.message });
   }
 });
 
 app.post('/api/auth/google-login', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    await ensureMongoConnected();
+    const { name, email } = req.body || {};
     if (!email) {
       return res.status(400).json({ success: false, message: 'Email is required' });
     }
@@ -2747,7 +2755,7 @@ app.post('/api/auth/google-login', async (req, res) => {
     const displayName = String(name || cleanEmail.split('@')[0]).trim();
     const escapedEmail = cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       let user = await User.findOne({ email: { $regex: new RegExp(`^${escapedEmail}$`, 'i') } });
       if (!user) {
         // Register new Google user
@@ -2763,26 +2771,25 @@ app.post('/api/auth/google-login', async (req, res) => {
         success: true,
         user: { name: user.name, email: user.email, role: user.role }
       });
-    } else {
-      const users = readLocalData('users.json', seededUsers);
-      let user = users.find(usr => (usr.email || '').toLowerCase() === cleanEmail);
-      if (!user) {
-        // Register new Google user in fallback JSON
-        user = {
-          id: `u-${Date.now()}`,
-          name: displayName,
-          email: cleanEmail,
-          password: `google-auth-${Date.now()}`,
-          role: cleanEmail.includes('admin') ? 'admin' : 'user'
-        };
-        users.push(user);
-        writeLocalData('users.json', users);
-      }
-      return res.json({
-        success: true,
-        user: { name: user.name, email: user.email, role: user.role }
-      });
     }
+
+    const users = readLocalData('users.json', seededUsers);
+    let user = users.find(usr => (usr.email || '').toLowerCase() === cleanEmail);
+    if (!user) {
+      user = {
+        id: `u-${Date.now()}`,
+        name: displayName,
+        email: cleanEmail,
+        password: `google-auth-${Date.now()}`,
+        role: cleanEmail.includes('admin') ? 'admin' : 'user'
+      };
+      users.push(user);
+      writeLocalData('users.json', users);
+    }
+    return res.json({
+      success: true,
+      user: { name: user.name, email: user.email, role: user.role }
+    });
   } catch (error) {
     console.error('Google authentication backend error:', error);
     return res.status(500).json({ success: false, message: 'Google authentication error: ' + error.message });
@@ -2792,53 +2799,54 @@ app.post('/api/auth/google-login', async (req, res) => {
 // ── REGISTER API ──
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    await ensureMongoConnected();
+    const { name, email, password } = req.body || {};
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: 'All fields are required' });
     }
 
-    const emailNorm = email.trim().toLowerCase();
+    const emailNorm = String(email).trim().toLowerCase();
 
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
       if (existingUser) {
         return res.status(400).json({ success: false, message: 'User with this email already exists' });
       }
 
       const user = new User({
-        name,
+        name: String(name).trim(),
         email: emailNorm,
         password: hashPassword(password),
         role: 'user'
       });
       await user.save();
 
-      res.json({
+      return res.json({
         success: true,
         user: { name: user.name, email: user.email, role: user.role }
       });
-    } else {
-      const users = readLocalData('users.json', seededUsers);
-      const existingUser = users.find(usr => usr.email.toLowerCase() === emailNorm);
-      if (existingUser) {
-        return res.status(400).json({ success: false, message: 'User with this email already exists' });
-      }
-
-      const newUser = {
-        id: `u-${Date.now()}`,
-        name,
-        email: emailNorm,
-        password: hashPassword(password),
-        role: 'user'
-      };
-      users.push(newUser);
-      writeLocalData('users.json', users);
-
-      res.json({
-        success: true,
-        user: { name: newUser.name, email: newUser.email, role: newUser.role }
-      });
     }
+
+    const users = readLocalData('users.json', seededUsers);
+    const existingUser = users.find(usr => (usr.email || '').toLowerCase() === emailNorm);
+    if (existingUser) {
+      return res.status(400).json({ success: false, message: 'User with this email already exists' });
+    }
+
+    const newUser = {
+      id: `u-${Date.now()}`,
+      name: String(name).trim(),
+      email: emailNorm,
+      password: hashPassword(password),
+      role: 'user'
+    };
+    users.push(newUser);
+    writeLocalData('users.json', users);
+
+    return res.json({
+      success: true,
+      user: { name: newUser.name, email: newUser.email, role: newUser.role }
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Registration error', error: error.message });
   }
