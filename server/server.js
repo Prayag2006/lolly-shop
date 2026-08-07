@@ -5,9 +5,29 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import mongoose from 'mongoose';
+import dns from 'dns';
 import { fileURLToPath } from 'url';
 import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media, Offer, AuditLog, BlogPost, Redirect, NewsletterSubscriber, CustomPage } from './db.js';
 import Stripe from 'stripe';
+
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+  dns.setDefaultResultOrder('ipv4first');
+} catch (e) {}
+
+const ensureMongoConnected = async () => {
+  if (process.env.MONGODB_URI && mongoose.connection.readyState !== 1) {
+    try {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000
+      });
+    } catch (err) {
+      console.warn('MongoDB connection retry:', err.message);
+    }
+  }
+};
 
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
@@ -475,13 +495,13 @@ app.get('/api/health', (req, res) => {
 
 app.get('/api/products', async (req, res) => {
   try {
-    if (sqlAvailable()) {
+    await ensureMongoConnected();
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const products = await Product.find().sort({ createdAt: -1 });
-      res.json(products);
-    } else {
-      const products = readLocalData('products.json', seededProducts);
-      res.json(products);
+      return res.json(products);
     }
+    const products = readLocalData('products.json', seededProducts);
+    res.json(products);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving products', error: error.message });
   }
@@ -489,8 +509,9 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/products/:id', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const targetId = req.params.id;
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       let product = null;
       if (mongoose.Types.ObjectId.isValid(targetId)) {
         product = await Product.findById(targetId);
@@ -509,13 +530,12 @@ app.get('/api/products/:id', async (req, res) => {
         product = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
       }
       if (!product) return res.status(404).json({ message: 'Product not found' });
-      res.json(product);
-    } else {
-      const products = readLocalData('products.json', seededProducts);
-      const product = products.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
-      if (!product) return res.status(404).json({ message: 'Product not found' });
-      res.json(product);
+      return res.json(product);
     }
+    const products = readLocalData('products.json', seededProducts);
+    const product = products.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    res.json(product);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving product', error: error.message });
   }
@@ -523,6 +543,7 @@ app.get('/api/products/:id', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
+    await ensureMongoConnected();
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
       req.body.inStock = req.body.quantity > 0;
@@ -538,27 +559,26 @@ app.post('/api/products', async (req, res) => {
       req.body.category = 'General';
     }
 
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const newProduct = new Product(req.body);
       await newProduct.save();
-      res.status(201).json(newProduct);
-    } else {
-      const products = readLocalData('products.json', seededProducts);
-      const newProduct = {
-        id: `p-${Date.now()}`,
-        ...req.body,
-        weightPrices: req.body.weightPrices || {
-          '100g': req.body.price,
-          '250g': Number((req.body.price * 2.2).toFixed(2)),
-          '500g': Number((req.body.price * 4.0).toFixed(2)),
-          '1kg': Number((req.body.price * 7.5).toFixed(2))
-        },
-        createdAt: new Date().toISOString()
-      };
-      products.unshift(newProduct);
-      writeLocalData('products.json', products);
-      res.status(201).json(newProduct);
+      return res.status(201).json(newProduct);
     }
+    const products = readLocalData('products.json', seededProducts);
+    const newProduct = {
+      id: `p-${Date.now()}`,
+      ...req.body,
+      weightPrices: req.body.weightPrices || {
+        '100g': req.body.price,
+        '250g': Number((req.body.price * 2.2).toFixed(2)),
+        '500g': Number((req.body.price * 4.0).toFixed(2)),
+        '1kg': Number((req.body.price * 7.5).toFixed(2))
+      },
+      createdAt: new Date().toISOString()
+    };
+    products.unshift(newProduct);
+    writeLocalData('products.json', products);
+    res.status(201).json(newProduct);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(400).json({ message: 'Error creating product', error: error.message });
@@ -567,13 +587,14 @@ app.post('/api/products', async (req, res) => {
 
 app.put('/api/products/:id', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const targetId = req.params.id;
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
       req.body.inStock = req.body.quantity > 0;
     }
 
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       let updated = null;
       if (mongoose.Types.ObjectId.isValid(targetId)) {
         updated = await Product.findByIdAndUpdate(targetId, req.body, { new: true });
@@ -595,22 +616,22 @@ app.put('/api/products/:id', async (req, res) => {
         }
       }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
-      res.json(updated);
-    } else {
-      const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
-      if (index === -1) return res.status(404).json({ message: 'Product not found' });
-      
-      const updatedProduct = {
-        ...products[index],
-        ...req.body,
-        weightPrices: req.body.weightPrices || products[index].weightPrices,
-        updatedAt: new Date().toISOString()
-      };
-      products[index] = updatedProduct;
-      writeLocalData('products.json', products);
-      res.json(updatedProduct);
+      return res.json(updated);
     }
+
+    const products = readLocalData('products.json', seededProducts);
+    const index = products.findIndex(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
+    if (index === -1) return res.status(404).json({ message: 'Product not found' });
+    
+    const updatedProduct = {
+      ...products[index],
+      ...req.body,
+      weightPrices: req.body.weightPrices || products[index].weightPrices,
+      updatedAt: new Date().toISOString()
+    };
+    products[index] = updatedProduct;
+    writeLocalData('products.json', products);
+    res.json(updatedProduct);
   } catch (error) {
     res.status(400).json({ message: 'Error updating product', error: error.message });
   }
@@ -618,8 +639,9 @@ app.put('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const targetId = req.params.id;
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       let deleted = null;
       if (mongoose.Types.ObjectId.isValid(targetId)) {
         deleted = await Product.findByIdAndDelete(targetId);
@@ -641,16 +663,16 @@ app.delete('/api/products/:id', async (req, res) => {
         }
       }
       if (!deleted) return res.status(404).json({ message: 'Product not found' });
-      res.json({ message: 'Product successfully deleted' });
-    } else {
-      const products = readLocalData('products.json', seededProducts);
-      const filtered = products.filter(p => String(p.id) !== String(targetId) && String(p._id) !== String(targetId));
-      if (products.length === filtered.length) {
-        return res.status(404).json({ message: 'Product not found' });
-      }
-      writeLocalData('products.json', filtered);
-      res.json({ message: 'Product successfully deleted' });
+      return res.json({ message: 'Product successfully deleted' });
     }
+
+    const products = readLocalData('products.json', seededProducts);
+    const filtered = products.filter(p => String(p.id) !== String(targetId) && String(p._id) !== String(targetId));
+    if (products.length === filtered.length) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    writeLocalData('products.json', filtered);
+    res.json({ message: 'Product successfully deleted' });
   } catch (error) {
     console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Error deleting product', error: error.message });
