@@ -362,11 +362,11 @@ export const StoreProvider = ({ children }) => {
         return data;
       } else {
         console.error('Server returned error adding product:', data);
-        return null;
+        return { error: data.message || data.error || 'Server error adding product' };
       }
     } catch (error) {
       console.error('Error adding product to DB:', error);
-      return null;
+      return { error: error.message || 'Network error adding product' };
     }
   };
 
@@ -383,11 +383,11 @@ export const StoreProvider = ({ children }) => {
         return data;
       } else {
         console.error('Server returned error updating product:', data);
-        return null;
+        return { error: data.message || data.error || 'Server error updating product' };
       }
     } catch (error) {
       console.error('Error updating product in DB:', error);
-      return null;
+      return { error: error.message || 'Network error updating product' };
     }
   };
 

@@ -2,8 +2,8 @@
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   z-index: 99999;
   background-color: #090514; /* Deep dark background */
   overflow: hidden;
@@ -15,26 +15,27 @@
               visibility 0.6s;
   visibility: visible;
   opacity: 1;
-  user-select: none;
 }
 
 .video-splash-container.exit-fade {
   opacity: 0;
-  transform: scale(1.04);
+  transform: scale(1.05);
   visibility: hidden;
   pointer-events: none;
 }
 
-/* Fullscreen Background Video */
+/* Fullscreen Background Video/GIF */
 .splash-video-bg {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
   object-fit: cover;
   z-index: 1;
-  pointer-events: none;
 }
 
 .splash-video-bg.loading {
@@ -62,9 +63,9 @@
   background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5),
-              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* Glowing spinner ring */
@@ -72,9 +73,9 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  border: 3px solid rgba(231, 44, 131, 0.15);
-  border-top-color: #e72c83;
-  border-bottom-color: #e72c83;
+  border: 3px solid rgba(231, 44, 131, 0.1);
+  border-top-color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
   animation: spinnerRotate 1.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
   position: absolute;
   top: 40px;
@@ -105,12 +106,12 @@
 }
 
 .spinner-title {
-  font-family: var(--font-heading, sans-serif);
+  font-family: var(--font-heading), 'Nunito', sans-serif;
   font-size: 24px;
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 1px;
-  background: linear-gradient(135deg, #e72c83 0%, #f472b6 100%);
+  background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin: 0;
@@ -118,140 +119,66 @@
 }
 
 .spinner-text {
-  font-family: var(--font-body, sans-serif);
+  font-family: var(--font-body), 'Poppins', sans-serif;
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.6);
   margin: 0;
   font-weight: 400;
 }
 
-/* Tap to Play Autoplay Blocked Overlay */
-.splash-autoplay-blocked-overlay {
+/* Top-right Skip Button */
+.splash-skip-btn {
   position: absolute;
-  inset: 0;
+  top: 40px;
+  right: 40px;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  background: rgba(9, 5, 20, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  cursor: pointer;
-  animation: fadeIn 0.4s ease;
-}
-
-.play-pulse-btn {
-  width: 84px;
-  height: 84px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #e72c83 0%, #f472b6 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 30px rgba(231, 44, 131, 0.6), 0 10px 25px rgba(0, 0, 0, 0.4);
-  animation: playPulse 2s infinite;
-}
-
-@keyframes playPulse {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 44, 131, 0.7); }
-  70% { transform: scale(1.06); box-shadow: 0 0 0 20px rgba(231, 44, 131, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(231, 44, 131, 0); }
-}
-
-.play-prompt-text {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
-  font-family: var(--font-heading, sans-serif);
-  font-size: 16px;
+  padding: 10px 24px;
+  font-family: var(--font-nav), sans-serif;
+  font-size: 15px;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-}
-
-/* Top Controls Container (Mute + Skip) */
-.splash-controls-top {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.splash-control-btn {
-  background: rgba(15, 10, 28, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  color: #ffffff;
-  padding: 10px 20px;
-  font-family: var(--font-nav, sans-serif);
-  font-size: 14px;
-  font-weight: 700;
-  border-radius: 30px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.15);
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-.splash-control-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.35);
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5),
-              0 0 20px rgba(231, 44, 131, 0.25);
+.splash-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4),
+              0 0 15px rgba(255, 255, 255, 0.1);
 }
 
-.splash-control-btn:active {
-  transform: translateY(0) scale(0.97);
+.splash-skip-btn:active {
+  transform: translateY(-1px) scale(0.98);
 }
 
-.splash-mute-btn {
-  background: rgba(231, 44, 131, 0.25);
-  border-color: rgba(231, 44, 131, 0.4);
+.splash-skip-btn svg {
+  transition: transform 0.3s ease;
 }
 
-.splash-mute-btn:hover {
-  background: rgba(231, 44, 131, 0.45);
-}
-
-/* Bottom Visual Progress Bar */
-.splash-progress-container {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background: rgba(255, 255, 255, 0.1);
-  z-index: 20;
-}
-
-.splash-progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #e72c83 0%, #f472b6 100%);
-  box-shadow: 0 0 12px rgba(231, 44, 131, 0.8);
-  transition: width 0.1s linear;
+.splash-skip-btn:hover svg {
+  transform: translateX(4px);
 }
 
 /* Mobile responsive layout */
 @media (max-width: 600px) {
-  .splash-controls-top {
+  .splash-skip-btn {
     top: 20px;
     right: 20px;
-    gap: 8px;
-  }
-  .splash-control-btn {
-    padding: 8px 14px;
-    font-size: 12.5px;
-  }
-  .splash-control-btn span {
-    display: inline;
+    bottom: auto;
+    left: auto;
+    padding: 8px 18px;
+    font-size: 13.5px;
   }
 }
-

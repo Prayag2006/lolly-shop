@@ -766,7 +766,10 @@ export const Admin = () => {
 
   const handleAddProductSubmit = async (e) => {
     e.preventDefault();
-    if (!newProduct.name || !newProduct.price) return;
+    if (!newProduct.name || !newProduct.price) {
+      alert('Please fill in required fields: Product Name and Price.');
+      return;
+    }
 
     const weightPricesMap = {};
     weightOptions.forEach(opt => {
@@ -786,7 +789,7 @@ export const Admin = () => {
 
     const payload = {
       name: newProduct.name,
-      category: newProduct.category,
+      category: newProduct.category || newProduct.mainCategory || 'General',
       mainCategory: newProduct.mainCategory || '',
       price: Number(newProduct.price),
       weightPrices: weightPricesMap,
@@ -794,16 +797,16 @@ export const Admin = () => {
       image: newProduct.image || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600',
       description: newProduct.description || 'Delicious gourmet treats for sweet lovers.',
       longDescription: newProduct.longDescription || newProduct.description || 'Delicious gourmet treats for sweet lovers.',
-      ingredients: '',
+      ingredients: newProduct.ingredients || '',
       collections: (newProduct.collectionsText || '')
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean),
       nutrition: {
-        calories: newProduct.calories,
-        sugar: newProduct.sugar,
-        fat: newProduct.fat,
-        protein: newProduct.protein
+        calories: newProduct.calories || '120 kcal',
+        sugar: newProduct.sugar || '20g',
+        fat: newProduct.fat || '0g',
+        protein: newProduct.protein || '1g'
       },
       inStock: newProduct.inStock,
       quantity: Number(newProduct.quantity !== undefined ? newProduct.quantity : 50)
@@ -811,20 +814,20 @@ export const Admin = () => {
 
     try {
       if (editingProductId) {
-        const success = await updateProduct(editingProductId, payload);
-        if (success) {
+        const res = await updateProduct(editingProductId, payload);
+        if (res && !res.error) {
           setFormSuccess('Product successfully updated!');
           resetProductForm();
         } else {
-          alert('Failed to update product. Please check your inputs.');
+          alert(`Failed to update product: ${res?.error || 'Please check your inputs.'}`);
         }
       } else {
-        const success = await addProduct(payload);
-        if (success) {
+        const res = await addProduct(payload);
+        if (res && !res.error) {
           setFormSuccess('Product successfully added to the catalog!');
           resetProductForm();
         } else {
-          alert('Failed to add product. Please check your inputs.');
+          alert(`Failed to add product: ${res?.error || 'Please check your inputs.'}`);
         }
       }
       setTimeout(() => setFormSuccess(''), 4000);

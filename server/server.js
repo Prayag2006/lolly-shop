@@ -509,6 +509,13 @@ app.post('/api/products', async (req, res) => {
       req.body.inStock = true;
     }
 
+    if (!req.body.category && req.body.mainCategory) {
+      req.body.category = req.body.mainCategory;
+    }
+    if (!req.body.category) {
+      req.body.category = 'General';
+    }
+
     if (sqlAvailable()) {
       const newProduct = new Product(req.body);
       await newProduct.save();
