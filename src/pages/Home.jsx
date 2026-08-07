@@ -348,12 +348,19 @@ export const Home = ({ onProductClick }) => {
             <h2>Brands</h2>
           </div>
           <div className="brands-grid-row">
-            {brands.map(brand => (
-              <div className="brand-grid-card" key={brand.id}>
+            {((brands && brands.length > 0) ? brands : [
+              { id: 'b-1', name: 'Bazooka', color: '#00aeef', svgType: 'bazooka' },
+              { id: 'b-2', name: 'Chupa Chups', color: '#e20613', svgType: 'chupachups' },
+              { id: 'b-3', name: "Hershey's", color: '#2a120e', svgType: 'hersheys' },
+              { id: 'b-4', name: 'Reeses', color: '#f05a28', svgType: 'reeses' },
+              { id: 'b-5', name: 'Walkers', color: '#ffffff', svgType: 'walkers' },
+              { id: 'b-6', name: 'Warheads', color: '#4a2c81', svgType: 'warheads' }
+            ]).map(brand => (
+              <div className="brand-grid-card" key={brand.id || brand.name}>
                 <div
                   className="brand-square"
                   style={{
-                    backgroundColor: brand.color,
+                    backgroundColor: brand.color || '#e72c83',
                     border: brand.color === '#ffffff' ? '1px solid var(--color-border)' : 'none',
                     display: 'flex',
                     alignItems: 'center',
@@ -368,7 +375,7 @@ export const Home = ({ onProductClick }) => {
                       style={{ maxWidth: '90%', maxHeight: '90%', objectFit: 'contain' }} 
                     />
                   ) : (
-                    <BrandSvg type={brand.svgType} name={brand.name} />
+                    <BrandSvg type={brand.svgType || 'bazooka'} name={brand.name} />
                   )}
                 </div>
                 <span className="brand-grid-name">{brand.name}</span>

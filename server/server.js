@@ -866,13 +866,17 @@ app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
 // ── BRANDS API ──
 app.get('/api/brands', async (req, res) => {
   try {
-    if (sqlAvailable()) {
-      const brands = await Brand.find();
-      res.json(brands);
-    } else {
-      const brands = readLocalData('brands.json', seededBrands);
-      res.json(brands);
+    await ensureMongoConnected();
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
+      let brands = await Brand.find();
+      if (!brands || brands.length === 0) {
+        await Brand.insertMany(seededBrands);
+        brands = await Brand.find();
+      }
+      return res.json(brands);
     }
+    const brands = readLocalData('brands.json', seededBrands);
+    res.json(brands && brands.length > 0 ? brands : seededBrands);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching brands', error: error.message });
   }

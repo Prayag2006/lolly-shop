@@ -3,11 +3,20 @@ import { fallbackProducts } from '../data/fallbackProducts';
 
 const StoreContext = createContext();
 
+const defaultInitialBrands = [
+  { id: 'b-1', name: 'Bazooka', color: '#00aeef', svgType: 'bazooka' },
+  { id: 'b-2', name: 'Chupa Chups', color: '#e20613', svgType: 'chupachups' },
+  { id: 'b-3', name: "Hershey's", color: '#2a120e', svgType: 'hersheys' },
+  { id: 'b-4', name: 'Reeses', color: '#f05a28', svgType: 'reeses' },
+  { id: 'b-5', name: 'Walkers', color: '#ffffff', svgType: 'walkers' },
+  { id: 'b-6', name: 'Warheads', color: '#4a2c81', svgType: 'warheads' }
+];
+
 export const StoreProvider = ({ children }) => {
   const [products, setProducts] = useState(fallbackProducts);
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
-  const [brands, setBrands] = useState([]);
+  const [brands, setBrands] = useState(defaultInitialBrands);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
     marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
@@ -211,11 +220,14 @@ export const StoreProvider = ({ children }) => {
     try {
       const res = await fetch('/api/brands');
       const data = await res.json();
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         setBrands(data);
+      } else {
+        setBrands(defaultInitialBrands);
       }
     } catch (err) {
       console.error('Error fetching brands from server:', err);
+      setBrands(defaultInitialBrands);
     }
   };
 
