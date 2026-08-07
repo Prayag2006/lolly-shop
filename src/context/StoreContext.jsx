@@ -9,14 +9,32 @@ const defaultInitialBrands = [
   { id: 'b-3', name: "Hershey's", color: '#2a120e', svgType: 'hersheys' },
   { id: 'b-4', name: 'Reeses', color: '#f05a28', svgType: 'reeses' },
   { id: 'b-5', name: 'Walkers', color: '#ffffff', svgType: 'walkers' },
-  { id: 'b-6', name: 'Warheads', color: '#4a2c81', svgType: 'warheads' }
 ];
 
 export const StoreProvider = ({ children }) => {
-  const [products, setProducts] = useState(fallbackProducts);
+  const getInitialProducts = () => {
+    try {
+      const saved = localStorage.getItem('lollyshop_custom_products');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (e) {}
+    return fallbackProducts;
+  };
+
+  const [products, setProducts] = useState(getInitialProducts);
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
   const [brands, setBrands] = useState(defaultInitialBrands);
+
+  useEffect(() => {
+    if (Array.isArray(products)) {
+      try {
+        localStorage.setItem('lollyshop_custom_products', JSON.stringify(products));
+      } catch (e) {}
+    }
+  }, [products]);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
     marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
@@ -207,8 +225,11 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch('/api/products');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setProducts(data);
+          try {
+            localStorage.setItem('lollyshop_custom_products', JSON.stringify(data));
+          } catch (e) {}
         }
       }
     } catch (err) {
