@@ -356,8 +356,15 @@ export const StoreProvider = ({ children }) => {
           inStock: productData.inStock !== undefined ? productData.inStock : true
         })
       });
-      const data = await res.json();
-      if (res.ok) {
+      let data;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { error: text || `HTTP ${res.status} ${res.statusText}` };
+      }
+      if (res.ok && !data.error) {
         setProducts(prev => [data, ...prev]);
         return data;
       } else {
@@ -377,8 +384,15 @@ export const StoreProvider = ({ children }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
       });
-      const data = await res.json();
-      if (res.ok) {
+      let data;
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const text = await res.text();
+        data = { error: text || `HTTP ${res.status} ${res.statusText}` };
+      }
+      if (res.ok && !data.error) {
         setProducts(prev => prev.map(p => p.id === productId ? data : p));
         return data;
       } else {

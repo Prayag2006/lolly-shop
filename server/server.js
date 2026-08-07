@@ -39,7 +39,8 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 ensureDatabase();
 
@@ -154,6 +155,10 @@ const readLocalData = (filename, defaultVal = []) => {
       return defaultVal;
     }
     const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (Array.isArray(data) && data.length === 0 && Array.isArray(defaultVal) && defaultVal.length > 0) {
+      localCache[filename] = defaultVal;
+      return defaultVal;
+    }
     localCache[filename] = data;
     return data;
   } catch (err) {
@@ -471,10 +476,27 @@ app.get('/api/health', (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     if (sqlAvailable()) {
-      const products = await Product.find().sort({ createdAt: -1 });
+      let products = await Product.find().sort({ createdAt: -1 });
+      if (!products || products.length === 0) {
+        const productsToSeed = seededProducts.map(p => ({
+          ...p,
+          weightPrices: p.weightPrices || {
+            '100g': p.price,
+            '250g': Number((p.price * 2.2).toFixed(2)),
+            '500g': Number((p.price * 4.0).toFixed(2)),
+            '1kg': Number((p.price * 7.5).toFixed(2))
+          }
+        }));
+        await Product.insertMany(productsToSeed);
+        products = await Product.find().sort({ createdAt: -1 });
+      }
       res.json(products);
     } else {
-      const products = readLocalData('products.json', seededProducts);
+      let products = readLocalData('products.json', seededProducts);
+      if (!products || (Array.isArray(products) && products.length === 0)) {
+        products = seededProducts;
+        writeLocalData('products.json', seededProducts);
+      }
       res.json(products);
     }
   } catch (error) {
