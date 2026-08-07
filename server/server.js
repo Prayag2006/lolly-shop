@@ -3836,13 +3836,13 @@ app.delete('/api/redirects/:id', checkPermission('seo'), async (req, res) => {
 // ── NEWSLETTER SUBSCRIBERS ENDPOINTS ──
 app.get('/api/newsletter-subscribers', async (req, res) => {
   try {
-    if (sqlAvailable()) {
+    await ensureMongoConnected();
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const subs = await NewsletterSubscriber.find().sort({ createdAt: -1 });
-      res.json(subs);
-    } else {
-      const subs = readLocalData('subscribers.json', []);
-      res.json(subs);
+      return res.json(subs);
     }
+    const subs = readLocalData('subscribers.json', []);
+    res.json(subs);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving subscribers', error: error.message });
   }
@@ -3850,13 +3850,14 @@ app.get('/api/newsletter-subscribers', async (req, res) => {
 
 app.post('/api/newsletter-subscribers', async (req, res) => {
   try {
-    const { email } = req.body;
+    await ensureMongoConnected();
+    const { email } = req.body || {};
     if (!email || typeof email !== 'string' || !email.trim() || !email.includes('@')) {
       return res.status(400).json({ message: 'Please enter a valid email address.' });
     }
     const cleanEmail = email.trim().toLowerCase();
     let sub;
-    if (sqlAvailable()) {
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const existing = await NewsletterSubscriber.findOne({ 
         email: new RegExp('^' + cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') 
       });
@@ -3866,16 +3867,17 @@ app.post('/api/newsletter-subscribers', async (req, res) => {
       }
       sub = new NewsletterSubscriber({ email: cleanEmail, active: true });
       await sub.save();
-    } else {
-      const subs = readLocalData('subscribers.json', []);
-      const existing = subs.find(s => (s.email || '').toLowerCase() === cleanEmail);
-      if (existing) {
-        return res.status(200).json({ ...existing, alreadySubscribed: true, message: 'You are already subscribed to our sweet newsletter! 🍭' });
-      }
-      sub = { id: `sub-${Date.now()}`, email: cleanEmail, active: true, createdAt: new Date().toISOString() };
-      subs.push(sub);
-      writeLocalData('subscribers.json', subs);
+      return res.status(201).json(sub);
     }
+
+    const subs = readLocalData('subscribers.json', []);
+    const existing = subs.find(s => (s.email || '').toLowerCase() === cleanEmail);
+    if (existing) {
+      return res.status(200).json({ ...existing, alreadySubscribed: true, message: 'You are already subscribed to our sweet newsletter! 🍭' });
+    }
+    sub = { id: `sub-${Date.now()}`, email: cleanEmail, active: true, createdAt: new Date().toISOString() };
+    subs.push(sub);
+    writeLocalData('subscribers.json', subs);
     res.status(201).json(sub);
   } catch (error) {
     res.status(400).json({ message: 'Error subscribing: ' + error.message, error: error.message });
@@ -3884,23 +3886,28 @@ app.post('/api/newsletter-subscribers', async (req, res) => {
 
 app.delete('/api/newsletter-subscribers/:id', checkPermission('newsletter'), async (req, res) => {
   try {
-    let deleted;
-    if (sqlAvailable()) {
-      deleted = await NewsletterSubscriber.findByIdAndDelete(req.params.id).catch(() => null);
+    await ensureMongoConnected();
+    const targetId = req.params.id;
+    let deleted = null;
+    if (sqlAvailable() || mongoose.connection.readyState === 1) {
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        deleted = await NewsletterSubscriber.findByIdAndDelete(targetId).catch(() => null);
+      }
       if (!deleted) {
-        deleted = await NewsletterSubscriber.findOneAndDelete({ email: req.params.id }).catch(() => null);
+        deleted = await NewsletterSubscriber.findOneAndDelete({ $or: [{ id: targetId }, { email: targetId }] }).catch(() => null);
       }
-    } else {
-      const subs = readLocalData('subscribers.json', []);
-      const idx = subs.findIndex(s => String(s.id || s._id) === String(req.params.id) || s.email === req.params.id);
-      if (idx !== -1) {
-        deleted = subs[idx];
-        subs.splice(idx, 1);
-        writeLocalData('subscribers.json', subs);
-      }
+      if (deleted) return res.json({ success: true, message: 'Subscriber removed' });
     }
-    if (!deleted) return res.status(404).json({ message: 'Subscriber not found' });
-    res.json({ success: true });
+
+    const subs = readLocalData('subscribers.json', []);
+    const idx = subs.findIndex(s => String(s.id || s._id) === String(targetId) || s.email === targetId);
+    if (idx !== -1) {
+      deleted = subs[idx];
+      subs.splice(idx, 1);
+      writeLocalData('subscribers.json', subs);
+      return res.json({ success: true, message: 'Subscriber removed' });
+    }
+    return res.status(404).json({ message: 'Subscriber not found' });
   } catch (error) {
     res.status(500).json({ message: 'Error removing subscriber', error: error.message });
   }
