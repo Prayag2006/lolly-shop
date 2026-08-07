@@ -77,6 +77,11 @@
 }
 
 /* Reset */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 100px;
+}
+
 * {
   margin: 0;
   padding: 0;

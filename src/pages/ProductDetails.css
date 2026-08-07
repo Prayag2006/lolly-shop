@@ -83,7 +83,9 @@
 /* Left Column: Visual */
 .details-visual-column {
   position: sticky;
-  top: 110px;
+  top: 100px;
+  align-self: start;
+  z-index: 5;
 }
 
 .details-image-wrapper {
@@ -1072,7 +1074,10 @@
   gap: 12px;
   margin-top: 16px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 8px;
+  scrollbar-width: thin;
 }
 
 .gallery-thumb-btn {
