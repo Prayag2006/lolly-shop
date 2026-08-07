@@ -407,10 +407,20 @@ export const StoreProvider = ({ children }) => {
 
   const deleteProduct = async (productId) => {
     try {
-      await fetch(`/api/products/${productId}`, { method: 'DELETE' });
-      setProducts(prev => prev.filter(p => p.id !== productId));
+      const res = await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      if (res.ok) {
+        setProducts(prev => prev.filter(p => String(p.id) !== String(productId) && String(p._id) !== String(productId)));
+        return { success: true };
+      } else {
+        const data = await res.json().catch(() => ({}));
+        console.error('Server error deleting product:', data);
+        alert(`Failed to delete product: ${data.message || 'Server error'}`);
+        return { success: false, error: data.message };
+      }
     } catch (error) {
       console.error('Error deleting product from DB:', error);
+      alert('Error deleting product: Network error');
+      return { success: false, error: error.message };
     }
   };
 

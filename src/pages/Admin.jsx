@@ -1432,7 +1432,11 @@ export const Admin = () => {
                             </button>
                             <button 
                               className="p-delete-btn"
-                              onClick={() => deleteProduct(p.id)}
+                              onClick={async () => {
+                                if (window.confirm(`Are you sure you want to delete "${p.name}"?`)) {
+                                  await deleteProduct(p.id || p._id);
+                                }
+                              }}
                               title="Delete Product"
                             >
                               <Trash2 size={16} />

@@ -476,27 +476,10 @@ app.get('/api/health', (req, res) => {
 app.get('/api/products', async (req, res) => {
   try {
     if (sqlAvailable()) {
-      let products = await Product.find().sort({ createdAt: -1 });
-      if (!products || products.length === 0) {
-        const productsToSeed = seededProducts.map(p => ({
-          ...p,
-          weightPrices: p.weightPrices || {
-            '100g': p.price,
-            '250g': Number((p.price * 2.2).toFixed(2)),
-            '500g': Number((p.price * 4.0).toFixed(2)),
-            '1kg': Number((p.price * 7.5).toFixed(2))
-          }
-        }));
-        await Product.insertMany(productsToSeed);
-        products = await Product.find().sort({ createdAt: -1 });
-      }
+      const products = await Product.find().sort({ createdAt: -1 });
       res.json(products);
     } else {
-      let products = readLocalData('products.json', seededProducts);
-      if (!products || (Array.isArray(products) && products.length === 0)) {
-        products = seededProducts;
-        writeLocalData('products.json', seededProducts);
-      }
+      const products = readLocalData('products.json', seededProducts);
       res.json(products);
     }
   } catch (error) {
@@ -506,13 +489,20 @@ app.get('/api/products', async (req, res) => {
 
 app.get('/api/products/:id', async (req, res) => {
   try {
+    const targetId = req.params.id;
     if (sqlAvailable()) {
-      const product = await Product.findById(req.params.id);
+      let product = null;
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        product = await Product.findById(targetId);
+      }
+      if (!product) {
+        product = await Product.findOne({ $or: [{ id: targetId }, { _id: targetId }] });
+      }
       if (!product) return res.status(404).json({ message: 'Product not found' });
       res.json(product);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const product = products.find(p => String(p.id) === String(req.params.id));
+      const product = products.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
       if (!product) return res.status(404).json({ message: 'Product not found' });
       res.json(product);
     }
@@ -560,24 +550,32 @@ app.post('/api/products', async (req, res) => {
       res.status(201).json(newProduct);
     }
   } catch (error) {
+    console.error('Error creating product:', error);
     res.status(400).json({ message: 'Error creating product', error: error.message });
   }
 });
 
 app.put('/api/products/:id', async (req, res) => {
   try {
+    const targetId = req.params.id;
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
       req.body.inStock = req.body.quantity > 0;
     }
 
     if (sqlAvailable()) {
-      const updated = await Product.findByIdAndUpdate(req.params.id, req.body, { new: true });
+      let updated = null;
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        updated = await Product.findByIdAndUpdate(targetId, req.body, { new: true });
+      }
+      if (!updated) {
+        updated = await Product.findOneAndUpdate({ $or: [{ id: targetId }, { _id: targetId }] }, req.body, { new: true });
+      }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
       res.json(updated);
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const index = products.findIndex(p => String(p.id) === String(req.params.id));
+      const index = products.findIndex(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
       if (index === -1) return res.status(404).json({ message: 'Product not found' });
       
       const updatedProduct = {
@@ -597,13 +595,20 @@ app.put('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
+    const targetId = req.params.id;
     if (sqlAvailable()) {
-      const deleted = await Product.findByIdAndDelete(req.params.id);
+      let deleted = null;
+      if (mongoose.Types.ObjectId.isValid(targetId)) {
+        deleted = await Product.findByIdAndDelete(targetId);
+      }
+      if (!deleted) {
+        deleted = await Product.findOneAndDelete({ $or: [{ id: targetId }, { _id: targetId }] });
+      }
       if (!deleted) return res.status(404).json({ message: 'Product not found' });
       res.json({ message: 'Product successfully deleted' });
     } else {
       const products = readLocalData('products.json', seededProducts);
-      const filtered = products.filter(p => String(p.id) !== String(req.params.id));
+      const filtered = products.filter(p => String(p.id) !== String(targetId) && String(p._id) !== String(targetId));
       if (products.length === filtered.length) {
         return res.status(404).json({ message: 'Product not found' });
       }
@@ -611,6 +616,7 @@ app.delete('/api/products/:id', async (req, res) => {
       res.json({ message: 'Product successfully deleted' });
     }
   } catch (error) {
+    console.error('Error deleting product:', error);
     res.status(500).json({ message: 'Error deleting product', error: error.message });
   }
 });
