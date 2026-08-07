@@ -68,7 +68,9 @@ const DB_PATH = path.join(DATA_DIR, 'lollyshop.db');
 let db;
 let sqlEnabled = false;
 
-let useMongo = !!process.env.MONGODB_URI;
+const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
+const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+let useMongo = true;
 
 
 const createDataDir = () => {
@@ -364,7 +366,7 @@ if (useMongo) {
     connectTimeoutMS: 8000,
     socketTimeoutMS: 10000,
   };
-  mongoReady = mongoose.connect(process.env.MONGODB_URI, mongoOptions)
+  mongoReady = mongoose.connect(activeMongoUri, mongoOptions)
     .then(() => {
       console.log('Successfully connected to MongoDB Atlas database.');
       autoSeedMongo();

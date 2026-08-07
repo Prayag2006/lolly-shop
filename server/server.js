@@ -16,10 +16,13 @@ try {
   dns.setDefaultResultOrder('ipv4first');
 } catch (e) {}
 
+const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
+const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+
 const ensureMongoConnected = async () => {
-  if (process.env.MONGODB_URI && mongoose.connection.readyState !== 1) {
+  if (mongoose.connection.readyState !== 1) {
     try {
-      await mongoose.connect(process.env.MONGODB_URI, {
+      await mongoose.connect(activeMongoUri, {
         serverSelectionTimeoutMS: 10000,
         connectTimeoutMS: 10000
       });
