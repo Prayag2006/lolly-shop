@@ -262,19 +262,11 @@ export const Admin = () => {
   const [editBrandLogoType, setEditBrandLogoType] = useState('svg'); // 'svg' | 'url' | 'upload'
   const [editBrandImage, setEditBrandImage] = useState('');
 
-  const handleFileChange = (e, callback) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        alert('File size exceeds 2MB. Please choose a smaller image.');
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        callback(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleFileChange = async (e, callback) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const compressed = await compressImageFile(file);
+    callback(compressed);
   };
 
 
@@ -711,15 +703,46 @@ export const Admin = () => {
     }));
   };
 
-  const handleImageUpload = (e, callback) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      callback(reader.result);
-    };
-    reader.readAsDataURL(file);
+  const compressImageFile = (file, maxWidth = 1000, quality = 0.8) => {
+    return new Promise((resolve) => {
+      if (!file) return resolve('');
+      if (file.type === 'image/svg+xml' || file.size < 80 * 1024) {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          if (width > maxWidth || height > maxWidth) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxWidth) / height);
+              height = maxWidth;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = () => resolve(e.target.result);
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
   };
+
+  const handleImageUpload = handleFileChange;
 
   const getProductCollections = (product) => {
     if (Array.isArray(product.collections)) {
@@ -823,6 +846,12 @@ export const Admin = () => {
       inStock: newProduct.inStock,
       quantity: Number(newProduct.quantity !== undefined ? newProduct.quantity : 50)
     };
+
+    const payloadStr = JSON.stringify(payload);
+    if (payloadStr.length > 3.5 * 1024 * 1024) {
+      alert('❌ Total size of uploaded images is too large for serverless upload (> 3.5MB). Please remove a few uploaded images or use online image URLs.');
+      return;
+    }
 
     try {
       if (editingProductId) {
@@ -2338,30 +2367,24 @@ export const Admin = () => {
                           multiple
                           accept="image/*"
                           style={{ display: 'none' }}
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             const files = Array.from(e.target.files || []);
                             if (!files.length) return;
-                            let loadedCount = 0;
-                            const newBase64s = [];
-                            files.forEach(file => {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                if (reader.result) newBase64s.push(reader.result);
-                                loadedCount++;
-                                if (loadedCount === files.length) {
-                                  setNewProduct(prev => {
-                                    const existing = Array.isArray(prev.images) ? prev.images : (prev.image ? [prev.image] : []);
-                                    const combined = [...existing, ...newBase64s];
-                                    return {
-                                      ...prev,
-                                      images: combined,
-                                      image: prev.image || combined[0] || ''
-                                    };
-                                  });
-                                }
+                            const compressedImages = await Promise.all(
+                              files.map(file => compressImageFile(file))
+                            );
+                            const validImages = compressedImages.filter(Boolean);
+                            if (!validImages.length) return;
+                            setNewProduct(prev => {
+                              const existing = Array.isArray(prev.images) ? prev.images : (prev.image ? [prev.image] : []);
+                              const combined = [...existing, ...validImages];
+                              return {
+                                ...prev,
+                                images: combined,
+                                image: prev.image || combined[0] || ''
                               };
-                              reader.readAsDataURL(file);
                             });
+                            e.target.value = '';
                           }}
                         />
                       </label>
