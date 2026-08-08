@@ -299,15 +299,22 @@ export const Shop = ({ onProductClick }) => {
         (product.description || '').toLowerCase().includes(lowerQuery) ||
         (product.collections || []).some((tag) => tag.toLowerCase().includes(lowerQuery));
       
+      const productCategoryList = typeof product.category === 'string'
+        ? product.category.split(',').map(c => c.trim()).filter(Boolean)
+        : (Array.isArray(product.category) ? product.category : [product.category].filter(Boolean));
+
       const matchesCategory =
         selectedCategory === 'All' || 
         product.category === selectedCategory ||
+        productCategoryList.includes(selectedCategory) ||
         product.mainCategory === selectedCategory ||
         (selectedParent !== 'All' && !selectedSubcategory && (
-          product.category === parentGroups[selectedParent].name ||
-          product.mainCategory === parentGroups[selectedParent].name ||
-          (parentGroups[selectedParent].categories || []).includes(product.category) ||
-          (parentGroups[selectedParent].categories || []).includes(product.mainCategory)
+          product.category === parentGroups[selectedParent]?.name ||
+          productCategoryList.includes(parentGroups[selectedParent]?.name) ||
+          product.mainCategory === parentGroups[selectedParent]?.name ||
+          (parentGroups[selectedParent]?.categories || []).includes(product.category) ||
+          (parentGroups[selectedParent]?.categories || []).some(c => productCategoryList.includes(c)) ||
+          (parentGroups[selectedParent]?.categories || []).includes(product.mainCategory)
         ));
       
       const matchesPrice = product.price <= maxPrice;

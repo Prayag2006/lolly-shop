@@ -230,7 +230,16 @@ export const ProductDetails = () => {
           <span className="bc-separator">/</span>
           <Link to="/shop">Shop</Link>
           <span className="bc-separator">/</span>
-          <Link to={`/shop?category=${product.category}`}>{product.category}</Link>
+          {typeof product.category === 'string' && product.category.includes(',') ? (
+            product.category.split(',').map((cat, idx) => (
+              <React.Fragment key={cat.trim()}>
+                {idx > 0 && ', '}
+                <Link to={`/shop?category=${encodeURIComponent(cat.trim())}`}>{cat.trim()}</Link>
+              </React.Fragment>
+            ))
+          ) : (
+            <Link to={`/shop?category=${encodeURIComponent(product.category)}`}>{product.category}</Link>
+          )}
           <span className="bc-separator">/</span>
           <span className="bc-current">{product.name}</span>
         </div>
@@ -307,7 +316,15 @@ export const ProductDetails = () => {
 
           {/* Right Column: Order Selection details */}
           <div className="details-info-column">
-            <span className="details-category-tag">{product.category}</span>
+            {typeof product.category === 'string' && product.category.includes(',') ? (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                {product.category.split(',').map(c => (
+                  <span key={c.trim()} className="details-category-tag" style={{ margin: 0 }}>{c.trim()}</span>
+                ))}
+              </div>
+            ) : (
+              <span className="details-category-tag">{product.category}</span>
+            )}
             <h1 className="details-product-title">{product.name}</h1>
 
             {/* Price display */}

@@ -101,6 +101,14 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
   );
 };
 
+const parseSubcategories = (catVal) => {
+  if (Array.isArray(catVal)) return catVal.filter(Boolean);
+  if (typeof catVal === 'string' && catVal.trim()) {
+    return catVal.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  return [];
+};
+
 export const Admin = () => {
   const { 
     currentUser, products, orders, contactSubmissions, addContactSubmission, deleteContactSubmission, 
@@ -769,7 +777,7 @@ export const Admin = () => {
 
     setNewProduct({
       name: product.name,
-      category: product.category || 'General',
+      category: parseSubcategories(product.category),
       mainCategory: product.mainCategory || '',
       price: product.price.toString(),
       gradient: product.gradient || gradientsList[0].value,
@@ -818,9 +826,14 @@ export const Admin = () => {
       : (newProduct.image ? [newProduct.image] : []);
     const coverImg = newProduct.image || payloadImages[0] || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
 
+    const selectedSubs = parseSubcategories(newProduct.category);
+    const categoryVal = selectedSubs.length > 0 
+      ? selectedSubs.join(', ') 
+      : (newProduct.mainCategory || 'General');
+
     const payload = {
       name: newProduct.name,
-      category: newProduct.category || newProduct.mainCategory || 'General',
+      category: categoryVal,
       mainCategory: newProduct.mainCategory || '',
       price: Number(newProduct.price),
       weightPrices: weightPricesMap,
@@ -1360,7 +1373,16 @@ export const Admin = () => {
                           </div>
                         </td>
                         <td>
-                          <span className="p-cell-category">{p.category}</span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                            {parseSubcategories(p.category).map((cat, i) => (
+                              <span key={i} className="p-cell-category-tag" style={{ background: '#fdf2f8', color: '#db2777', border: '1px solid #fbcfe8', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                                {cat}
+                              </span>
+                            ))}
+                            {parseSubcategories(p.category).length === 0 && (
+                              <span className="p-cell-category">{p.category || 'General'}</span>
+                            )}
+                          </div>
                         </td>
                         <td>
                           <div className="p-cell-collections-list">
@@ -2194,7 +2216,9 @@ export const Admin = () => {
                     </div>
                     <div className="form-group">
                       <label htmlFor="psubcategory" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>Subcategory *</span>
+                        <span>
+                          Subcategory * <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>(Select Multiple)</span>
+                        </span>
                         {newProduct.mainCategory && (
                           <div style={{ display: 'flex', gap: '6px' }}>
                             <button
@@ -2215,50 +2239,164 @@ export const Admin = () => {
                                   return g;
                                 });
                                 await updateSettings({ ...settings, megaMenu: updatedMenu });
-                                setNewProduct(prev => ({ ...prev, category: trimmed }));
+                                const currentSubs = parseSubcategories(newProduct.category);
+                                setNewProduct(prev => ({ ...prev, category: [...currentSubs, trimmed] }));
                               }}
                               style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: 'var(--color-primary)' }}
                               title="Add Subcategory"
                             >
                               ➕ Add
                             </button>
-                            {newProduct.category && (
+                            {parseSubcategories(newProduct.category).length > 0 && (
                               <button
                                 type="button"
                                 onClick={async () => {
-                                  if (!confirm(`Are you sure you want to delete the subcategory "${newProduct.category}" from "${newProduct.mainCategory}"?`)) return;
+                                  const currentSubs = parseSubcategories(newProduct.category);
+                                  if (!confirm(`Are you sure you want to delete selected subcategory options ("${currentSubs.join(', ')}") from "${newProduct.mainCategory}"?`)) return;
                                   const updatedMenu = activeMegaMenuFromSettings.map(g => {
                                     if (g.title === newProduct.mainCategory) {
-                                      return { ...g, items: (g.items || []).filter(item => item !== newProduct.category) };
+                                      return { ...g, items: (g.items || []).filter(item => !currentSubs.includes(item)) };
                                     }
                                     return g;
                                   });
                                   await updateSettings({ ...settings, megaMenu: updatedMenu });
-                                  const group = updatedMenu.find(g => g.title === newProduct.mainCategory);
-                                  const nextSub = group && group.items.length > 0 ? group.items[0] : '';
-                                  setNewProduct(prev => ({ ...prev, category: nextSub }));
+                                  setNewProduct(prev => ({ ...prev, category: [] }));
                                 }}
                                 style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: '#dc2626' }}
                                 title="Delete Subcategory"
                               >
-                                🗑️ Delete
+                                🗑️ Delete Selected
                               </button>
                             )}
                           </div>
                         )}
                       </label>
-                      <select
-                        id="psubcategory"
-                        className="admin-select"
-                        value={newProduct.category || ''}
-                        onChange={(e) => setNewProduct(prev => ({ ...prev, category: e.target.value }))}
-                        disabled={!newProduct.mainCategory}
-                      >
-                        <option value="">-- Select Subcategory --</option>
-                        {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).map((sub) => (
-                          <option key={sub} value={sub}>{sub}</option>
-                        ))}
-                      </select>
+
+                      {/* Selected Subcategory Tag Pills */}
+                      {parseSubcategories(newProduct.category).length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                          {parseSubcategories(newProduct.category).map((sub) => (
+                            <span
+                              key={sub}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                background: '#fdf2f8',
+                                color: '#db2777',
+                                border: '1px solid #fbcfe8',
+                                borderRadius: '16px',
+                                padding: '4px 10px',
+                                fontSize: '12px',
+                                fontWeight: '600'
+                              }}
+                            >
+                              {sub}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const updated = parseSubcategories(newProduct.category).filter(item => item !== sub);
+                                  setNewProduct(prev => ({ ...prev, category: updated }));
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  fontSize: '12px',
+                                  fontWeight: 'bold',
+                                  color: '#db2777',
+                                  padding: 0,
+                                  lineHeight: 1
+                                }}
+                                title={`Remove ${sub}`}
+                              >
+                                ✕
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Multi-Select Subcategory Box */}
+                      <div style={{ border: '1.5px solid var(--color-border)', borderRadius: '10px', padding: '10px 14px', backgroundColor: 'var(--color-surface)' }}>
+                        {!newProduct.mainCategory ? (
+                          <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                            -- Select Main Category First --
+                          </span>
+                        ) : (
+                          <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Available Options ({parseSubcategories(newProduct.category).length} selected)
+                              </span>
+                              <div style={{ display: 'flex', gap: '10px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const available = activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || [];
+                                    setNewProduct(prev => ({ ...prev, category: [...available] }));
+                                  }}
+                                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                  Select All
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setNewProduct(prev => ({ ...prev, category: [] }))}
+                                  style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                                >
+                                  Clear All
+                                </button>
+                              </div>
+                            </div>
+
+                            {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).length === 0 ? (
+                              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>No subcategories found for this main category. Use ➕ Add to create one.</span>
+                            ) : (
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingTop: '4px' }}>
+                                {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).map((sub) => {
+                                  const isSelected = parseSubcategories(newProduct.category).includes(sub);
+                                  return (
+                                    <label
+                                      key={sub}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        padding: '6px 10px',
+                                        borderRadius: '8px',
+                                        background: isSelected ? 'rgba(255, 20, 147, 0.08)' : 'transparent',
+                                        border: isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        fontWeight: isSelected ? '700' : '500',
+                                        transition: 'all 0.15s ease'
+                                      }}
+                                    >
+                                      <input
+                                        type="checkbox"
+                                        checked={isSelected}
+                                        onChange={(e) => {
+                                          const currentSubs = parseSubcategories(newProduct.category);
+                                          let updated;
+                                          if (e.target.checked) {
+                                            updated = [...currentSubs, sub];
+                                          } else {
+                                            updated = currentSubs.filter(item => item !== sub);
+                                          }
+                                          setNewProduct(prev => ({ ...prev, category: updated }));
+                                        }}
+                                        style={{ accentColor: 'var(--color-primary)', cursor: 'pointer', width: '16px', height: '16px' }}
+                                      />
+                                      <span>{sub}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -2637,15 +2775,14 @@ export const Admin = () => {
                       <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', marginTop: '8px' }}>
                         {(settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free']).map(tag => {
                           const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
-                          const isSelected = currentTags.includes(tag);
+                          const isSelected = currentTags.some(t => t.toLowerCase() === tag.toLowerCase());
                           return (
                             <div key={tag} style={{ position: 'relative' }}>
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if (isEditingTags) return;
                                   if (isSelected) {
-                                    setNewProduct({ ...newProduct, collectionsText: currentTags.filter(t => t !== tag).join(', ') });
+                                    setNewProduct({ ...newProduct, collectionsText: currentTags.filter(t => t.toLowerCase() !== tag.toLowerCase()).join(', ') });
                                   } else {
                                     setNewProduct({ ...newProduct, collectionsText: [...currentTags, tag].join(', ') });
                                   }
@@ -2653,14 +2790,13 @@ export const Admin = () => {
                                 style={{
                                   padding: '6px 14px',
                                   borderRadius: '20px',
-                                  border: `1px solid ${isSelected && !isEditingTags ? 'var(--color-primary)' : 'var(--color-border)'}`,
-                                  background: isSelected && !isEditingTags ? 'var(--color-primary)' : 'transparent',
-                                  color: isSelected && !isEditingTags ? 'white' : 'var(--color-text)',
-                                  cursor: isEditingTags ? 'default' : 'pointer',
+                                  border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                  background: isSelected ? 'var(--color-primary)' : 'transparent',
+                                  color: isSelected ? 'white' : 'var(--color-text)',
+                                  cursor: 'pointer',
                                   fontSize: '13px',
                                   fontWeight: '500',
-                                  transition: 'all 0.2s ease',
-                                  opacity: isEditingTags ? 0.7 : 1
+                                  transition: 'all 0.2s ease'
                                 }}
                               >
                                 {tag}
@@ -2669,7 +2805,8 @@ export const Admin = () => {
                                 <button
                                   type="button"
                                   onClick={async () => {
-                                    const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                    const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                    const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
                                     await updateSettings({ ...settings, productTags: currentProductTags.filter(t => t !== tag) });
                                   }}
                                   style={{
@@ -2689,6 +2826,7 @@ export const Admin = () => {
                                     cursor: 'pointer',
                                     padding: 0
                                   }}
+                                  title={`Remove ${tag} option`}
                                 >
                                   ×
                                 </button>
@@ -2697,38 +2835,52 @@ export const Admin = () => {
                           );
                         })}
                         {isEditingTags && (
-                          <div style={{ display: 'flex', gap: '4px' }}>
+                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                             <input 
                               type="text" 
                               value={newTagInput}
                               onChange={(e) => setNewTagInput(e.target.value)}
                               placeholder="New tag..."
-                              style={{ padding: '4px 8px', fontSize: '12px', borderRadius: '4px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', width: '100px' }}
+                              style={{ padding: '6px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', width: '110px' }}
                               onKeyDown={async (e) => {
                                 if (e.key === 'Enter') {
                                   e.preventDefault();
-                                  if (newTagInput.trim()) {
-                                    const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
-                                    if (!currentProductTags.includes(newTagInput.trim())) {
-                                      await updateSettings({ ...settings, productTags: [...currentProductTags, newTagInput.trim()] });
-                                    }
-                                    setNewTagInput('');
+                                  const trimmed = newTagInput.trim();
+                                  if (!trimmed) return;
+                                  const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                  const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
+                                  
+                                  const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
+                                  if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                    setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
                                   }
+
+                                  if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                    await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
+                                  }
+                                  setNewTagInput('');
                                 }
                               }}
                             />
                             <button
                               type="button"
                               onClick={async () => {
-                                if (newTagInput.trim()) {
-                                  const currentProductTags = settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
-                                  if (!currentProductTags.includes(newTagInput.trim())) {
-                                    await updateSettings({ ...settings, productTags: [...currentProductTags, newTagInput.trim()] });
-                                  }
-                                  setNewTagInput('');
+                                const trimmed = newTagInput.trim();
+                                if (!trimmed) return;
+                                const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                                const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
+                                
+                                const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
+                                if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                  setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
                                 }
+
+                                if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                  await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
+                                }
+                                setNewTagInput('');
                               }}
-                              style={{ background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '4px', padding: '0 8px', fontSize: '12px', cursor: 'pointer' }}
+                              style={{ background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', height: '32px' }}
                             >
                               Add
                             </button>
