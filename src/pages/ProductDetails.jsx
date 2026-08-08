@@ -57,19 +57,31 @@ export const ProductDetails = () => {
     }
   }, [currentUser]);
 
-  // Reset details state on product change
+  // Reset details state ONLY on product page change
   useEffect(() => {
     setQuantity(1);
     setActiveImageIndex(0);
-    setSelectedWeight(product && product.weightPrices && Object.keys(product.weightPrices).length > 0 
-      ? Object.keys(product.weightPrices)[0] 
-      : '100g'
-    );
+    if (product && product.weightPrices && Object.keys(product.weightPrices).length > 0) {
+      setSelectedWeight(Object.keys(product.weightPrices)[0]);
+    } else {
+      setSelectedWeight('100g');
+    }
     setReviewComment('');
     setReviewRating(5);
     setReviewError('');
+    setReviewSuccess('');
     window.scrollTo(0, 0);
-  }, [id, product]);
+  }, [id, realId]);
+
+  // Ensure selectedWeight is valid if product loads asynchronously
+  useEffect(() => {
+    if (product && product.weightPrices && Object.keys(product.weightPrices).length > 0) {
+      const availableWeights = Object.keys(product.weightPrices);
+      if (!availableWeights.includes(selectedWeight)) {
+        setSelectedWeight(availableWeights[0]);
+      }
+    }
+  }, [product, selectedWeight]);
 
   if (!product) {
     return (

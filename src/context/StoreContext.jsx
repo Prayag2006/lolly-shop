@@ -237,7 +237,7 @@ export const StoreProvider = ({ children }) => {
   const sanitizeProducts = (data) => {
     if (!Array.isArray(data)) return [];
     return data.map((p, idx) => {
-      const validId = String(p.id || p._id || `p-${Date.now()}-${idx}`);
+      const validId = String(p.id || p._id || `p-item-${idx}`);
       return {
         ...p,
         id: validId,
@@ -256,7 +256,13 @@ export const StoreProvider = ({ children }) => {
           const customStorage = getCustomProductsFromStorage();
           const serverIds = new Set(sanitized.map(p => String(p.id || p._id)));
           const missingCustom = customStorage.filter(p => !serverIds.has(String(p.id || p._id)));
-          setProducts([...missingCustom, ...sanitized]);
+          const newProducts = [...missingCustom, ...sanitized];
+          setProducts(prevProducts => {
+            if (JSON.stringify(prevProducts) === JSON.stringify(newProducts)) {
+              return prevProducts;
+            }
+            return newProducts;
+          });
           return;
         }
       }
