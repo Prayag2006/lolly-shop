@@ -12,29 +12,16 @@ const defaultInitialBrands = [
 ];
 
 export const StoreProvider = ({ children }) => {
-  const getInitialProducts = () => {
-    try {
-      const saved = localStorage.getItem('lollyshop_custom_products');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
-      }
-    } catch (e) {}
-    return fallbackProducts;
-  };
-
-  const [products, setProducts] = useState(getInitialProducts);
+  const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
   const [brands, setBrands] = useState(defaultInitialBrands);
 
   useEffect(() => {
-    if (Array.isArray(products)) {
-      try {
-        localStorage.setItem('lollyshop_custom_products', JSON.stringify(products));
-      } catch (e) {}
-    }
-  }, [products]);
+    try {
+      localStorage.removeItem('lollyshop_custom_products');
+    } catch (e) {}
+  }, []);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
     marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
@@ -397,84 +384,45 @@ export const StoreProvider = ({ children }) => {
       ...productData,
       inStock: productData.inStock !== undefined ? productData.inStock : true
     };
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      let data;
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        data = { error: text || `HTTP ${res.status}` };
-      }
-      if (res.ok && data && !data.error && !data.message?.toLowerCase().includes('error')) {
-        setProducts(prev => [data, ...prev]);
-        return data;
-      }
-    } catch (error) {
-      console.warn('Server error adding product, applying seamless fallback:', error);
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (res.ok && data && !data.error) {
+      const sanitized = sanitizeProducts([data])[0];
+      setProducts(prev => [sanitized, ...prev.filter(p => String(p.id || p._id) !== String(sanitized.id || sanitized._id))]);
+      fetchProducts();
+      return sanitized;
     }
-
-    // Seamless fallback so publishing products always succeeds without throwing errors
-    const localId = `p-${Date.now()}`;
-    const fallbackProduct = {
-      id: localId,
-      _id: localId,
-      ...payload,
-      quantity: payload.quantity !== undefined ? Number(payload.quantity) : 50,
-      createdAt: new Date().toISOString()
-    };
-    setProducts(prev => [fallbackProduct, ...prev]);
-    return fallbackProduct;
+    throw new Error(data?.message || 'Failed to publish product to MongoDB Atlas');
   };
 
   const updateProduct = async (productId, updates) => {
-    try {
-      const res = await fetch(`/api/products/${productId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updates)
-      });
-      let data;
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        data = { error: text || `HTTP ${res.status}` };
-      }
-      if (res.ok && data && !data.error && !data.message?.toLowerCase().includes('error')) {
-        setProducts(prev => prev.map(p => (String(p.id || p._id) === String(productId) ? data : p)));
-        return data;
-      }
-    } catch (error) {
-      console.warn('Server error updating product, applying seamless fallback:', error);
+    const res = await fetch(`/api/products/${productId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    });
+    const data = await res.json();
+    if (res.ok && data && !data.error) {
+      const sanitized = sanitizeProducts([data])[0];
+      setProducts(prev => prev.map(p => (String(p.id || p._id) === String(productId) ? sanitized : p)));
+      fetchProducts();
+      return sanitized;
     }
-
-    let updatedLocalProduct;
-    setProducts(prev => prev.map(p => {
-      if (String(p.id || p._id) === String(productId)) {
-        updatedLocalProduct = { ...p, ...updates, updatedAt: new Date().toISOString() };
-        return updatedLocalProduct;
-      }
-      return p;
-    }));
-    return updatedLocalProduct || { id: productId, ...updates };
+    throw new Error(data?.message || 'Failed to update product in MongoDB Atlas');
   };
 
   const deleteProduct = async (productId) => {
-    // Instantly remove product from React state so UI updates immediately and smoothly
     setProducts(prev => prev.filter(p => String(p.id) !== String(productId) && String(p._id) !== String(productId)));
-
     try {
       await fetch(`/api/products/${productId}`, { method: 'DELETE' });
     } catch (error) {
-      console.warn('Background server delete notice, product removed locally:', error);
+      console.error('Error deleting product from MongoDB Atlas:', error);
     }
+    fetchProducts();
     return { success: true };
   };
 
