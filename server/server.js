@@ -500,7 +500,22 @@ app.get('/api/products', async (req, res) => {
   try {
     await ensureMongoConnected();
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      const products = await Product.find().sort({ createdAt: -1 });
+      let products = await Product.find().sort({ createdAt: -1 });
+      if (!products || products.length === 0) {
+        console.log('MongoDB products collection is empty. Auto-seeding initial products...');
+        const productsToSeed = initialProducts.map((p, idx) => ({
+          id: `p-${idx + 1}`,
+          ...p,
+          weightPrices: p.weightPrices || {
+            '100g': p.price,
+            '250g': Number((p.price * 2.2).toFixed(2)),
+            '500g': Number((p.price * 4.0).toFixed(2)),
+            '1kg': Number((p.price * 7.5).toFixed(2))
+          }
+        }));
+        await Product.insertMany(productsToSeed);
+        products = await Product.find().sort({ createdAt: -1 });
+      }
       const formatted = products.map(p => {
         const obj = p.toObject ? p.toObject({ virtuals: true }) : p;
         const validId = String(obj.id || obj._id || '');
