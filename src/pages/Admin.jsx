@@ -2778,17 +2778,19 @@ export const Admin = () => {
 
                   <div className="form-row">
                     <div className="form-group">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <label htmlFor="pcollections" style={{ margin: 0 }}>Collections / Tags</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label htmlFor="pcollections" style={{ margin: 0, fontWeight: '600' }}>Collections / Tags</label>
                         <button 
                           type="button" 
                           onClick={() => setIsEditingTags(!isEditingTags)}
                           style={{ background: 'none', border: 'none', color: 'var(--color-primary)', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
                         >
-                          {isEditingTags ? 'Done Editing' : 'Edit Options'}
+                          {isEditingTags ? 'Done Deleting' : '🗑️ Delete Option Pills'}
                         </button>
                       </div>
-                      <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px', marginTop: '8px' }}>
+
+                      {/* Tag Options Pills Container */}
+                      <div className="tags-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                         {(settings?.productTags || ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free']).map(tag => {
                           const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
                           const isSelected = currentTags.some(t => t.toLowerCase() === tag.toLowerCase());
@@ -2811,11 +2813,11 @@ export const Admin = () => {
                                   color: isSelected ? 'white' : 'var(--color-text)',
                                   cursor: 'pointer',
                                   fontSize: '13px',
-                                  fontWeight: '500',
-                                  transition: 'all 0.2s ease'
+                                  fontWeight: isSelected ? '700' : '500',
+                                  transition: 'all 0.15s ease'
                                 }}
                               >
-                                {tag}
+                                {isSelected ? `✓ ${tag}` : tag}
                               </button>
                               {isEditingTags && (
                                 <button
@@ -2823,7 +2825,7 @@ export const Admin = () => {
                                   onClick={async () => {
                                     const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
                                     const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
-                                    await updateSettings({ ...settings, productTags: currentProductTags.filter(t => t !== tag) });
+                                    await updateSettings({ ...settings, productTags: currentProductTags.filter(t => t.toLowerCase() !== tag.toLowerCase()) });
                                   }}
                                   style={{
                                     position: 'absolute',
@@ -2842,7 +2844,7 @@ export const Admin = () => {
                                     cursor: 'pointer',
                                     padding: 0
                                   }}
-                                  title={`Remove ${tag} option`}
+                                  title={`Remove "${tag}" option from global settings`}
                                 >
                                   ×
                                 </button>
@@ -2850,67 +2852,88 @@ export const Admin = () => {
                             </div>
                           );
                         })}
-                        {isEditingTags && (
-                          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                            <input 
-                              type="text" 
-                              value={newTagInput}
-                              onChange={(e) => setNewTagInput(e.target.value)}
-                              placeholder="New tag..."
-                              style={{ padding: '6px 10px', fontSize: '13px', borderRadius: '6px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', width: '110px' }}
-                              onKeyDown={async (e) => {
-                                if (e.key === 'Enter') {
-                                  e.preventDefault();
-                                  const trimmed = newTagInput.trim();
-                                  if (!trimmed) return;
-                                  const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
-                                  const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
-                                  
-                                  const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
-                                  if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
-                                    setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
-                                  }
-
-                                  if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
-                                    await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
-                                  }
-                                  setNewTagInput('');
-                                }
-                              }}
-                            />
-                            <button
-                              type="button"
-                              onClick={async () => {
-                                const trimmed = newTagInput.trim();
-                                if (!trimmed) return;
-                                const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
-                                const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
-                                
-                                const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
-                                if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
-                                  setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
-                                }
-
-                                if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
-                                  await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
-                                }
-                                setNewTagInput('');
-                              }}
-                              style={{ background: 'var(--color-primary)', color: 'white', border: 'none', borderRadius: '6px', padding: '6px 14px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', height: '32px' }}
-                            >
-                              Add
-                            </button>
-                          </div>
-                        )}
                       </div>
+
+                      {/* Always-Visible Add Collection Input Bar */}
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '10px' }}>
+                        <input 
+                          type="text" 
+                          value={newTagInput}
+                          onChange={(e) => setNewTagInput(e.target.value)}
+                          placeholder="➕ Add new collection tag (e.g. Summer Special)..."
+                          style={{
+                            flex: 1,
+                            padding: '8px 12px',
+                            fontSize: '13px',
+                            borderRadius: '8px',
+                            border: '1.5px solid var(--color-border)',
+                            background: 'var(--color-surface)',
+                            color: 'var(--color-text)',
+                            outline: 'none'
+                          }}
+                          onKeyDown={async (e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const trimmed = newTagInput.trim();
+                              if (!trimmed) return;
+                              const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                              const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
+                              
+                              const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
+                              if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
+                              }
+
+                              if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                                await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
+                              }
+                              setNewTagInput('');
+                            }
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const trimmed = newTagInput.trim();
+                            if (!trimmed) return;
+                            const defaultTags = ['Easter', 'Valentine', 'Parties', 'Weddings', 'Halloween', 'Christmas', 'Birthdays', 'Gifts', 'Kids', 'Vegan', 'Gluten-Free'];
+                            const currentProductTags = Array.isArray(settings?.productTags) && settings.productTags.length > 0 ? settings.productTags : defaultTags;
+                            
+                            const currentTags = (newProduct.collectionsText || '').split(',').map(t => t.trim()).filter(Boolean);
+                            if (!currentTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                              setNewProduct(prev => ({ ...prev, collectionsText: [...currentTags, trimmed].join(', ') }));
+                            }
+
+                            if (!currentProductTags.some(t => t.toLowerCase() === trimmed.toLowerCase())) {
+                              await updateSettings({ ...settings, productTags: [...currentProductTags, trimmed] });
+                            }
+                            setNewTagInput('');
+                          }}
+                          style={{
+                            background: 'var(--color-primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '8px 16px',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          ➕ Add Collection
+                        </button>
+                      </div>
+
                       <input
                         type="text"
                         id="pcollections"
-                        placeholder="Or type custom tags separated by commas..."
+                        placeholder="Selected collections (comma-separated)..."
                         value={newProduct.collectionsText}
                         onChange={(e) => setNewProduct({ ...newProduct, collectionsText: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', fontSize: '13px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)' }}
                       />
-                      <small className="field-note">Select from the options above or enter custom comma-separated tags.</small>
+                      <small className="field-note">Click option pills above or type new collection name in the box to add & select.</small>
                     </div>
                   </div>
 
