@@ -357,8 +357,9 @@ export const Admin = () => {
   // Top Selling Products Calculation
   const productSalesMap = {};
   safeProducts.forEach(p => {
-    if (p && p.id) {
-      productSalesMap[p.id] = { product: p, qty: 0, revenue: 0 };
+    const pid = p && (p.id || p._id);
+    if (p && pid) {
+      productSalesMap[pid] = { product: p, qty: 0, revenue: 0 };
     }
   });
 
@@ -366,9 +367,10 @@ export const Admin = () => {
   safeOrders.forEach(ord => {
     if (ord) {
       (ord.items || []).forEach(item => {
-        if (item && productSalesMap[item.id]) {
-          productSalesMap[item.id].qty += Number(item.quantity || 0);
-          productSalesMap[item.id].revenue += Number(item.price || 0) * Number(item.quantity || 0);
+        const itemPid = item && (item.id || item._id);
+        if (itemPid && productSalesMap[itemPid]) {
+          productSalesMap[itemPid].qty += Number(item.quantity || 0);
+          productSalesMap[itemPid].revenue += Number(item.price || 0) * Number(item.quantity || 0);
         }
       });
     }
@@ -1358,74 +1360,76 @@ export const Admin = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((p) => (
-                      <tr key={p.id}>
-                        <td>
-                          <div className="p-cell-name">
-                            <span className="p-cell-visual">
-                              <img 
-                                src={p.image} 
-                                alt={p.name} 
-                                className="p-cell-image"
-                              />
-                            </span>
-                            <span>{p.name}</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                            {parseSubcategories(p.category).map((cat, i) => (
-                              <span key={i} className="p-cell-category-tag" style={{ background: '#fdf2f8', color: '#db2777', border: '1px solid #fbcfe8', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
-                                {cat}
+                    {products.map((p) => {
+                      const pid = p.id || p._id;
+                      return (
+                        <tr key={pid}>
+                          <td>
+                            <div className="p-cell-name">
+                              <span className="p-cell-visual">
+                                <img 
+                                  src={p.image} 
+                                  alt={p.name} 
+                                  className="p-cell-image"
+                                />
                               </span>
-                            ))}
-                            {parseSubcategories(p.category).length === 0 && (
-                              <span className="p-cell-category">{p.category || 'General'}</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <div className="p-cell-collections-list">
-                            {Array.isArray(p.collections) && p.collections.length > 0 ? (
-                              p.collections.map((col) => (
-                                <span key={col} className="p-cell-category-tag">{col}</span>
-                              ))
-                            ) : (
-                              <span className="p-cell-category-empty">—</span>
-                            )}
-                          </div>
-                        </td>
-                        <td>
-                          <strong>${p.price.toFixed(2)}</strong>
-                        </td>
-                        <td>
-                          <input
-                            type="number"
-                            min="0"
-                            value={p.quantity !== undefined ? p.quantity : 50}
-                            onChange={(e) => updateProductQuantity(p.id, Number(e.target.value))}
-                            style={{
-                              width: '75px',
-                              padding: '6px 10px',
-                              borderRadius: '8px',
-                              border: '1.5px solid var(--color-border)',
-                              background: 'var(--color-surface)',
-                              color: 'var(--color-text)',
-                              fontWeight: '700',
-                              textAlign: 'center',
-                              outline: 'none'
-                            }}
-                          />
-                        </td>
-                        <td>
-                          <button
-                            className={`stock-toggle ${p.inStock ? 'instock' : 'outofstock'}`}
-                            onClick={() => updateProductStock(p.id, !p.inStock)}
-                            title="Toggle Stock availability"
-                          >
-                            {p.inStock ? <Check size={14} /> : <AlertTriangle size={14} />}
-                            <span>{p.inStock ? 'In Stock' : 'Out of Stock'}</span>
-                          </button>
+                              <span>{p.name}</span>
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                              {parseSubcategories(p.category).map((cat, i) => (
+                                <span key={i} className="p-cell-category-tag" style={{ background: '#fdf2f8', color: '#db2777', border: '1px solid #fbcfe8', padding: '2px 8px', borderRadius: '12px', fontSize: '11px', fontWeight: '600' }}>
+                                  {cat}
+                                </span>
+                              ))}
+                              {parseSubcategories(p.category).length === 0 && (
+                                <span className="p-cell-category">{p.category || 'General'}</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <div className="p-cell-collections-list">
+                              {Array.isArray(p.collections) && p.collections.length > 0 ? (
+                                p.collections.map((col) => (
+                                  <span key={col} className="p-cell-category-tag">{col}</span>
+                                ))
+                              ) : (
+                                <span className="p-cell-category-empty">—</span>
+                              )}
+                            </div>
+                          </td>
+                          <td>
+                            <strong>${p.price.toFixed(2)}</strong>
+                          </td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              value={p.quantity !== undefined ? p.quantity : 50}
+                              onChange={(e) => updateProductQuantity(pid, Number(e.target.value))}
+                              style={{
+                                width: '75px',
+                                padding: '6px 10px',
+                                borderRadius: '8px',
+                                border: '1.5px solid var(--color-border)',
+                                background: 'var(--color-surface)',
+                                color: 'var(--color-text)',
+                                fontWeight: '700',
+                                textAlign: 'center',
+                                outline: 'none'
+                              }}
+                            />
+                          </td>
+                          <td>
+                            <button
+                              className={`stock-toggle ${p.inStock ? 'instock' : 'outofstock'}`}
+                              onClick={() => updateProductStock(pid, !p.inStock)}
+                              title="Toggle Stock availability"
+                            >
+                              {p.inStock ? <Check size={14} /> : <AlertTriangle size={14} />}
+                              <span>{p.inStock ? 'In Stock' : 'Out of Stock'}</span>
+                            </button>
                         </td>
                         <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '10px' }}>
@@ -1450,7 +1454,8 @@ export const Admin = () => {
                           </div>
                         </td>
                       </tr>
-                    ))}
+                    );
+                  })}
                   </tbody>
                 </table>
               </div>

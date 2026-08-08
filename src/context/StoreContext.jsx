@@ -220,15 +220,28 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  const sanitizeProducts = (data) => {
+    if (!Array.isArray(data)) return [];
+    return data.map((p, idx) => {
+      const validId = String(p.id || p._id || `p-${Date.now()}-${idx}`);
+      return {
+        ...p,
+        id: validId,
+        _id: p._id || validId
+      };
+    });
+  };
+
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/products');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setProducts(data);
+        if (Array.isArray(data) && data.length > 0) {
+          const sanitized = sanitizeProducts(data);
+          setProducts(sanitized);
           try {
-            localStorage.setItem('lollyshop_custom_products', JSON.stringify(data));
+            localStorage.setItem('lollyshop_custom_products', JSON.stringify(sanitized));
           } catch (e) {}
         }
       }
@@ -474,7 +487,7 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       setProducts(prev =>
-        prev.map(p => (p.id === productId ? { ...p, inStock: data.inStock, quantity: data.quantity } : p))
+        prev.map(p => (String(p.id || p._id) === String(productId) ? { ...p, inStock: data.inStock, quantity: data.quantity } : p))
       );
     } catch (error) {
       console.error('Error toggling stock in DB:', error);
@@ -490,7 +503,7 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       setProducts(prev =>
-        prev.map(p => (p.id === productId ? { ...p, quantity: data.quantity, inStock: data.inStock } : p))
+        prev.map(p => (String(p.id || p._id) === String(productId) ? { ...p, quantity: data.quantity, inStock: data.inStock } : p))
       );
       return data;
     } catch (error) {

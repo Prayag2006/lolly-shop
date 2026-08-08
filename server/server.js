@@ -67,7 +67,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 ensureDatabase();
 
-const sqlAvailable = () => sqlReady();
+const sqlAvailable = () => sqlReady() || mongoose.connection.readyState === 1;
 
 // ── DB READINESS MIDDLEWARE (Serverless cold-start fix) ──
 // On Vercel, MongoDB connects asynchronously after the Lambda starts.
@@ -501,7 +501,12 @@ app.get('/api/products', async (req, res) => {
     await ensureMongoConnected();
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const products = await Product.find().sort({ createdAt: -1 });
-      return res.json(products);
+      const formatted = products.map(p => {
+        const obj = p.toObject ? p.toObject({ virtuals: true }) : p;
+        const validId = String(obj.id || obj._id || '');
+        return { ...obj, id: validId, _id: validId };
+      });
+      return res.json(formatted);
     }
     const products = readLocalData('products.json', seededProducts);
     res.json(products);
@@ -533,7 +538,9 @@ app.get('/api/products/:id', async (req, res) => {
         product = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
       }
       if (!product) return res.status(404).json({ message: 'Product not found' });
-      return res.json(product);
+      const obj = product.toObject ? product.toObject({ virtuals: true }) : product;
+      const validId = String(obj.id || obj._id || '');
+      return res.json({ ...obj, id: validId, _id: validId });
     }
     const products = readLocalData('products.json', seededProducts);
     const product = products.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
@@ -561,11 +568,16 @@ app.post('/api/products', async (req, res) => {
     if (!req.body.category) {
       req.body.category = 'General';
     }
+    if (!req.body.id) {
+      req.body.id = `p-${Date.now()}`;
+    }
 
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const newProduct = new Product(req.body);
       await newProduct.save();
-      return res.status(201).json(newProduct);
+      const obj = newProduct.toObject ? newProduct.toObject({ virtuals: true }) : newProduct;
+      const validId = String(obj.id || obj._id || req.body.id);
+      return res.status(201).json({ ...obj, id: validId, _id: validId });
     }
     const products = readLocalData('products.json', seededProducts);
     const newProduct = {

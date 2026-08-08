@@ -68,7 +68,9 @@ const productSchema = new mongoose.Schema({
 
 // Convert _id to id virtual on JSON serialization
 productSchema.virtual('id').get(function() {
-  return this._id.toHexString();
+  const currentId = this.get('id');
+  if (currentId && String(currentId).trim()) return String(currentId);
+  return this._id ? this._id.toHexString() : '';
 });
 productSchema.set('toJSON', { virtuals: true });
 productSchema.set('toObject', { virtuals: true });
