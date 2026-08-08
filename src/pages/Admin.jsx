@@ -800,6 +800,8 @@ export const Admin = () => {
     });
   };
 
+
+
   const handleAddProductSubmit = async (e) => {
     e.preventDefault();
     if (!newProduct.name || !newProduct.price) {
@@ -863,17 +865,18 @@ export const Admin = () => {
       if (editingProductId) {
         await updateProduct(editingProductId, payload);
         setFormSuccess('Product successfully updated!');
-        resetProductForm();
       } else {
         await addProduct(payload);
         setFormSuccess('Product successfully added to the catalog!');
-        resetProductForm();
       }
+      resetProductForm();
+      setActiveTab('products');
       setTimeout(() => setFormSuccess(''), 4000);
     } catch (error) {
       console.error('Error submitting product:', error);
       setFormSuccess('Product added to catalog!');
       resetProductForm();
+      setActiveTab('products');
     }
   };
 
