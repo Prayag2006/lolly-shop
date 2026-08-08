@@ -224,12 +224,9 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch('/api/products');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const sanitized = sanitizeProducts(data);
           setProducts(sanitized);
-          try {
-            localStorage.setItem('lollyshop_custom_products', JSON.stringify(sanitized));
-          } catch (e) {}
         }
       }
     } catch (err) {
@@ -297,10 +294,6 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('hc_cart', JSON.stringify(cart));
   }, [cart]);
-
-  useEffect(() => {
-    localStorage.setItem('hc_categories', JSON.stringify(categories));
-  }, [categories]);
 
   useEffect(() => {
     localStorage.setItem('hc_theme', theme);

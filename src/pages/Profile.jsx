@@ -7,25 +7,13 @@ import './Profile.css';
 export const Profile = () => {
   const { currentUser, orders, logout, updateProfile } = useStore();
   
-  const getSavedAddressFromStorage = () => {
-    try {
-      const stored = localStorage.getItem('lolly_saved_address');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      // ignore
-    }
-    return {};
-  };
-
-  const initialSaved = getSavedAddressFromStorage();
-
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
     name: currentUser?.name || '',
-    phone: currentUser?.phone || initialSaved.phone || '',
-    address: currentUser?.savedAddress?.address || initialSaved.address || '',
-    city: currentUser?.savedAddress?.city || initialSaved.city || '',
-    zip: currentUser?.savedAddress?.zip || initialSaved.zip || ''
+    phone: currentUser?.phone || '',
+    address: currentUser?.savedAddress?.address || '',
+    city: currentUser?.savedAddress?.city || '',
+    zip: currentUser?.savedAddress?.zip || ''
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -35,21 +23,6 @@ export const Profile = () => {
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
-
-    const savedAddressObj = {
-      name: editForm.name,
-      email: currentUser?.email || '',
-      phone: editForm.phone,
-      address: editForm.address,
-      city: editForm.city,
-      zip: editForm.zip
-    };
-
-    try {
-      localStorage.setItem('lolly_saved_address', JSON.stringify(savedAddressObj));
-    } catch (e) {
-      // ignore
-    }
 
     await updateProfile({
       name: editForm.name,

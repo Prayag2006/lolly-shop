@@ -21,24 +21,16 @@ export const Checkout = () => {
   const [couponSuccess, setCouponSuccess] = useState('');
   const [submitError, setSubmitError] = useState('');
 
-  // Read saved address from currentUser or localStorage
+  // Read saved address from currentUser (MongoDB Atlas)
   const getInitialShippingData = () => {
-    let savedLocal = {};
-    try {
-      const stored = localStorage.getItem('lolly_saved_address');
-      if (stored) savedLocal = JSON.parse(stored);
-    } catch (e) {
-      // ignore
-    }
-
-    const savedAddr = currentUser?.savedAddress || savedLocal;
+    const savedAddr = currentUser?.savedAddress || {};
     const hasAddress = Boolean(savedAddr?.address);
 
     return {
       form: {
-        name: currentUser?.name || savedLocal.name || '',
-        email: currentUser?.email || savedLocal.email || '',
-        phone: currentUser?.phone || savedLocal.phone || '',
+        name: currentUser?.name || '',
+        email: currentUser?.email || '',
+        phone: currentUser?.phone || '',
         address: savedAddr?.address || '',
         city: savedAddr?.city || '',
         zip: savedAddr?.zip || ''
@@ -55,19 +47,6 @@ export const Checkout = () => {
 
   const saveCustomerAddress = async (formData) => {
     if (!saveAddressForNextTime) return;
-    const addressObj = {
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      city: formData.city,
-      zip: formData.zip
-    };
-    try {
-      localStorage.setItem('lolly_saved_address', JSON.stringify(addressObj));
-    } catch (e) {
-      // ignore
-    }
 
     if (currentUser?.email && updateProfile) {
       try {
