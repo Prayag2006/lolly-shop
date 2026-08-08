@@ -375,41 +375,24 @@ export const StoreProvider = ({ children }) => {
       ...productData,
       inStock: productData.inStock !== undefined ? productData.inStock : true
     };
-    let added = null;
-    try {
-      const res = await fetch('/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      let data;
-      const contentType = res.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        data = await res.json();
-      } else {
-        const text = await res.text();
-        data = { error: text || `HTTP ${res.status}` };
-      }
-      if (res.ok && data && !data.error && !data.message?.toLowerCase().includes('error')) {
-        added = sanitizeProducts([data])[0];
-      }
-    } catch (error) {
-      console.warn('Server notice adding product to DB, updating state:', error);
+
+    const res = await fetch('/api/products', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'Failed to save product to MongoDB Atlas');
     }
 
-    if (!added) {
-      const localId = `p-${Date.now()}`;
-      added = {
-        id: localId,
-        _id: localId,
-        ...payload,
-        quantity: payload.quantity !== undefined ? Number(payload.quantity) : 50,
-        createdAt: new Date().toISOString()
-      };
-    }
+    const data = await res.json();
+    const sanitized = sanitizeProducts([data])[0];
 
-    setProducts(prev => [added, ...prev.filter(p => String(p.id || p._id) !== String(added.id || added._id))]);
-    return added;
+    setProducts(prev => [sanitized, ...prev.filter(p => String(p.id || p._id) !== String(sanitized.id || sanitized._id))]);
+    await fetchProducts();
+    return sanitized;
   };
 
   const updateProduct = async (productId, updates) => {

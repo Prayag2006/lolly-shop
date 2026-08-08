@@ -20,15 +20,16 @@ const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluste
 const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 
 const ensureMongoConnected = async () => {
-  if (mongoose.connection.readyState !== 1) {
-    try {
-      await mongoose.connect(activeMongoUri, {
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000
-      });
-    } catch (err) {
-      console.warn('MongoDB connection retry:', err.message);
-    }
+  if (mongoose.connection.readyState === 1) return true;
+  try {
+    await mongoose.connect(activeMongoUri, {
+      serverSelectionTimeoutMS: 15000,
+      connectTimeoutMS: 15000
+    });
+    return mongoose.connection.readyState === 1;
+  } catch (err) {
+    console.warn('MongoDB connection retry notice:', err.message);
+    return false;
   }
 };
 
@@ -711,12 +712,19 @@ app.delete('/api/products/:id', async (req, res) => {
 
 app.put('/api/products/:id/stock', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const { inStock } = req.body;
     if (sqlAvailable()) {
       // If toggled to In Stock but quantity is 0, give it a default stock of 10
       const updateData = { inStock };
       if (inStock) {
-        const prod = await Product.findById(req.params.id);
+        let prod;
+        if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+          prod = await Product.findById(req.params.id);
+        }
+        if (!prod) {
+          prod = await Product.findOne({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+        }
         if (prod && (!prod.quantity || prod.quantity <= 0)) {
           updateData.quantity = 10;
         }
@@ -724,9 +732,16 @@ app.put('/api/products/:id/stock', async (req, res) => {
         updateData.quantity = 0;
       }
 
-      const updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
+      let updated;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
+      }
+      if (!updated) {
+        updated = await Product.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, updateData, { new: true });
+      }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
-      res.json(updated);
+      const obj = updated.toObject ? updated.toObject({ virtuals: true }) : updated;
+      return res.json({ ...obj, id: String(obj.id || obj._id), _id: String(obj.id || obj._id) });
     } else {
       const products = readLocalData('products.json', seededProducts);
       const index = products.findIndex(p => String(p.id) === String(req.params.id));
@@ -750,14 +765,22 @@ app.put('/api/products/:id/stock', async (req, res) => {
 
 app.put('/api/products/:id/quantity', async (req, res) => {
   try {
+    await ensureMongoConnected();
     let { quantity } = req.body;
     quantity = Math.max(0, Number(quantity) || 0);
     const inStock = quantity > 0;
 
     if (sqlAvailable()) {
-      const updated = await Product.findByIdAndUpdate(req.params.id, { quantity, inStock }, { new: true });
+      let updated;
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        updated = await Product.findByIdAndUpdate(req.params.id, { quantity, inStock }, { new: true });
+      }
+      if (!updated) {
+        updated = await Product.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, { quantity, inStock }, { new: true });
+      }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
-      res.json(updated);
+      const obj = updated.toObject ? updated.toObject({ virtuals: true }) : updated;
+      return res.json({ ...obj, id: String(obj.id || obj._id), _id: String(obj.id || obj._id) });
     } else {
       const products = readLocalData('products.json', seededProducts);
       const index = products.findIndex(p => p.id === req.params.id);
