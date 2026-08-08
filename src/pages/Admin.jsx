@@ -2219,13 +2219,13 @@ export const Admin = () => {
                         ))}
                       </select>
                     </div>
-                    <div className="form-group">
-                      <label htmlFor="psubcategory" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span>
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label htmlFor="psubcategory" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: '600', fontSize: '13px' }}>
                           Subcategory * <span style={{ fontSize: '11px', color: 'var(--color-text-muted)', fontWeight: 'normal' }}>(Select Multiple)</span>
                         </span>
                         {newProduct.mainCategory && (
-                          <div style={{ display: 'flex', gap: '6px' }}>
+                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                             <button
                               type="button"
                               onClick={async () => {
@@ -2247,7 +2247,7 @@ export const Admin = () => {
                                 const currentSubs = parseSubcategories(newProduct.category);
                                 setNewProduct(prev => ({ ...prev, category: [...currentSubs, trimmed] }));
                               }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: 'var(--color-primary)' }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700', color: 'var(--color-primary)' }}
                               title="Add Subcategory"
                             >
                               ➕ Add
@@ -2267,7 +2267,7 @@ export const Admin = () => {
                                   await updateSettings({ ...settings, megaMenu: updatedMenu });
                                   setNewProduct(prev => ({ ...prev, category: [] }));
                                 }}
-                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 'bold', color: '#dc2626' }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: '700', color: '#dc2626' }}
                                 title="Delete Subcategory"
                               >
                                 🗑️ Delete Selected
@@ -2277,88 +2277,97 @@ export const Admin = () => {
                         )}
                       </label>
 
-                      {/* Selected Subcategory Tag Pills */}
-                      {parseSubcategories(newProduct.category).length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
-                          {parseSubcategories(newProduct.category).map((sub) => (
-                            <span
-                              key={sub}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                background: '#fdf2f8',
-                                color: '#db2777',
-                                border: '1px solid #fbcfe8',
-                                borderRadius: '16px',
-                                padding: '4px 10px',
-                                fontSize: '12px',
-                                fontWeight: '600'
-                              }}
-                            >
-                              {sub}
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  const updated = parseSubcategories(newProduct.category).filter(item => item !== sub);
-                                  setNewProduct(prev => ({ ...prev, category: updated }));
-                                }}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  cursor: 'pointer',
-                                  fontSize: '12px',
-                                  fontWeight: 'bold',
-                                  color: '#db2777',
-                                  padding: 0,
-                                  lineHeight: 1
-                                }}
-                                title={`Remove ${sub}`}
-                              >
-                                ✕
-                              </button>
-                            </span>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Multi-Select Subcategory Box */}
-                      <div style={{ border: '1.5px solid var(--color-border)', borderRadius: '10px', padding: '10px 14px', backgroundColor: 'var(--color-surface)' }}>
+                      {/* Multi-Select Box */}
+                      <div style={{
+                        border: '1.5px solid var(--color-border)',
+                        borderRadius: '10px',
+                        padding: '8px 12px',
+                        backgroundColor: 'var(--color-surface)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)'
+                      }}>
                         {!newProduct.mainCategory ? (
-                          <span style={{ fontSize: '13px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
-                            -- Select Main Category First --
-                          </span>
+                          <div style={{ padding: '8px 0', textAlign: 'center' }}>
+                            <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', fontStyle: 'italic' }}>
+                              -- Select Main Category First --
+                            </span>
+                          </div>
                         ) : (
                           <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                Available Options ({parseSubcategories(newProduct.category).length} selected)
+                            {/* Selected Subcategory Tags Bar */}
+                            {parseSubcategories(newProduct.category).length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px', paddingBottom: '6px', borderBottom: '1px dotted var(--color-border)' }}>
+                                {parseSubcategories(newProduct.category).map((sub) => (
+                                  <span
+                                    key={sub}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      background: '#fdf2f8',
+                                      color: '#db2777',
+                                      border: '1px solid #fbcfe8',
+                                      borderRadius: '12px',
+                                      padding: '2px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: '600'
+                                    }}
+                                  >
+                                    {sub}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const updated = parseSubcategories(newProduct.category).filter(item => item !== sub);
+                                        setNewProduct(prev => ({ ...prev, category: updated }));
+                                      }}
+                                      style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        fontSize: '11px',
+                                        fontWeight: 'bold',
+                                        color: '#db2777',
+                                        padding: 0,
+                                        lineHeight: 1
+                                      }}
+                                    >
+                                      ✕
+                                    </button>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+
+                            {/* Actions Header */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                Options ({parseSubcategories(newProduct.category).length} selected)
                               </span>
-                              <div style={{ display: 'flex', gap: '10px' }}>
+                              <div style={{ display: 'flex', gap: '8px' }}>
                                 <button
                                   type="button"
                                   onClick={() => {
                                     const available = activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || [];
                                     setNewProduct(prev => ({ ...prev, category: [...available] }));
                                   }}
-                                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                                  style={{ background: 'none', border: 'none', color: 'var(--color-primary)', fontSize: '11px', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}
                                 >
                                   Select All
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setNewProduct(prev => ({ ...prev, category: [] }))}
-                                  style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }}
+                                  style={{ background: 'none', border: 'none', color: '#6b7280', fontSize: '11px', fontWeight: '700', cursor: 'pointer', textDecoration: 'underline' }}
                                 >
                                   Clear All
                                 </button>
                               </div>
                             </div>
 
+                            {/* Options Checkbox Grid */}
                             {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).length === 0 ? (
-                              <span style={{ fontSize: '13px', color: 'var(--color-text-muted)' }}>No subcategories found for this main category. Use ➕ Add to create one.</span>
+                              <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>No subcategories found. Use ➕ Add to create one.</span>
                             ) : (
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '8px', maxHeight: '180px', overflowY: 'auto', paddingTop: '4px' }}>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '4px', maxHeight: '110px', overflowY: 'auto', paddingRight: '4px' }}>
                                 {(activeMegaMenuFromSettings.find(g => g.title === newProduct.mainCategory)?.items || []).map((sub) => {
                                   const isSelected = parseSubcategories(newProduct.category).includes(sub);
                                   return (
@@ -2367,15 +2376,17 @@ export const Admin = () => {
                                       style={{
                                         display: 'flex',
                                         alignItems: 'center',
-                                        gap: '8px',
-                                        padding: '6px 10px',
-                                        borderRadius: '8px',
+                                        gap: '6px',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
                                         background: isSelected ? 'rgba(255, 20, 147, 0.08)' : 'transparent',
                                         border: isSelected ? '1px solid var(--color-primary)' : '1px solid transparent',
                                         cursor: 'pointer',
-                                        fontSize: '13px',
+                                        fontSize: '12px',
                                         fontWeight: isSelected ? '700' : '500',
-                                        transition: 'all 0.15s ease'
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis'
                                       }}
                                     >
                                       <input
@@ -2391,9 +2402,9 @@ export const Admin = () => {
                                           }
                                           setNewProduct(prev => ({ ...prev, category: updated }));
                                         }}
-                                        style={{ accentColor: 'var(--color-primary)', cursor: 'pointer', width: '16px', height: '16px' }}
+                                        style={{ accentColor: 'var(--color-primary)', cursor: 'pointer', width: '14px', height: '14px', flexShrink: 0 }}
                                       />
-                                      <span>{sub}</span>
+                                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sub}</span>
                                     </label>
                                   );
                                 })}
