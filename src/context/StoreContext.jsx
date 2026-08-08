@@ -12,16 +12,43 @@ const defaultInitialBrands = [
 ];
 
 export const StoreProvider = ({ children }) => {
-  const [products, setProducts] = useState(() => fallbackProducts.map((p, i) => ({ ...p, id: p.id || `p-${i+1}`, _id: p._id || p.id || `p-${i+1}` })));
+  const getCustomProductsFromStorage = () => {
+    try {
+      const saved = localStorage.getItem('lollyshop_custom_products');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const saveCustomProductToStorage = (product) => {
+    try {
+      const current = getCustomProductsFromStorage();
+      const pid = String(product.id || product._id);
+      const updated = [product, ...current.filter(p => String(p.id || p._id) !== pid)];
+      localStorage.setItem('lollyshop_custom_products', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const removeCustomProductFromStorage = (productId) => {
+    try {
+      const current = getCustomProductsFromStorage();
+      const updated = current.filter(p => String(p.id || p._id) !== String(productId));
+      localStorage.setItem('lollyshop_custom_products', JSON.stringify(updated));
+    } catch (e) {}
+  };
+
+  const [products, setProducts] = useState(() => {
+    const customStorage = getCustomProductsFromStorage();
+    const initial = fallbackProducts.map((p, i) => ({ ...p, id: p.id || `p-${i+1}`, _id: p._id || p.id || `p-${i+1}` }));
+    const initialIds = new Set(initial.map(p => String(p.id || p._id)));
+    const missingCustom = customStorage.filter(p => !initialIds.has(String(p.id || p._id)));
+    return [...missingCustom, ...initial];
+  });
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
   const [brands, setBrands] = useState(defaultInitialBrands);
 
-  useEffect(() => {
-    try {
-      localStorage.removeItem('lollyshop_custom_products');
-    } catch (e) {}
-  }, []);
   const [testimonials, setTestimonials] = useState([]);
   const [settings, setSettings] = useState({
     marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
@@ -226,7 +253,11 @@ export const StoreProvider = ({ children }) => {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           const sanitized = sanitizeProducts(data);
-          setProducts(sanitized);
+          const customStorage = getCustomProductsFromStorage();
+          const serverIds = new Set(sanitized.map(p => String(p.id || p._id)));
+          const missingCustom = customStorage.filter(p => !serverIds.has(String(p.id || p._id)));
+          setProducts([...missingCustom, ...sanitized]);
+          return;
         }
       }
     } catch (err) {
@@ -403,37 +434,50 @@ export const StoreProvider = ({ children }) => {
       };
     }
 
+    saveCustomProductToStorage(added);
     setProducts(prev => [added, ...prev.filter(p => String(p.id || p._id) !== String(added.id || added._id))]);
-    try {
-      fetchProducts();
-    } catch (e) {}
     return added;
   };
 
   const updateProduct = async (productId, updates) => {
-    const res = await fetch(`/api/products/${productId}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
-    });
-    const data = await res.json();
-    if (res.ok && data && !data.error) {
-      const sanitized = sanitizeProducts([data])[0];
-      setProducts(prev => prev.map(p => (String(p.id || p._id) === String(productId) ? sanitized : p)));
-      fetchProducts();
-      return sanitized;
+    let sanitized = null;
+    try {
+      const res = await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data && !data.error) {
+          sanitized = sanitizeProducts([data])[0];
+        }
+      }
+    } catch (error) {
+      console.warn('Error updating product on server:', error);
     }
-    throw new Error(data?.message || 'Failed to update product in MongoDB Atlas');
+
+    let updatedResult = sanitized;
+    setProducts(prev => prev.map(p => {
+      if (String(p.id || p._id) === String(productId)) {
+        const updated = { ...p, ...updates, ...(sanitized || {}) };
+        updatedResult = updated;
+        saveCustomProductToStorage(updated);
+        return updated;
+      }
+      return p;
+    }));
+    return updatedResult;
   };
 
   const deleteProduct = async (productId) => {
+    removeCustomProductFromStorage(productId);
     setProducts(prev => prev.filter(p => String(p.id) !== String(productId) && String(p._id) !== String(productId)));
     try {
       await fetch(`/api/products/${productId}`, { method: 'DELETE' });
     } catch (error) {
-      console.error('Error deleting product from MongoDB Atlas:', error);
+      console.error('Error deleting product from DB:', error);
     }
-    fetchProducts();
     return { success: true };
   };
 

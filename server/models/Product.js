@@ -66,13 +66,17 @@ const productSchema = new mongoose.Schema({
   reviews: { type: [reviewSchema], default: [] }
 }, { timestamps: true, suppressReservedKeysWarning: true });
 
-// Convert _id to id virtual on JSON serialization
-productSchema.virtual('id').get(function() {
-  const currentId = this.get('id');
-  if (currentId && String(currentId).trim()) return String(currentId);
-  return this._id ? this._id.toHexString() : '';
+productSchema.set('toJSON', {
+  transform: (doc, ret) => {
+    ret.id = ret.id || (ret._id ? ret._id.toString() : '');
+    return ret;
+  }
 });
-productSchema.set('toJSON', { virtuals: true });
-productSchema.set('toObject', { virtuals: true });
+productSchema.set('toObject', {
+  transform: (doc, ret) => {
+    ret.id = ret.id || (ret._id ? ret._id.toString() : '');
+    return ret;
+  }
+});
 
 export const Product = mongoose.models.Product || mongoose.model('Product', productSchema);

@@ -359,12 +359,13 @@ ensureDatabase();
 // Route handlers can await this for first-request DB readiness on cold starts.
 export let mongoReady = Promise.resolve(false);
 
-if (useMongo) {
+if (useMongo && mongoose.connection.readyState !== 1 && mongoose.connection.readyState !== 2) {
   // Set a connection timeout to avoid hanging serverless functions
   const mongoOptions = {
-    serverSelectionTimeoutMS: 8000,
-    connectTimeoutMS: 8000,
-    socketTimeoutMS: 10000,
+    dbName: 'lollyshop',
+    serverSelectionTimeoutMS: 10000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 15000,
   };
   mongoReady = mongoose.connect(activeMongoUri, mongoOptions)
     .then(() => {
@@ -374,8 +375,6 @@ if (useMongo) {
     })
     .catch((err) => {
       console.error('Failed to connect to MongoDB Atlas database:', err.message);
-      console.log('Falling back to SQLite/JSON database...');
-      useMongo = false;
       return false;
     });
 }

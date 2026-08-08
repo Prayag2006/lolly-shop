@@ -8,21 +8,33 @@ import crypto from 'crypto';
 import mongoose from 'mongoose';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
-import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media, Offer, AuditLog, BlogPost, Redirect, NewsletterSubscriber, CustomPage } from './db.js';
-import Stripe from 'stripe';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config();
 
 try {
   dns.setServers(['8.8.8.8', '8.8.4.4']);
   dns.setDefaultResultOrder('ipv4first');
 } catch (e) {}
 
+import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Brand, Testimonial, Settings, Category, Media, Offer, AuditLog, BlogPost, Redirect, NewsletterSubscriber, CustomPage } from './db.js';
+import Stripe from 'stripe';
+import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
+
 const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
-const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 
 const ensureMongoConnected = async () => {
   if (mongoose.connection.readyState === 1) return true;
   try {
+    await mongoReady;
+  } catch (e) {}
+  if (mongoose.connection.readyState === 1) return true;
+  const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+  try {
     await mongoose.connect(activeMongoUri, {
+      dbName: 'lollyshop',
       serverSelectionTimeoutMS: 15000,
       connectTimeoutMS: 15000
     });
@@ -32,12 +44,6 @@ const ensureMongoConnected = async () => {
     return false;
   }
 };
-
-import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
@@ -798,6 +804,7 @@ app.put('/api/products/:id/quantity', async (req, res) => {
 
 app.post('/api/products/:id/reviews', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const { userName, rating, comment } = req.body;
     const rate = Number(rating);
     if (!userName?.trim() || isNaN(rate) || rate < 1 || rate > 5 || !comment?.trim()) {
@@ -861,6 +868,7 @@ app.post('/api/products/:id/reviews', async (req, res) => {
 
 app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const { id, reviewId } = req.params;
     if (sqlAvailable()) {
       let product;
@@ -3340,12 +3348,18 @@ app.get('/api/media/file/:filename', async (req, res) => {
 // ── PRODUCT CMS ACTIONS ──
 app.post('/api/products/:id/duplicate', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
     let sourceProduct = null;
     if (sqlAvailable()) {
-      sourceProduct = await Product.findById(req.params.id);
+      if (mongoose.Types.ObjectId.isValid(req.params.id)) {
+        sourceProduct = await Product.findById(req.params.id);
+      }
+      if (!sourceProduct) {
+        sourceProduct = await Product.findOne({ id: req.params.id });
+      }
     } else {
       const list = readLocalData('products.json', seededProducts);
       sourceProduct = list.find(p => String(p.id) === String(req.params.id));
@@ -3391,6 +3405,7 @@ app.post('/api/products/:id/duplicate', async (req, res) => {
 
 app.post('/api/products/import', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
@@ -3428,6 +3443,7 @@ app.post('/api/products/import', async (req, res) => {
 
 app.get('/api/products-export', async (req, res) => {
   try {
+    await ensureMongoConnected();
     const isAdmin = isStaffAuthorized(req, 'products');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
 
