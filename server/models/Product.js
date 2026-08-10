@@ -63,6 +63,7 @@ const productSchema = new mongoose.Schema({
   seoKeywords: { type: String, default: '' },
 
   weightPrices: { type: mongoose.Schema.Types.Mixed, default: {} },
+  weightImages: { type: mongoose.Schema.Types.Mixed, default: {} },
   reviews: { type: [reviewSchema], default: [] }
 }, { timestamps: true, suppressReservedKeysWarning: true });
 

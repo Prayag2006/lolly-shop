@@ -28,9 +28,15 @@ export const ProductDetails = () => {
   const productImages = React.useMemo(() => {
     if (!product) return [];
     const list = [];
-    if (product.image) list.push(product.image);
-    if (Array.isArray(product.images)) {
+    if (Array.isArray(product.images) && product.images.length > 0) {
       product.images.forEach(img => {
+        if (img && !list.includes(img)) list.push(img);
+      });
+    } else if (product.image) {
+      list.push(product.image);
+    }
+    if (product.weightImages && typeof product.weightImages === 'object') {
+      Object.values(product.weightImages).forEach(img => {
         if (img && !list.includes(img)) list.push(img);
       });
     }
@@ -41,6 +47,17 @@ export const ProductDetails = () => {
   }, [product]);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const handleWeightSelect = (w) => {
+    setSelectedWeight(w);
+    if (product?.weightImages && product.weightImages[w]) {
+      const optionImg = product.weightImages[w];
+      const foundIdx = productImages.indexOf(optionImg);
+      if (foundIdx !== -1) {
+        setActiveImageIndex(foundIdx);
+      }
+    }
+  };
 
   const [reviewName, setReviewName] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
@@ -355,7 +372,7 @@ export const ProductDetails = () => {
                       key={w}
                       type="button"
                       className={`size-chip-btn ${selectedWeight === w ? 'active' : ''}`}
-                      onClick={() => setSelectedWeight(w)}
+                      onClick={() => handleWeightSelect(w)}
                     >
                       {w.toUpperCase()}
                     </button>
@@ -366,7 +383,7 @@ export const ProductDetails = () => {
                       key={w}
                       type="button"
                       className={`size-chip-btn ${selectedWeight === w ? 'active' : ''}`}
-                      onClick={() => setSelectedWeight(w)}
+                      onClick={() => handleWeightSelect(w)}
                     >
                       {w.toUpperCase()}
                     </button>

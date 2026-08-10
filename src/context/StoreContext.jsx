@@ -40,10 +40,14 @@ export const StoreProvider = ({ children }) => {
 
   const [products, setProducts] = useState(() => {
     const customStorage = getCustomProductsFromStorage();
-    const initial = fallbackProducts.map((p, i) => ({ ...p, id: p.id || `p-${i+1}`, _id: p._id || p.id || `p-${i+1}` }));
+    const customMap = new Map(customStorage.map(p => [String(p.id || p._id), p]));
+    const initial = fallbackProducts.map((p, i) => {
+      const pid = String(p.id || `p-${i+1}`);
+      return customMap.get(pid) || { ...p, id: pid, _id: p._id || pid };
+    });
     const initialIds = new Set(initial.map(p => String(p.id || p._id)));
-    const missingCustom = customStorage.filter(p => !initialIds.has(String(p.id || p._id)));
-    return [...missingCustom, ...initial];
+    const brandNewCustom = customStorage.filter(p => !initialIds.has(String(p.id || p._id)));
+    return [...initial, ...brandNewCustom];
   });
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
@@ -467,6 +471,15 @@ export const StoreProvider = ({ children }) => {
     setProducts(prev => prev.map(p => {
       if (String(p.id || p._id) === String(productId)) {
         const updated = { ...p, ...updates, ...(sanitized || {}) };
+        if (Array.isArray(updates.images)) {
+          updated.images = updates.images;
+        }
+        if (updates.image !== undefined) {
+          updated.image = updates.image;
+        }
+        if (updates.weightImages !== undefined) {
+          updated.weightImages = updates.weightImages;
+        }
         updatedResult = updated;
         saveCustomProductToStorage(updated);
         return updated;

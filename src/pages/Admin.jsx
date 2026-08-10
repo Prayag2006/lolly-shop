@@ -768,12 +768,16 @@ export const Admin = () => {
     setEditingProductId(product.id);
     setActiveTab('add-product');
     const options = product.weightPrices && Object.keys(product.weightPrices).length > 0
-      ? Object.entries(product.weightPrices).map(([weight, price]) => ({ weight, price: price.toString() }))
+      ? Object.entries(product.weightPrices).map(([weight, price]) => ({
+          weight,
+          price: price.toString(),
+          image: (product.weightImages && product.weightImages[weight]) ? product.weightImages[weight] : ''
+        }))
       : [
-          { weight: '100g', price: product.price.toString() },
-          { weight: '250g', price: '' },
-          { weight: '500g', price: '' },
-          { weight: '1kg', price: '' }
+          { weight: '100g', price: product.price.toString(), image: '' },
+          { weight: '250g', price: '', image: '' },
+          { weight: '500g', price: '', image: '' },
+          { weight: '1kg', price: '', image: '' }
         ];
     setWeightOptions(options);
 
@@ -810,25 +814,30 @@ export const Admin = () => {
     }
 
     const weightPricesMap = {};
+    const weightImagesMap = {};
     weightOptions.forEach(opt => {
-      if (opt.weight.trim()) {
+      const wKey = opt.weight.trim();
+      if (wKey) {
         let priceVal = Number(opt.price);
         if (!opt.price) {
           const base = Number(newProduct.price);
-          if (opt.weight === '100g') priceVal = base;
-          else if (opt.weight === '250g') priceVal = base * 2.2;
-          else if (opt.weight === '500g') priceVal = base * 4.0;
-          else if (opt.weight === '1kg') priceVal = base * 7.5;
+          if (wKey === '100g') priceVal = base;
+          else if (wKey === '250g') priceVal = base * 2.2;
+          else if (wKey === '500g') priceVal = base * 4.0;
+          else if (wKey === '1kg') priceVal = base * 7.5;
           else priceVal = base;
         }
-        weightPricesMap[opt.weight.trim()] = Number(priceVal.toFixed(2));
+        weightPricesMap[wKey] = Number(priceVal.toFixed(2));
+        if (opt.image && opt.image.trim()) {
+          weightImagesMap[wKey] = opt.image.trim();
+        }
       }
     });
 
-    const payloadImages = Array.isArray(newProduct.images) && newProduct.images.length > 0 
-      ? newProduct.images 
-      : (newProduct.image ? [newProduct.image] : []);
-    const coverImg = newProduct.image || payloadImages[0] || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
+    const payloadImages = Array.isArray(newProduct.images) ? newProduct.images.filter(Boolean) : [];
+    const coverImg = (newProduct.image && payloadImages.includes(newProduct.image))
+      ? newProduct.image
+      : (payloadImages[0] || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600');
 
     const selectedSubs = parseSubcategories(newProduct.category);
     const categoryVal = selectedSubs.length > 0 
@@ -841,6 +850,7 @@ export const Admin = () => {
       mainCategory: newProduct.mainCategory || '',
       price: Number(newProduct.price),
       weightPrices: weightPricesMap,
+      weightImages: weightImagesMap,
       gradient: newProduct.gradient,
       image: coverImg,
       images: payloadImages,
@@ -2607,19 +2617,21 @@ export const Admin = () => {
                                   </button>
                                 )}
                                 <button
-                                  type="button"
-                                  onClick={() => {
-                                    setNewProduct(prev => {
-                                      const filtered = prev.images.filter((_, i) => i !== index);
-                                      const nextCover = prev.image === imgSrc ? (filtered[0] || '') : prev.image;
-                                      return { ...prev, images: filtered, image: nextCover };
-                                    });
-                                  }}
-                                  style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', cursor: 'pointer', marginLeft: isCover ? 'auto' : 0 }}
-                                  title="Delete Image"
-                                >
-                                  ✕
-                                </button>
+                                   type="button"
+                                   onClick={() => {
+                                     const deletedSrc = imgSrc;
+                                     setNewProduct(prev => {
+                                       const filtered = prev.images.filter((_, i) => i !== index);
+                                       const nextCover = filtered.includes(prev.image) ? prev.image : (filtered[0] || '');
+                                       return { ...prev, images: filtered, image: nextCover };
+                                     });
+                                     setWeightOptions(prevOpts => prevOpts.map(opt => opt.image === deletedSrc ? { ...opt, image: '' } : opt));
+                                   }}
+                                   style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', cursor: 'pointer', marginLeft: isCover ? 'auto' : 0 }}
+                                   title="Delete Image"
+                                 >
+                                   ✕
+                                 </button>
                               </div>
                             </div>
                           );
@@ -2670,7 +2682,7 @@ export const Admin = () => {
                   </div>
 
                   <h3 className="form-section-title">Weight-Based Pricing Options</h3>
-                  <div className="weight-options-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                  <div className="weight-options-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '16px', marginBottom: '16px' }}>
                     {weightOptions.map((opt, index) => (
                       <div key={index} className="weight-option-card glass-card" style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', background: 'rgba(255, 255, 255, 0.02)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div className="form-group" style={{ marginBottom: 0 }}>
@@ -2703,6 +2715,73 @@ export const Admin = () => {
                             }}
                             style={{ padding: '8px 12px', fontSize: '14px', marginTop: '4px' }}
                           />
+                        </div>
+                        <div className="form-group" style={{ marginBottom: 0 }}>
+                          <label style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--color-text-muted)', display: 'block', marginBottom: '4px' }}>
+                            Option Image (Optional)
+                          </label>
+                          {opt.image ? (
+                            <div style={{ position: 'relative', width: '100%', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.1)', padding: '6px 10px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                              <img src={opt.image} alt={opt.weight || 'Option photo'} style={{ width: '40px', height: '40px', objectFit: 'contain', borderRadius: '6px', background: 'var(--color-card-bg)' }} />
+                              <button
+                                type="button"
+                                style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', cursor: 'pointer', marginLeft: 'auto' }}
+                                onClick={() => {
+                                  const newOpts = [...weightOptions];
+                                  newOpts[index].image = '';
+                                  setWeightOptions(newOpts);
+                                }}
+                              >
+                                ✕ Remove
+                              </button>
+                            </div>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                              <label 
+                                style={{
+                                  background: 'rgba(231, 44, 131, 0.08)',
+                                  color: 'var(--color-primary)',
+                                  border: '1px dashed rgba(231, 44, 131, 0.3)',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '11px',
+                                  fontWeight: '600',
+                                  textAlign: 'center',
+                                  display: 'block'
+                                }}
+                              >
+                                📁 Upload Photo
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  style={{ display: 'none' }}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    const base64 = await compressImageFile(file);
+                                    if (base64) {
+                                      const newOpts = [...weightOptions];
+                                      newOpts[index].image = base64;
+                                      setWeightOptions(newOpts);
+                                    }
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+                              <input
+                                type="url"
+                                placeholder="Or photo URL..."
+                                value={opt.image || ''}
+                                onChange={(e) => {
+                                  const newOpts = [...weightOptions];
+                                  newOpts[index].image = e.target.value;
+                                  setWeightOptions(newOpts);
+                                }}
+                                style={{ padding: '6px 10px', fontSize: '12px', borderRadius: '6px' }}
+                              />
+                            </div>
+                          )}
                         </div>
                         <button
                           type="button"
@@ -2745,7 +2824,7 @@ export const Admin = () => {
                       display: 'inline-block'
                     }}
                     onClick={() => {
-                      setWeightOptions([...weightOptions, { weight: '', price: '' }]);
+                      setWeightOptions([...weightOptions, { weight: '', price: '', image: '' }]);
                     }}
                   >
                     + Add Weight Option

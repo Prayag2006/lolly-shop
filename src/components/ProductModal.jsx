@@ -52,7 +52,7 @@ export const ProductModal = ({ product, onClose }) => {
           <div className="modal-visual-side">
             <div className="modal-mesh"></div>
             <img 
-              src={product.image} 
+              src={(product.weightImages && product.weightImages[selectedWeight]) ? product.weightImages[selectedWeight] : product.image} 
               alt={product.name} 
               className="modal-product-image"
             />
