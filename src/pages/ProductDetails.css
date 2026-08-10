@@ -194,7 +194,9 @@
 
 .details-size-chips {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
 }
 
 .size-chip-btn {
@@ -202,16 +204,20 @@
   border: 1.5px solid var(--color-border);
   color: var(--color-text);
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
-  min-width: 76px;
-  padding: 0 16px;
-  height: 44px;
+  min-width: 70px;
+  padding: 8px 14px;
+  min-height: 44px;
+  height: auto;
   border-radius: 12px;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  line-height: 1.25;
+  word-break: break-word;
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
 }
@@ -985,6 +991,19 @@
 
   .details-product-title {
     font-size: 22px !important;
+  }
+
+  .details-size-chips {
+    gap: 8px;
+    width: 100%;
+  }
+
+  .size-chip-btn {
+    font-size: 12px;
+    padding: 8px 10px;
+    min-height: 42px;
+    flex: 1 1 auto;
+    max-width: 100%;
   }
 
   .details-action-row {
