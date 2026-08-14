@@ -700,6 +700,11 @@ app.delete('/api/products/:id', async (req, res) => {
         }
       }
       if (!deleted) return res.status(404).json({ message: 'Product not found' });
+      try {
+        const localProds = readLocalData('products.json', seededProducts);
+        const filtered = localProds.filter(p => String(p.id) !== String(targetId) && String(p._id) !== String(targetId));
+        writeLocalData('products.json', filtered);
+      } catch (e) {}
       return res.json({ message: 'Product successfully deleted' });
     }
 

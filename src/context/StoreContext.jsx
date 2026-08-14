@@ -255,17 +255,33 @@ export const StoreProvider = ({ children }) => {
       const res = await fetch('/api/products');
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const sanitized = sanitizeProducts(data);
-          const customStorage = getCustomProductsFromStorage();
-          const serverIds = new Set(sanitized.map(p => String(p.id || p._id)));
-          const missingCustom = customStorage.filter(p => !serverIds.has(String(p.id || p._id)));
-          const newProducts = [...missingCustom, ...sanitized];
           setProducts(prevProducts => {
-            if (JSON.stringify(prevProducts) === JSON.stringify(newProducts)) {
+            if (JSON.stringify(prevProducts) === JSON.stringify(sanitized)) {
               return prevProducts;
             }
-            return newProducts;
+            return sanitized;
+          });
+
+          // Sync localStorage and remove any items that were deleted from server
+          try {
+            const serverIds = new Set(sanitized.map(p => String(p.id || p._id)));
+            const customStorage = getCustomProductsFromStorage();
+            const validCustom = customStorage.filter(p => serverIds.has(String(p.id || p._id)));
+            if (validCustom.length !== customStorage.length) {
+              localStorage.setItem('lollyshop_custom_products', JSON.stringify(validCustom));
+            }
+          } catch (e) {}
+
+          // Remove any deleted products from user's shopping cart
+          setCart(prevCart => {
+            const serverIds = new Set(sanitized.map(p => String(p.id || p._id)));
+            const validCart = prevCart.filter(item => serverIds.has(String(item.id || item._id)));
+            if (validCart.length !== prevCart.length) {
+              return validCart;
+            }
+            return prevCart;
           });
           return;
         }
@@ -490,10 +506,15 @@ export const StoreProvider = ({ children }) => {
   };
 
   const deleteProduct = async (productId) => {
-    removeCustomProductFromStorage(productId);
-    setProducts(prev => prev.filter(p => String(p.id) !== String(productId) && String(p._id) !== String(productId)));
+    const pid = String(productId);
+    removeCustomProductFromStorage(pid);
+    setProducts(prev => prev.filter(p => String(p.id) !== pid && String(p._id) !== pid));
+    setCart(prev => prev.filter(item => String(item.id) !== pid && String(item._id) !== pid));
     try {
-      await fetch(`/api/products/${productId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/products/${encodeURIComponent(pid)}`, { method: 'DELETE' });
+      if (res.ok) {
+        await fetchProducts();
+      }
     } catch (error) {
       console.error('Error deleting product from DB:', error);
     }
