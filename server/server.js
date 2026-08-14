@@ -23,7 +23,7 @@ import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Br
 import Stripe from 'stripe';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
-const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
+const DEFAULT_MONGO_URI = 'mongodb+srv://Bestlolly:Bestlolly56@cluster0.0intrz7.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
 
 const ensureMongoConnected = async () => {
   if (mongoose.connection.readyState === 1) return true;

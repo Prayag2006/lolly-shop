@@ -68,7 +68,7 @@ const DB_PATH = path.join(DATA_DIR, 'lollyshop.db');
 let db;
 let sqlEnabled = false;
 
-const DEFAULT_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
+const DEFAULT_MONGO_URI = 'mongodb+srv://Bestlolly:Bestlolly56@cluster0.0intrz7.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
 const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
 let useMongo = true;
 
