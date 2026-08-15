@@ -3132,7 +3132,13 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
     }
 
-    await sendPasswordResetEmail(user, rawToken);
+    const emailSent = await sendPasswordResetEmail(user, rawToken);
+    if (!emailSent) {
+      return res.status(502).json({
+        success: false,
+        message: 'We could not send the reset email right now (mail server error). Please try again shortly or contact support.'
+      });
+    }
 
     return res.json({
       success: true,
