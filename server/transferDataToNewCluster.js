@@ -31,8 +31,13 @@ import { NewsletterSubscriber } from './models/NewsletterSubscriber.js';
 import { CustomPage } from './models/CustomPage.js';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
-const OLD_MONGO_URI = 'mongodb+srv://prayagkansara05_db_user:Prayag56@cluster0.7nelkgw.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
-const targetUriArg = process.argv[2] || process.env.MONGODB_URI || 'mongodb+srv://Bestlolly:Bestlolly56@cluster0.0intrz7.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
+const OLD_MONGO_URI = process.env.SOURCE_MONGODB_URI;
+const targetUriArg = process.argv[2] || process.env.MONGODB_URI;
+
+if (!OLD_MONGO_URI || !targetUriArg) {
+  console.error('Set SOURCE_MONGODB_URI (source cluster) and MONGODB_URI (or pass target URI as an argument) before running this migration script.');
+  process.exit(1);
+}
 
 // Ensure dbName is present
 let TARGET_MONGO_URI = targetUriArg;

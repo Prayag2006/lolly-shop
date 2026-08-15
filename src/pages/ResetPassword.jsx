@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useStore } from '../context/StoreContext';
-import { Lock, AlertCircle, CheckCircle, Eye, EyeOff, KeyRound, ArrowLeft, Mail } from 'lucide-react';
+import { Lock, AlertCircle, CheckCircle, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
 import './ResetPassword.css';
 import './Login.css';
 
@@ -10,22 +10,22 @@ export const ResetPassword = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
-  const emailParam = searchParams.get('email') || '';
 
   // Page States
-  const [activeToken, setActiveToken] = useState(token || '');
-  const [email, setEmail] = useState(emailParam);
+  const [activeToken, setActiveToken] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isValidating, setIsValidating] = useState(token ? true : false);
+  const [isValidating, setIsValidating] = useState(true);
 
-  // Validate token if present in query params
+  // A valid, unexpired reset token (from the emailed link) is required to reach this form —
+  // there is no email-only path anymore, since that let anyone reset any account's password.
   useEffect(() => {
     const validateToken = async () => {
       if (!token) {
+        setError('This password reset link is missing or invalid. Please request a new one from the Sign In page.');
         setIsValidating(false);
         return;
       }
@@ -34,7 +34,7 @@ export const ResetPassword = () => {
       if (res.success) {
         setActiveToken(token);
       } else {
-        setError(res.message || 'This password reset link is invalid or has expired.');
+        setError(res.message || 'This password reset link is invalid or has expired. Please request a new one.');
       }
       setIsValidating(false);
     };
@@ -47,8 +47,8 @@ export const ResetPassword = () => {
     setError('');
     setSuccess('');
 
-    if (!email.trim() && !activeToken) {
-      setError('Please enter your email address.');
+    if (!activeToken) {
+      setError('This password reset link is invalid or has expired. Please request a new one.');
       return;
     }
 
@@ -67,7 +67,7 @@ export const ResetPassword = () => {
       return;
     }
 
-    const res = await resetPassword(activeToken, password, email.trim());
+    const res = await resetPassword(activeToken, password);
     if (res.success) {
       setSuccess('Your password has been updated successfully! Redirecting to Sign In...');
       setTimeout(() => {
@@ -95,7 +95,7 @@ export const ResetPassword = () => {
               <KeyRound size={28} />
             </div>
             <h2>RESET PASSWORD</h2>
-            <p>Enter your account email and new password below to update your account credentials</p>
+            <p>Enter a new password below to update your account credentials</p>
           </div>
 
           {isValidating ? (
@@ -111,7 +111,7 @@ export const ResetPassword = () => {
                   <span>{error}</span>
                 </div>
               )}
-              
+
               {success && (
                 <div className="login-alert alert-success">
                   <CheckCircle size={18} />
@@ -119,23 +119,8 @@ export const ResetPassword = () => {
                 </div>
               )}
 
-              {!success && (
+              {!success && activeToken && (
                 <form onSubmit={handleSubmit} className="login-form">
-                  <div className="form-group">
-                    <label htmlFor="reset-email">Email Address</label>
-                    <div className="input-with-icon">
-                      <Mail size={18} className="input-icon" />
-                      <input
-                        type="email"
-                        id="reset-email"
-                        placeholder="Enter your account email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required={!activeToken}
-                      />
-                    </div>
-                  </div>
-
                   <div className="form-group">
                     <label htmlFor="new-password">New Password</label>
                     <div className="input-with-icon">
@@ -178,6 +163,12 @@ export const ResetPassword = () => {
                     Update Password
                   </button>
                 </form>
+              )}
+
+              {!success && !activeToken && (
+                <Link to="/login" className="btn btn-primary login-submit-btn" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+                  Request a New Reset Link
+                </Link>
               )}
             </>
           )}

@@ -5,6 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
@@ -23,15 +24,14 @@ import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Br
 import Stripe from 'stripe';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
-const DEFAULT_MONGO_URI = 'mongodb+srv://Bestlolly:Bestlolly56@cluster0.0intrz7.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
-
 const ensureMongoConnected = async () => {
   if (mongoose.connection.readyState === 1) return true;
   try {
     await mongoReady;
   } catch (e) {}
   if (mongoose.connection.readyState === 1) return true;
-  const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
+  const activeMongoUri = process.env.MONGODB_URI;
+  if (!activeMongoUri) return false;
   try {
     await mongoose.connect(activeMongoUri, {
       dbName: 'lollyshop',
@@ -65,12 +65,50 @@ const verifyPassword = (password, hashedPassword) => {
   return hash === originalHash;
 };
 
+// ── JWT SESSION TOKENS ──
+// Authorization must never be based on client-supplied headers (X-User-Role, etc.) alone,
+// since those can be freely forged by any API caller. Instead, the server issues a signed
+// token on login that the client returns on every request; only a token this server signed
+// can produce a valid decode, so a caller cannot claim a role/permissions it wasn't granted.
+if (!process.env.JWT_SECRET) {
+  console.warn('⚠️  JWT_SECRET is not set — using a generated development-only secret. Set JWT_SECRET in your .env for production (sessions will invalidate on every restart until you do).');
+}
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(48).toString('hex');
+
+const generateAuthToken = (user) => jwt.sign(
+  {
+    email: user.email,
+    name: user.name,
+    role: user.role || 'user',
+    permissions: user.permissions || []
+  },
+  JWT_SECRET,
+  { expiresIn: '7d' }
+);
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Verify the bearer session token (if any) and attach the *trusted* identity to req.authUser.
+// Route handlers must use req.authUser for authorization decisions — never the raw
+// X-User-Role/X-User-Permissions headers, which are client-supplied and unverified.
+app.use((req, res, next) => {
+  req.authUser = null;
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  if (token) {
+    try {
+      req.authUser = jwt.verify(token, JWT_SECRET);
+    } catch (e) {
+      req.authUser = null;
+    }
+  }
+  next();
+});
 
 ensureDatabase();
 
@@ -117,7 +155,7 @@ const createMailTransporter = async () => {
   const host = settingsSmtp.host || process.env.SMTP_HOST || 'smtp.gmail.com';
   const port = Number(settingsSmtp.port || process.env.SMTP_PORT || 587);
   const smtpUser = settingsSmtp.user || process.env.SMTP_USER || 'bestlollyshopnz@gmail.com';
-  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || 'iwiwwwmafwipuskv';
+  const smtpPass = settingsSmtp.pass || process.env.SMTP_PASS || '';
 
   if (smtpUser && smtpPass) {
     const isGmail = host.includes('gmail');
@@ -1365,6 +1403,46 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
   }
 };
 
+// Recomputes an order's item subtotal from the authoritative product prices in the database
+// rather than trusting whatever total the client sent. Without this, a request could be
+// edited client-side to pay any arbitrary (e.g. near-zero) amount for a cart of real value.
+async function computeVerifiedSubtotal(items) {
+  const list = Array.isArray(items) ? items : [];
+  const useDb = sqlAvailable() || mongoose.connection.readyState === 1;
+  const localProducts = useDb ? null : readLocalData('products.json', seededProducts);
+  let subtotal = 0;
+
+  for (const item of list) {
+    let product = null;
+    if (useDb) {
+      if (typeof item.id === 'string' && mongoose.Types.ObjectId.isValid(item.id)) {
+        product = await Product.findById(item.id).catch(() => null);
+      }
+      if (!product && item.id) {
+        product = await Product.findOne({ id: item.id }).catch(() => null);
+      }
+    } else {
+      product = localProducts.find(p => String(p.id) === String(item.id)) || null;
+    }
+    if (!product) continue; // Unknown/removed product — never trust a client-supplied price for it
+
+    const weight = item.selectedWeight || '100g';
+    const basePrice = Number(product.price || 0);
+    const weightPrices = product.weightPrices || {};
+    let unitPrice = weightPrices[weight] !== undefined ? Number(weightPrices[weight]) : basePrice;
+    if (weightPrices[weight] === undefined) {
+      if (weight === '250g') unitPrice = Number((basePrice * 2.2).toFixed(2));
+      else if (weight === '500g') unitPrice = Number((basePrice * 4.0).toFixed(2));
+      else if (weight === '1kg') unitPrice = Number((basePrice * 7.5).toFixed(2));
+    }
+
+    const qty = Math.max(1, Math.floor(Number(item.quantity)) || 1);
+    subtotal += unitPrice * qty;
+  }
+
+  return Number(subtotal.toFixed(2));
+}
+
 app.post('/api/orders', async (req, res) => {
   try {
     if (!req.body.customer || !isValidNZPhoneNumber(req.body.customer.phone)) {
@@ -1375,7 +1453,7 @@ app.post('/api/orders', async (req, res) => {
     const settings = await Settings.findOne({ key: 'main_settings' });
     const dynamicShipping = settings?.shipping?.flatRate ?? 19.00;
     const cappedShipping = isHamilton ? 0.00 : (Number(req.body.shipping) === 0 ? 0 : Math.min(Number(req.body.shipping || dynamicShipping), dynamicShipping));
-    
+
     const matchingServiceForActual = isHamilton ? 'Standard Delivery' : req.body.deliveryCompany;
     const actualShipping = await calculateActualShippingCost(
       req.body.customer?.address || '',
@@ -1385,8 +1463,8 @@ app.post('/api/orders', async (req, res) => {
       matchingServiceForActual
     );
 
-    const originalShipping = Number(req.body.shipping || 0);
-    const adjustedTotal = Number(req.body.total || 0) - originalShipping + cappedShipping;
+    const verifiedSubtotal = await computeVerifiedSubtotal(req.body.items);
+    const adjustedTotal = Number((verifiedSubtotal + cappedShipping).toFixed(2));
 
     const orderData = {
       id: req.body.id || `ORD-${Date.now().toString().slice(-6)}`,
@@ -1573,7 +1651,9 @@ function isValidNZPhoneNumber(phone) {
 
 app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const { customerDetails, items, finalTotal, shippingFee, deliveryCompany } = req.body;
+    // finalTotal/shippingFee are intentionally ignored — the amount actually charged is
+    // always recomputed server-side below (computeVerifiedSubtotal + cappedShipping).
+    const { customerDetails, items, deliveryCompany } = req.body;
 
     if (!customerDetails || !isValidNZPhoneNumber(customerDetails.phone)) {
       return res.status(400).json({ message: 'Invalid phone number. Only New Zealand phone numbers are valid.' });
@@ -1597,6 +1677,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
       matchingServiceForActual
     );
     
+    // Recompute the payable total server-side from real product prices — finalTotal from the
+    // client is never trusted for the amount actually charged (it can be freely edited client-side).
+    const verifiedSubtotal = await computeVerifiedSubtotal(items);
+    const verifiedTotal = Number((verifiedSubtotal + cappedShipping).toFixed(2));
+
     // 1. Create a Pending Order in the Database (Unpaid)
     const newOrder = {
       id: orderId,
@@ -1606,7 +1691,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         day: 'numeric'
       }),
       items: items || [],
-      total: Number(finalTotal),
+      total: verifiedTotal,
       shipping: cappedShipping,
       actualShipping: actualShipping,
       deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (rateInfo.isSouthIsland ? 'South Island Delivery' : 'North Island Delivery'),
@@ -1645,7 +1730,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
           name: `Lolly Shop Order - ${orderId}`,
           description: itemDescription.slice(0, 500) || 'Candy treats order from Lolly Shop',
         },
-        unit_amount: Math.round(Number(finalTotal) * 100), // convert to cents
+        unit_amount: Math.round(verifiedTotal * 100), // convert to cents — server-verified amount, not client-supplied
       },
       quantity: 1,
     }];
@@ -2005,10 +2090,12 @@ const sendDeliveryCompleteEmail = async (order) => {
   }
 };
 
-app.put('/api/orders/:id/status', async (req, res) => {
+// These endpoints modify orders that don't belong to the caller — they must require verified
+// staff authorization, not just shape the response differently for admins vs everyone else
+// (the previous code let anyone change any order's status/delivery/items unauthenticated).
+app.put('/api/orders/:id/status', checkPermission('orders'), async (req, res) => {
   try {
     const { status } = req.body;
-    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const updated = await Order.findOneAndUpdate({ id: req.params.id }, { status }, { new: true });
       if (!updated) return res.status(404).json({ message: 'Order not found' });
@@ -2017,12 +2104,12 @@ app.put('/api/orders/:id/status', async (req, res) => {
       } else if (status === 'Out for Delivery') {
         sendOrderDispatchedEmail(updated);
       }
-      res.json(isAdmin ? updated : sanitizeOrder(updated));
+      res.json(updated);
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
       if (index === -1) return res.status(404).json({ message: 'Order not found' });
-      
+
       orders[index].status = status;
       writeLocalData('orders.json', orders);
       if (status === 'Completed') {
@@ -2030,17 +2117,16 @@ app.put('/api/orders/:id/status', async (req, res) => {
       } else if (status === 'Out for Delivery') {
         sendOrderDispatchedEmail(orders[index]);
       }
-      res.json(isAdmin ? orders[index] : sanitizeOrder(orders[index]));
+      res.json(orders[index]);
     }
   } catch (error) {
     res.status(400).json({ message: 'Error updating order status', error: error.message });
   }
 });
 
-app.put('/api/orders/:id/delivery', async (req, res) => {
+app.put('/api/orders/:id/delivery', checkPermission('orders'), async (req, res) => {
   try {
     const { deliveryCompany, deliveryReference } = req.body;
-    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const oldOrder = await Order.findOne({ id: req.params.id });
       
@@ -2060,36 +2146,35 @@ app.put('/api/orders/:id/delivery', async (req, res) => {
         await updated.save();
         sendOrderDispatchedEmail(updated);
       }
-      res.json(isAdmin ? updated : sanitizeOrder(updated));
+      res.json(updated);
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
       if (index === -1) return res.status(404).json({ message: 'Order not found' });
-      
+
       const oldOrder = { ...orders[index] };
       orders[index].deliveryCompany = deliveryCompany || '';
       orders[index].deliveryReference = deliveryReference || '';
-      
+
       const wasEmptyBefore = !oldOrder.deliveryCompany || !oldOrder.deliveryReference;
       const isFilledNow = deliveryCompany && deliveryReference;
       const isChanged = oldOrder.deliveryCompany !== deliveryCompany || oldOrder.deliveryReference !== deliveryReference;
-      
+
       if (isFilledNow && (wasEmptyBefore || isChanged)) {
         orders[index].status = 'Out for Delivery';
         sendOrderDispatchedEmail(orders[index]);
       }
       writeLocalData('orders.json', orders);
-      res.json(isAdmin ? orders[index] : sanitizeOrder(orders[index]));
+      res.json(orders[index]);
     }
   } catch (error) {
     res.status(400).json({ message: 'Error updating order tracking details', error: error.message });
   }
 });
 
-app.put('/api/orders/:id/remove-item', async (req, res) => {
+app.put('/api/orders/:id/remove-item', checkPermission('orders'), async (req, res) => {
   try {
     const { itemId, selectedWeight } = req.body;
-    const isAdmin = req.headers['x-user-role'] === 'admin';
     if (sqlAvailable()) {
       const order = await Order.findOne({ id: req.params.id });
       if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -2107,7 +2192,7 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
         await order.save();
         sendOrderConfirmationEmail(order, true);
       }
-      res.json(isAdmin ? order : sanitizeOrder(order));
+      res.json(order);
     } else {
       const orders = readLocalData('orders.json', []);
       const index = orders.findIndex(o => o.id === req.params.id);
@@ -2126,7 +2211,7 @@ app.put('/api/orders/:id/remove-item', async (req, res) => {
         writeLocalData('orders.json', orders);
         sendOrderConfirmationEmail(order, true);
       }
-      res.json(isAdmin ? order : sanitizeOrder(order));
+      res.json(order);
     }
   } catch (error) {
     res.status(400).json({ message: 'Error removing item from order', error: error.message });
@@ -2792,9 +2877,11 @@ app.post('/api/auth/login', async (req, res) => {
       if (!user || !verifyPassword(pass, user.password)) {
         return res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
+      const authedUser = { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] };
       return res.json({
         success: true,
-        user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
+        user: authedUser,
+        token: generateAuthToken(authedUser)
       });
     }
 
@@ -2803,9 +2890,11 @@ app.post('/api/auth/login', async (req, res) => {
     if (!user || !verifyPassword(pass, user.password)) {
       return res.status(401).json({ success: false, message: 'Invalid username or password' });
     }
+    const authedUser = { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] };
     return res.json({
       success: true,
-      user: { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] }
+      user: authedUser,
+      token: generateAuthToken(authedUser)
     });
   } catch (error) {
     console.error('Login authentication error:', error);
@@ -2833,13 +2922,15 @@ app.post('/api/auth/google-login', async (req, res) => {
           name: displayName,
           email: cleanEmail,
           password: `google-auth-${Date.now()}`,
-          role: cleanEmail.includes('admin') ? 'admin' : 'user'
+          role: 'user'
         });
         await user.save();
       }
+      const authedUser = { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] };
       return res.json({
         success: true,
-        user: { name: user.name, email: user.email, role: user.role }
+        user: authedUser,
+        token: generateAuthToken(authedUser)
       });
     }
 
@@ -2851,14 +2942,16 @@ app.post('/api/auth/google-login', async (req, res) => {
         name: displayName,
         email: cleanEmail,
         password: `google-auth-${Date.now()}`,
-        role: cleanEmail.includes('admin') ? 'admin' : 'user'
+        role: 'user'
       };
       users.push(user);
       writeLocalData('users.json', users);
     }
+    const authedUser = { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] };
     return res.json({
       success: true,
-      user: { name: user.name, email: user.email, role: user.role }
+      user: authedUser,
+      token: generateAuthToken(authedUser)
     });
   } catch (error) {
     console.error('Google authentication backend error:', error);
@@ -2891,9 +2984,11 @@ app.post('/api/auth/register', async (req, res) => {
       });
       await user.save();
 
+      const authedUser = { name: user.name, email: user.email, role: user.role, permissions: user.permissions || [] };
       return res.json({
         success: true,
-        user: { name: user.name, email: user.email, role: user.role }
+        user: authedUser,
+        token: generateAuthToken(authedUser)
       });
     }
 
@@ -2913,16 +3008,60 @@ app.post('/api/auth/register', async (req, res) => {
     users.push(newUser);
     writeLocalData('users.json', users);
 
+    const authedUser = { name: newUser.name, email: newUser.email, role: newUser.role, permissions: [] };
     return res.json({
       success: true,
-      user: { name: newUser.name, email: newUser.email, role: newUser.role }
+      user: authedUser,
+      token: generateAuthToken(authedUser)
     });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Registration error', error: error.message });
   }
 });
 
-    // ── FORGOT PASSWORD API (Direct Email Verification) ──
+// Reset tokens are stored hashed (never in plaintext) so a database leak alone can't be used
+// to reset accounts; only the raw token emailed to the user can produce a matching hash.
+const hashResetToken = (rawToken) => crypto.createHash('sha256').update(rawToken).digest('hex');
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+const sendPasswordResetEmail = async (user, rawToken) => {
+  try {
+    const mailConfig = await createMailTransporter();
+    const { transporter, smtpUser } = mailConfig;
+    const siteUrl = process.env.SITE_URL || 'https://bestlollyshop.co.nz';
+    const resetLink = `${siteUrl}/reset-password?token=${encodeURIComponent(rawToken)}`;
+
+    await transporter.sendMail({
+      from: `"Lolly Shop Account Security" <${smtpUser}>`,
+      to: user.email,
+      subject: 'Lolly Shop - Reset Your Password',
+      text: `Hi ${user.name || ''}, click this link to reset your Lolly Shop password: ${resetLink} (expires in 1 hour). If you did not request this, you can safely ignore this email.`,
+      html: getResponsiveEmailTemplate({
+        previewText: 'Reset your Lolly Shop account password. This link expires in 1 hour.',
+        headerEmoji: '🔑',
+        headerTitle: 'Lolly Shop',
+        headerSubtitle: 'Password Reset Request',
+        headerGradient: 'linear-gradient(135deg, #e72c83 0%, #9013fe 100%)',
+        bodyHtml: `
+          <h2 style="color: #2d2645; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">Reset Your Password</h2>
+          <p style="color: #615a75; font-size: 15px; line-height: 1.6; margin-bottom: 24px;">
+            Hi <strong>${user.name || ''}</strong>, we received a request to reset your Lolly Shop account password. Click the button below to choose a new one. This link expires in 1 hour and can only be used once.
+          </p>
+          <div style="text-align: center; margin-bottom: 24px;">
+            <a href="${resetLink}" style="display: inline-block; background: linear-gradient(135deg, #e72c83 0%, #9013fe 100%); color: #ffffff; text-decoration: none; font-weight: 700; padding: 14px 32px; border-radius: 12px; font-size: 15px;">Reset Password</a>
+          </div>
+          <p style="color: #8c859d; font-size: 13px; line-height: 1.6;">If you didn't request this, you can safely ignore this email — your password will not be changed.</p>
+        `
+      })
+    });
+    return true;
+  } catch (error) {
+    console.error('Error sending password reset email:', error.message);
+    return false;
+  }
+};
+
+// ── FORGOT PASSWORD API — issues a single-use emailed reset token ──
 app.post('/api/auth/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
@@ -2931,31 +3070,42 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     }
 
     const emailNorm = email.trim().toLowerCase();
-    let userDetails = null;
+    const rawToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = hashResetToken(rawToken);
+    const expires = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+    let user = null;
 
     if (sqlAvailable()) {
-      const user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
+      user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
+      if (user) {
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordExpires = expires;
+        await user.save();
       }
-      userDetails = user;
     } else {
       const users = readLocalData('users.json', seededUsers);
-      const user = users.find(usr => usr.email && usr.email.toLowerCase() === emailNorm);
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
+      const index = users.findIndex(usr => usr.email && usr.email.toLowerCase() === emailNorm);
+      if (index !== -1) {
+        users[index].resetPasswordToken = hashedToken;
+        users[index].resetPasswordExpires = expires.toISOString();
+        writeLocalData('users.json', users);
+        user = users[index];
       }
-      userDetails = user;
     }
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No account found with this email address. Please check your email or create an account.' });
+    }
+
+    await sendPasswordResetEmail(user, rawToken);
 
     return res.json({
       success: true,
-      message: 'Account verified! Redirecting to reset password page...',
-      email: userDetails.email
+      message: 'A password reset link has been sent to your email address. Please check your inbox.'
     });
   } catch (error) {
     console.error('Forgot password error:', error);
-    res.status(500).json({ success: false, message: 'Error checking account email: ' + error.message });
+    res.status(500).json({ success: false, message: 'Error processing password reset request: ' + error.message });
   }
 });
 
@@ -2964,51 +3114,48 @@ app.get('/api/auth/verify-reset-token', async (req, res) => {
   try {
     const { token } = req.query;
     if (!token) {
-      return res.json({ success: true, message: 'Token check optional' });
+      return res.status(400).json({ success: false, message: 'This password reset link is invalid.' });
+    }
+    const hashedToken = hashResetToken(token);
+
+    let user = null;
+    if (sqlAvailable()) {
+      user = await User.findOne({ resetPasswordToken: hashedToken });
+    } else {
+      const users = readLocalData('users.json', seededUsers);
+      user = users.find(usr => usr.resetPasswordToken === hashedToken) || null;
     }
 
-    if (sqlAvailable()) {
-      const user = await User.findOne({ resetPasswordToken: token });
-      if (!user) {
-        return res.json({ success: true, message: 'Token fallback active' });
-      }
-      res.json({ success: true, message: 'Token is valid' });
-    } else {
-      res.json({ success: true, message: 'Token is valid' });
+    if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires).getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'This password reset link is invalid or has expired. Please request a new one.' });
     }
+
+    res.json({ success: true, message: 'Token is valid' });
   } catch (error) {
-    res.json({ success: true, message: 'Token check bypassed' });
+    res.status(400).json({ success: false, message: 'This password reset link is invalid or has expired.' });
   }
 });
 
-// ── RESET PASSWORD SAVE API ──
+// ── RESET PASSWORD SAVE API — requires a valid, unexpired, emailed token ──
 app.post('/api/auth/reset-password', async (req, res) => {
   try {
-    const { email, password, token } = req.body;
+    const { password, token } = req.body;
     if (!password) {
       return res.status(400).json({ success: false, message: 'New password is required' });
     }
-
     if (password.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
     }
-
-    if (!email && !token) {
-      return res.status(400).json({ success: false, message: 'Email address is required to reset password' });
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'A valid password reset link is required to reset your password.' });
     }
 
-    const emailNorm = email ? email.trim().toLowerCase() : null;
+    const hashedToken = hashResetToken(token);
 
     if (sqlAvailable()) {
-      let user = null;
-      if (emailNorm) {
-        user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
-      } else if (token) {
-        user = await User.findOne({ resetPasswordToken: token });
-      }
-
-      if (!user) {
-        return res.status(404).json({ success: false, message: 'No account found matching this email address.' });
+      const user = await User.findOne({ resetPasswordToken: hashedToken });
+      if (!user || !user.resetPasswordExpires || new Date(user.resetPasswordExpires).getTime() < Date.now()) {
+        return res.status(400).json({ success: false, message: 'This password reset link is invalid or has expired. Please request a new one.' });
       }
 
       user.password = hashPassword(password);
@@ -3019,15 +3166,9 @@ app.post('/api/auth/reset-password', async (req, res) => {
       return res.json({ success: true, message: 'Password updated successfully! You can now log in.' });
     } else {
       const users = readLocalData('users.json', seededUsers);
-      let index = -1;
-      if (emailNorm) {
-        index = users.findIndex(usr => usr.email && usr.email.toLowerCase() === emailNorm);
-      } else if (token) {
-        index = users.findIndex(usr => usr.resetPasswordToken === token);
-      }
-
-      if (index === -1) {
-        return res.status(404).json({ success: false, message: 'No account found matching this email address.' });
+      const index = users.findIndex(usr => usr.resetPasswordToken === hashedToken);
+      if (index === -1 || !users[index].resetPasswordExpires || new Date(users[index].resetPasswordExpires).getTime() < Date.now()) {
+        return res.status(400).json({ success: false, message: 'This password reset link is invalid or has expired. Please request a new one.' });
       }
 
       users[index].password = hashPassword(password);
@@ -3047,9 +3188,18 @@ app.post('/api/auth/reset-password', async (req, res) => {
 app.put('/api/auth/profile', async (req, res) => {
   try {
     const { email, name, phone, location, savedAddress } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({ message: 'Email is required to identify user' });
+    }
+
+    // A signed-in caller may only edit their own profile (or, for staff, any profile).
+    // Without this, anyone who knew/guessed an email could edit that account's details.
+    const callerEmail = (req.authUser?.email || '').toLowerCase();
+    const isSelf = callerEmail && callerEmail === String(email).toLowerCase();
+    const isAdmin = isStaffAuthorized(req, 'customers');
+    if (!isSelf && !isAdmin) {
+      return res.status(403).json({ success: false, message: 'You are not authorized to update this profile.' });
     }
 
     if (sqlAvailable()) {
@@ -3466,6 +3616,22 @@ app.get('/api/products-export', async (req, res) => {
 });
 
 // ── SETTINGS API ──
+// /api/settings is public (the storefront needs it to render), so the raw SMTP password
+// must never go out in that response — only authorized staff managing settings should see it.
+const sanitizeSettingsForResponse = (settingsObj, req) => {
+  // IMPORTANT: never mutate settingsObj in place — in local-JSON-fallback mode it's the same
+  // object reference held in the in-memory cache, so an in-place edit would permanently
+  // corrupt the real stored SMTP password for everyone, admins included.
+  const source = settingsObj && typeof settingsObj.toObject === 'function' ? settingsObj.toObject() : settingsObj;
+  if (!source) return source;
+  const isAdmin = isStaffAuthorized(req, 'settings');
+  if (isAdmin || !source.smtpConfig) return source;
+  return {
+    ...source,
+    smtpConfig: { ...source.smtpConfig, pass: source.smtpConfig.pass ? '••••••••' : '' }
+  };
+};
+
 app.get('/api/settings', async (req, res) => {
   try {
     if (sqlAvailable()) {
@@ -3497,10 +3663,10 @@ app.get('/api/settings', async (req, res) => {
         }
       }
 
-      res.json(settings);
+      res.json(sanitizeSettingsForResponse(settings, req));
     } else {
       const settings = readLocalData('settings.json', defaultSettings);
-      res.json(settings);
+      res.json(sanitizeSettingsForResponse(settings, req));
     }
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving settings', error: error.message });
@@ -3534,28 +3700,29 @@ const ROLE_PERMISSIONS = {
 };
 
 const isStaffAuthorized = (req, actionArea = 'general') => {
-  const userRole = req.headers['x-user-role'] || 'user';
+  // req.authUser is populated by the JWT verification middleware above — it can only be
+  // set if the caller presented a token this server actually signed on login, so it cannot
+  // be forged via request headers the way the old X-User-Role check could be.
+  const authUser = req.authUser;
+  if (!authUser) return false;
+  const userRole = authUser.role || 'user';
   if (userRole === 'admin' || userRole === 'manager') return true;
-  
+
   if (userRole === 'product_manager') {
     const productAreas = ['products', 'categories', 'brands', 'media', 'reviews', 'offers', 'add-product', 'dashboard', 'cms'];
     return productAreas.includes(actionArea);
   }
-  
+
   if (userRole === 'order_manager') {
     const orderAreas = ['orders', 'users', 'customers', 'contacts', 'shipping', 'reports', 'dashboard'];
     return orderAreas.includes(actionArea);
   }
-  
+
   if (userRole === 'custom') {
-    try {
-      const perms = JSON.parse(req.headers['x-user-permissions'] || '[]');
-      return perms.includes('*') || perms.includes(actionArea);
-    } catch (e) {
-      return false;
-    }
+    const perms = Array.isArray(authUser.permissions) ? authUser.permissions : [];
+    return perms.includes('*') || perms.includes(actionArea);
   }
-  
+
   return false;
 };
 
@@ -3571,9 +3738,11 @@ function checkPermission(actionArea) {
 
 const logAudit = async (req, action, details) => {
   try {
-    const userEmail = req.headers['x-user-email'] || 'admin@lollyshop.co.nz';
-    const userName = req.headers['x-user-name'] || 'Administrator';
-    const userRole = req.headers['x-user-role'] || 'admin';
+    // Prefer the verified token identity when present — headers are only a display fallback
+    // for this purely informational log, never used for authorization decisions.
+    const userEmail = req.authUser?.email || req.headers['x-user-email'] || 'admin@lollyshop.co.nz';
+    const userName = req.authUser?.name || req.headers['x-user-name'] || 'Administrator';
+    const userRole = req.authUser?.role || req.headers['x-user-role'] || 'admin';
     const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
     
     const logEntry = {

@@ -108,11 +108,7 @@ export const Login = () => {
 
     const result = await forgotPassword(email.trim());
     if (result.success) {
-      setSuccess(`Account verified! 🔑 Redirecting to Reset Password...`);
-      const targetEmail = result.email || email.trim();
-      setTimeout(() => {
-        navigate(`/reset-password?email=${encodeURIComponent(targetEmail)}`);
-      }, 1000);
+      setSuccess('📧 If an account exists for that email, a password reset link has been sent. Please check your inbox (and spam folder).');
     } else {
       setError(result.message || 'No account found with this email address.');
     }

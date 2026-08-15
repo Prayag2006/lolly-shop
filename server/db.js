@@ -68,9 +68,11 @@ const DB_PATH = path.join(DATA_DIR, 'lollyshop.db');
 let db;
 let sqlEnabled = false;
 
-const DEFAULT_MONGO_URI = 'mongodb+srv://Bestlolly:Bestlolly56@cluster0.0intrz7.mongodb.net/lollyshop?retryWrites=true&w=majority&appName=Cluster0';
-const activeMongoUri = process.env.MONGODB_URI || DEFAULT_MONGO_URI;
-let useMongo = true;
+const activeMongoUri = process.env.MONGODB_URI || '';
+if (!activeMongoUri) {
+  console.warn('⚠️  MONGODB_URI is not set — falling back to local SQLite/JSON storage. Set MONGODB_URI in your .env to use MongoDB Atlas.');
+}
+let useMongo = !!activeMongoUri;
 
 
 const createDataDir = () => {

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { fallbackProducts } from '../data/fallbackProducts';
+import { setAuthToken } from '../utils/apiClient';
 
 const StoreContext = createContext();
 
@@ -136,15 +137,12 @@ export const StoreProvider = ({ children }) => {
   const [mediaList, setMediaList] = useState([]);
 
   const [cart, setCart] = useState(() => {
-    const saved = localStorage.getItem('hc_cart');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed.length > 0 && parsed[0].price > 40) {
-        return [];
-      }
-      return parsed;
+    try {
+      const saved = localStorage.getItem('hc_cart');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
     }
-    return [];
   });
 
   const [theme, setTheme] = useState(() => {
@@ -987,6 +985,7 @@ export const StoreProvider = ({ children }) => {
         data = { success: false };
       }
       if (data && data.success && data.user) {
+        setAuthToken(data.token || null);
         setCurrentUser(data.user);
         return { success: true, user: data.user };
       }
@@ -997,15 +996,20 @@ export const StoreProvider = ({ children }) => {
       console.warn('Backend API login notice, executing seamless client login fallback:', error);
     }
 
-    // Seamless client-side admin & user login fallback
+    // Offline/demo fallback used only when the backend is unreachable. This never issues a
+    // session token, so it cannot grant real access to protected admin API endpoints — it just
+    // lets the local UI render as a demo session. Only exact, known demo passwords are accepted;
+    // do NOT widen this to "any password of length N" as that previously allowed anyone to log
+    // in as admin from the browser bundle.
     if (u === 'admin' || u === 'admin@lollyshop.co.nz') {
-      if (p === 'admin' || p === 'admin123' || p === 'lollyshop2026' || p === 'prayag56' || p.length >= 3) {
+      if (p === 'admin' || p === 'admin123' || p === 'lollyshop2026') {
         const adminUser = {
           name: 'Lolly Shop Admin',
           email: 'admin@lollyshop.co.nz',
           role: 'admin',
           permissions: ['dashboard', 'products', 'orders', 'customers', 'settings', 'promotions', 'analytics', 'content']
         };
+        setAuthToken(null);
         setCurrentUser(adminUser);
         return { success: true, user: adminUser };
       } else {
@@ -1015,15 +1019,9 @@ export const StoreProvider = ({ children }) => {
 
     if (u === 'user' || u === 'john@gmail.com') {
       const normalUser = { name: 'John Doe', email: 'john@gmail.com', role: 'user' };
+      setAuthToken(null);
       setCurrentUser(normalUser);
       return { success: true, user: normalUser };
-    }
-
-    const registeredUsers = users || [];
-    const found = registeredUsers.find(usr => String(usr.email || '').toLowerCase() === u || String(usr.name || '').toLowerCase() === u);
-    if (found) {
-      setCurrentUser(found);
-      return { success: true, user: found };
     }
 
     return { success: false, message: 'Invalid username or password. Please check your credentials.' };
@@ -1045,6 +1043,7 @@ export const StoreProvider = ({ children }) => {
       if (res.ok) {
         const data = await res.json();
         if (data.success) {
+          setAuthToken(data.token || null);
           setCurrentUser(data.user);
           return { success: true, user: data.user };
         }
@@ -1054,12 +1053,11 @@ export const StoreProvider = ({ children }) => {
       console.warn('Backend server connection un-reachable for Google Login, logging in locally:', error);
     }
 
-    // Fail-Safe Fallback: Authenticate user session instantly
-    const fallbackUser = {
-      name,
-      email,
-      role: email.toLowerCase().includes('admin') ? 'admin' : 'user'
-    };
+    // Fail-Safe Fallback: Authenticate user session instantly (offline demo only — never
+    // grants the 'admin' role locally; role is decided by the server, which is the only
+    // place account privileges are actually enforced).
+    const fallbackUser = { name, email, role: 'user' };
+    setAuthToken(null);
     setCurrentUser(fallbackUser);
     return { success: true, user: fallbackUser };
   };
@@ -1091,6 +1089,7 @@ export const StoreProvider = ({ children }) => {
 
   const logout = () => {
     setCurrentUser(null);
+    setAuthToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
@@ -1104,6 +1103,7 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       if (data.success) {
+        setAuthToken(data.token || null);
         setCurrentUser(data.user);
         return { success: true, user: data.user };
       }
@@ -1131,7 +1131,7 @@ export const StoreProvider = ({ children }) => {
 
   const verifyResetToken = async (token) => {
     try {
-      const res = await fetch(`/api/auth/verify-reset-token?token=${token}`);
+      const res = await fetch(`/api/auth/verify-reset-token?token=${encodeURIComponent(token)}`);
       const data = await res.json();
       return data;
     } catch (error) {
@@ -1140,12 +1140,14 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  const resetPassword = async (token, password, email) => {
+  // Password reset now requires the single-use token emailed to the account holder —
+  // the server no longer accepts a bare email address as proof of ownership.
+  const resetPassword = async (token, password) => {
     try {
       const res = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, password, email })
+        body: JSON.stringify({ token, password })
       });
       const data = await res.json();
       return data;
