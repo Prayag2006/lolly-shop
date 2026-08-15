@@ -136,6 +136,41 @@ app.use('/api', async (req, res, next) => {
   next();
 });
 
+// ── REFUSE UNSAFE WRITES WHEN THE DATABASE ISN'T DURABLY CONNECTED (serverless data-loss fix) ──
+// In serverless deployments, requests that can't reach MongoDB in time silently fall back to
+// writing into the local JSON files in server/data — but in that environment those files live
+// in /tmp, which is wiped on the next cold start. A write into that fallback looks like it
+// succeeded (200 OK) but quietly disappears later, which is what was happening to products
+// added while the connection was still (re)establishing (e.g. after the app had been idle).
+//
+// Reads are unaffected — GET requests still serve from the JSON fallback as a read-only cache
+// so browsing keeps working during a brief reconnect. Non-serverless deployments (local dev, or
+// a persistently-running server) are unaffected too, since their JSON fallback is a real file on
+// disk that survives restarts, not ephemeral storage.
+const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+// Endpoints that use POST/PUT/DELETE but don't durably write anything new (pure reads, external
+// API calls, or read-only report generation) are exempt — blocking them would break normal
+// operation (e.g. login) for no data-safety benefit.
+const WRITE_GUARD_EXEMPT_PATHS = new Set([
+  '/auth/login',
+  '/calculate-shipping',
+  '/chat',
+  '/database-backup',
+  '/newsletter/dispatch'
+]);
+app.use('/api', async (req, res, next) => {
+  if (!isServerless) return next();
+  if (!WRITE_METHODS.has(req.method)) return next();
+  if (WRITE_GUARD_EXEMPT_PATHS.has(req.path)) return next();
+
+  await ensureMongoConnected();
+  if (sqlAvailable() || mongoose.connection.readyState === 1) return next();
+
+  return res.status(503).json({
+    message: 'Our database is still (re)connecting. Nothing was saved — please try again in a few seconds.',
+    retryable: true
+  });
+});
 
 // ── CENTRALIZED SMTP TRANSPORTER HELPER ──
 const createMailTransporter = async () => {
