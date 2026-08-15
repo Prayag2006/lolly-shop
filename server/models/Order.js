@@ -15,10 +15,19 @@ const orderSchema = new mongoose.Schema({
   date: { type: String, required: true },
   items: [orderItemSchema],
   total: { type: Number, required: true },
+  subtotal: { type: Number },
+  couponCode: { type: String, default: '' },
+  discountAmount: { type: Number, default: 0 },
   shipping: { type: Number, default: 19 },
   actualShipping: { type: Number, default: 19 },
   freeShippingApplied: { type: Boolean, default: false },
   freeShippingReason: { type: String, default: '' },
+  // Without this in the schema, `order.paymentStatus = 'Paid'` would silently be dropped on
+  // save (mongoose strict mode ignores undeclared paths) — and confirm-payment's idempotency
+  // check ("if already Paid, return early") would never actually trigger, letting a repeated
+  // confirmation call (e.g. the customer refreshing the Stripe success page) deduct stock twice
+  // for the same payment.
+  paymentStatus: { type: String, enum: ['Unpaid', 'Paid'], default: 'Unpaid' },
   customer: {
     name: { type: String, required: true },
     email: { type: String, required: true },

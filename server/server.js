@@ -54,6 +54,13 @@ const hashPassword = (password) => {
   return `${salt}:${hash}`;
 };
 
+// Several lookups below build a case-insensitive exact-match regex from a user-supplied email
+// (Mongoose's { $regex } doesn't support a plain case-insensitive equality query directly).
+// Without escaping, a value like ".*" or a pathological alternation turns into an attacker-
+// controlled regex evaluated by MongoDB — at best matching unintended documents, at worst a
+// ReDoS via catastrophic backtracking. Escape every regex metacharacter before interpolating.
+const escapeRegex = (str) => String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const verifyPassword = (password, hashedPassword) => {
   if (!hashedPassword) return false;
   if (!hashedPassword.includes(':')) {
@@ -799,6 +806,11 @@ app.put('/api/products/:id/stock', async (req, res) => {
     await ensureMongoConnected();
     const { inStock } = req.body;
     if (sqlAvailable()) {
+      // Note: the id fallback queries below intentionally only match { id: req.params.id },
+      // not { _id: req.params.id } — Mongoose casts every branch of an $or against its schema
+      // type before running the query, so including a non-ObjectId string under `_id` throws
+      // a CastError and 400s the whole request before the `id` branch ever gets a chance to
+      // match. The ObjectId case is already handled by the explicit isValid() check above.
       // If toggled to In Stock but quantity is 0, give it a default stock of 10
       const updateData = { inStock };
       if (inStock) {
@@ -807,7 +819,7 @@ app.put('/api/products/:id/stock', async (req, res) => {
           prod = await Product.findById(req.params.id);
         }
         if (!prod) {
-          prod = await Product.findOne({ $or: [{ id: req.params.id }, { _id: req.params.id }] });
+          prod = await Product.findOne({ id: req.params.id });
         }
         if (prod && (!prod.quantity || prod.quantity <= 0)) {
           updateData.quantity = 10;
@@ -821,7 +833,7 @@ app.put('/api/products/:id/stock', async (req, res) => {
         updated = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true });
       }
       if (!updated) {
-        updated = await Product.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, updateData, { new: true });
+        updated = await Product.findOneAndUpdate({ id: req.params.id }, updateData, { new: true });
       }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
       const obj = updated.toObject ? updated.toObject({ virtuals: true }) : updated;
@@ -860,7 +872,7 @@ app.put('/api/products/:id/quantity', async (req, res) => {
         updated = await Product.findByIdAndUpdate(req.params.id, { quantity, inStock }, { new: true });
       }
       if (!updated) {
-        updated = await Product.findOneAndUpdate({ $or: [{ id: req.params.id }, { _id: req.params.id }] }, { quantity, inStock }, { new: true });
+        updated = await Product.findOneAndUpdate({ id: req.params.id }, { quantity, inStock }, { new: true });
       }
       if (!updated) return res.status(404).json({ message: 'Product not found' });
       const obj = updated.toObject ? updated.toObject({ virtuals: true }) : updated;
@@ -1438,6 +1450,48 @@ const sendOrderConfirmationEmail = async (order, isUpdate = false) => {
   }
 };
 
+// Resolves a coupon code to a discount amount, computed server-side against the *verified*
+// subtotal — never against a client-supplied number. Checkout.jsx used to compute the
+// discount itself and only send the already-discounted finalTotal, which the old client-trust
+// checkout code accepted outright (so anyone could fabricate a bogus discount) and the newer
+// price-verification code ignored outright (so real coupons silently stopped applying). This
+// keeps both properties: coupons still work, and only a code this endpoint actually recognizes
+// can reduce the total.
+async function resolveCouponDiscount(couponCode, verifiedSubtotal) {
+  const code = String(couponCode || '').trim().toUpperCase();
+  if (!code) return { discountAmount: 0, applied: null };
+
+  try {
+    const useDb = sqlAvailable() || mongoose.connection.readyState === 1;
+    const allOffers = useDb ? await Offer.find().catch(() => []) : readLocalData('offers.json', []);
+    const offer = (allOffers || []).find(o => o.active !== false && String(o.code || '').toUpperCase() === code) || null;
+
+    if (offer) {
+      if (offer.minPurchase && verifiedSubtotal < offer.minPurchase) {
+        return { discountAmount: 0, applied: null, error: `This coupon requires a minimum purchase of $${Number(offer.minPurchase).toFixed(2)}` };
+      }
+      const value = Number(offer.discountValue) || 0;
+      const discountAmount = offer.discountType === 'flat' ? value : (verifiedSubtotal * value) / 100;
+      return { discountAmount: Math.max(0, Math.min(discountAmount, verifiedSubtotal)), applied: offer.code };
+    }
+  } catch (e) {
+    // fall through to the demo-code patterns below
+  }
+
+  // Built-in demo/promo codes (kept server-side so they can't be forged with an arbitrary
+  // percentage the way trusting a client-computed total would allow).
+  if (code === 'SWEET10') {
+    return { discountAmount: (verifiedSubtotal * 10) / 100, applied: 'SWEET10' };
+  }
+  const sweetMatch = code.match(/^(?:SWEET|SAVE|DISCOUNT)(\d+)$/);
+  if (sweetMatch) {
+    const pct = Math.min(100, Math.max(0, parseInt(sweetMatch[1], 10)));
+    return { discountAmount: (verifiedSubtotal * pct) / 100, applied: code };
+  }
+
+  return { discountAmount: 0, applied: null, error: 'Invalid coupon code.' };
+}
+
 // Recomputes an order's item subtotal from the authoritative product prices in the database
 // rather than trusting whatever total the client sent. Without this, a request could be
 // edited client-side to pay any arbitrary (e.g. near-zero) amount for a cart of real value.
@@ -1478,6 +1532,42 @@ async function computeVerifiedSubtotal(items) {
   return Number(subtotal.toFixed(2));
 }
 
+// Deducts stock for each ordered item against the authoritative Mongo product record. The
+// previous inline version at each call site only matched products whose `id` happened to be a
+// raw 24-char Mongo ObjectId — but every product created through this app has an `id` like
+// "p-wine-gums" or "p-<timestamp>", so it silently deducted nothing for virtually any real
+// order. This also uses an atomic conditional $inc instead of read-then-write, so two orders
+// placed for the same product at the same moment can't both succeed off a stale read and push
+// stock negative (a classic overselling race condition).
+async function deductProductStock(items) {
+  for (const item of (items || [])) {
+    if (!item?.id) continue;
+    const qty = Math.max(1, Math.floor(Number(item.quantity)) || 1);
+    const query = (typeof item.id === 'string' && mongoose.Types.ObjectId.isValid(item.id))
+      ? { _id: item.id }
+      : { id: item.id };
+
+    const updated = await Product.findOneAndUpdate(
+      { ...query, quantity: { $gte: qty } },
+      { $inc: { quantity: -qty } },
+      { new: true }
+    ).catch(() => null);
+
+    if (updated) {
+      if (updated.inStock !== (updated.quantity > 0)) {
+        await Product.updateOne(query, { inStock: updated.quantity > 0 }).catch(() => null);
+      }
+    } else {
+      // Not enough stock left to fully satisfy this line (or product not found) — clamp to
+      // zero rather than leaving a stale positive quantity that overstates availability.
+      const prod = await Product.findOne(query).catch(() => null);
+      if (prod && prod.quantity > 0) {
+        await Product.updateOne(query, { quantity: 0, inStock: false }).catch(() => null);
+      }
+    }
+  }
+}
+
 app.post('/api/orders', async (req, res) => {
   try {
     if (!req.body.customer || !isValidNZPhoneNumber(req.body.customer.phone)) {
@@ -1499,7 +1589,12 @@ app.post('/api/orders', async (req, res) => {
     );
 
     const verifiedSubtotal = await computeVerifiedSubtotal(req.body.items);
-    const adjustedTotal = Number((verifiedSubtotal + cappedShipping).toFixed(2));
+    const couponResult = await resolveCouponDiscount(req.body.couponCode, verifiedSubtotal);
+    if (req.body.couponCode && couponResult.error) {
+      return res.status(400).json({ message: couponResult.error });
+    }
+    const discountedSubtotal = Math.max(0, verifiedSubtotal - couponResult.discountAmount);
+    const adjustedTotal = Number((discountedSubtotal + cappedShipping).toFixed(2));
 
     const orderData = {
       id: req.body.id || `ORD-${Date.now().toString().slice(-6)}`,
@@ -1512,6 +1607,9 @@ app.post('/api/orders', async (req, res) => {
       shipping: cappedShipping,
       actualShipping,
       total: adjustedTotal,
+      subtotal: verifiedSubtotal,
+      couponCode: couponResult.applied || '',
+      discountAmount: couponResult.discountAmount,
       deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (req.body.deliveryCompany || 'Standard Delivery'),
       freeShippingApplied: isHamilton,
       freeShippingReason: isHamilton ? 'Hamilton Free Delivery' : ''
@@ -1529,17 +1627,7 @@ app.post('/api/orders', async (req, res) => {
       const dbOrder = new Order(orderData);
       await dbOrder.save();
 
-      // Deduct product stock quantities in MongoDB
-      for (const item of req.body.items || []) {
-        if (typeof item.id === 'string' && item.id.match(/^[0-9a-fA-F]{24}$/)) {
-          const prod = await Product.findById(item.id).catch(() => null);
-          if (prod) {
-            prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
-            prod.inStock = prod.quantity > 0;
-            await prod.save().catch(() => null);
-          }
-        }
-      }
+      await deductProductStock(req.body.items);
 
       sendOrderConfirmationEmail(dbOrder);
       
@@ -1688,7 +1776,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
   try {
     // finalTotal/shippingFee are intentionally ignored — the amount actually charged is
     // always recomputed server-side below (computeVerifiedSubtotal + cappedShipping).
-    const { customerDetails, items, deliveryCompany } = req.body;
+    const { customerDetails, items, deliveryCompany, couponCode } = req.body;
 
     if (!customerDetails || !isValidNZPhoneNumber(customerDetails.phone)) {
       return res.status(400).json({ message: 'Invalid phone number. Only New Zealand phone numbers are valid.' });
@@ -1715,7 +1803,15 @@ app.post('/api/create-checkout-session', async (req, res) => {
     // Recompute the payable total server-side from real product prices — finalTotal from the
     // client is never trusted for the amount actually charged (it can be freely edited client-side).
     const verifiedSubtotal = await computeVerifiedSubtotal(items);
-    const verifiedTotal = Number((verifiedSubtotal + cappedShipping).toFixed(2));
+
+    // Coupons are resolved and applied server-side too — the discount amount is derived from
+    // the verified subtotal above, never from a client-computed number.
+    const couponResult = await resolveCouponDiscount(couponCode, verifiedSubtotal);
+    if (couponCode && couponResult.error) {
+      return res.status(400).json({ message: couponResult.error });
+    }
+    const discountedSubtotal = Math.max(0, verifiedSubtotal - couponResult.discountAmount);
+    const verifiedTotal = Number((discountedSubtotal + cappedShipping).toFixed(2));
 
     // 1. Create a Pending Order in the Database (Unpaid)
     const newOrder = {
@@ -1727,6 +1823,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
       }),
       items: items || [],
       total: verifiedTotal,
+      subtotal: verifiedSubtotal,
+      couponCode: couponResult.applied || '',
+      discountAmount: couponResult.discountAmount,
       shipping: cappedShipping,
       actualShipping: actualShipping,
       deliveryCompany: isHamilton ? 'Free Delivery - Hamilton' : (rateInfo.isSouthIsland ? 'South Island Delivery' : 'North Island Delivery'),
@@ -1822,17 +1921,7 @@ app.put('/api/orders/:id/confirm-payment', async (req, res) => {
         await order.save();
         updatedOrder = order;
 
-        // Deduct product stock quantities
-        for (const item of order.items || []) {
-          if (typeof item.id === 'string' && item.id.match(/^[0-9a-fA-F]{24}$/)) {
-            const prod = await Product.findById(item.id).catch(() => null);
-            if (prod) {
-              prod.quantity = Math.max(0, (prod.quantity !== undefined ? prod.quantity : 50) - item.quantity);
-              prod.inStock = prod.quantity > 0;
-              await prod.save().catch(() => null);
-            }
-          }
-        }
+        await deductProductStock(order.items);
       } else {
         const orders = readLocalData('orders.json', []);
         const index = orders.findIndex(o => o.id === orderId);
@@ -2908,7 +2997,7 @@ app.post('/api/auth/login', async (req, res) => {
     if (u === 'user') queryEmail = 'john@gmail.com';
 
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      const user = await User.findOne({ email: { $regex: new RegExp(`^${queryEmail}$`, 'i') } });
+      const user = await User.findOne({ email: { $regex: new RegExp(`^${escapeRegex(queryEmail)}$`, 'i') } });
       if (!user || !verifyPassword(pass, user.password)) {
         return res.status(401).json({ success: false, message: 'Invalid username or password' });
       }
@@ -3006,7 +3095,7 @@ app.post('/api/auth/register', async (req, res) => {
     const emailNorm = String(email).trim().toLowerCase();
 
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
+      const existingUser = await User.findOne({ email: { $regex: new RegExp(`^${escapeRegex(emailNorm)}$`, 'i') } });
       if (existingUser) {
         return res.status(400).json({ success: false, message: 'User with this email already exists' });
       }
@@ -3111,7 +3200,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     let user = null;
 
     if (sqlAvailable()) {
-      user = await User.findOne({ email: { $regex: new RegExp(`^${emailNorm}$`, 'i') } });
+      user = await User.findOne({ email: { $regex: new RegExp(`^${escapeRegex(emailNorm)}$`, 'i') } });
       if (user) {
         user.resetPasswordToken = hashedToken;
         user.resetPasswordExpires = expires;
@@ -3244,9 +3333,9 @@ app.put('/api/auth/profile', async (req, res) => {
     }
 
     if (sqlAvailable()) {
-      const user = await User.findOne({ email: { $regex: new RegExp(`^${email}$`, 'i') } });
+      const user = await User.findOne({ email: { $regex: new RegExp(`^${escapeRegex(email)}$`, 'i') } });
       if (!user) return res.status(404).json({ message: 'User not found' });
-      
+
       if (name) user.name = name;
       if (phone !== undefined) user.phone = phone;
       if (location !== undefined) user.location = location;

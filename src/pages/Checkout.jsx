@@ -366,7 +366,10 @@ export const Checkout = () => {
           items: cart,
           finalTotal: finalTotal,
           shippingFee: activeShippingFee,
-          deliveryCompany: selectedOption ? selectedOption.name : (isHamilton ? 'Free Delivery — Hamilton' : 'Standard Courier Delivery')
+          deliveryCompany: selectedOption ? selectedOption.name : (isHamilton ? 'Free Delivery — Hamilton' : 'Standard Courier Delivery'),
+          // The server independently validates this code and computes the discount itself —
+          // finalTotal above is display-only and never trusted for the amount actually charged.
+          couponCode: (discountPercent > 0 || flatDiscount > 0) ? couponCode : ''
         })
       });
       const data = await response.json();
