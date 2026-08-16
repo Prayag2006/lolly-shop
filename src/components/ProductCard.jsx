@@ -55,7 +55,6 @@ export const ProductCard = ({ product, onProductClick }) => {
 
       {/* Info Content */}
       <div className="card-content">
-        <span className="card-category">{product.category}</span>
         <h3 className="card-title">{product.name}</h3>
         
         {/* Rating */}

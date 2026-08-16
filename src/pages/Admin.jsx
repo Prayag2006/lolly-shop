@@ -691,7 +691,7 @@ export const Admin = () => {
 
   const allowedStaffRoles = ['admin', 'manager', 'product_manager', 'order_manager', 'custom'];
   if (!currentUser || !allowedStaffRoles.includes(currentUser.role)) {
-    return <Navigate to="/login?redirect=admin" replace />;
+    return <Navigate to="/login?redirect=/admin" replace />;
   }
 
   const handleSettingsSubmit = async (e) => {
