@@ -227,6 +227,15 @@
   background: rgba(231, 44, 131, 0.15);
 }
 
+/* ===== MOBILE SEARCH BAR ===== */
+.mobile-search-bar {
+  display: none;
+}
+
+.mobile-search-bar .search-bar input {
+  background: var(--color-white);
+}
+
 /* ===== MOBILE FILTER BAR ===== */
 .mobile-filter-bar {
   display: none;
@@ -546,6 +555,12 @@
 
   .shop-banner p {
     font-size: 14px;
+  }
+
+  /* Show mobile search bar */
+  .mobile-search-bar {
+    display: block;
+    margin-bottom: 14px;
   }
 
   /* Show mobile filter bar */

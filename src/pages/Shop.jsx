@@ -300,14 +300,18 @@ export const Shop = ({ onProductClick }) => {
   const filteredProducts = products
     .filter((product) => {
       const lowerQuery = searchQuery.toLowerCase();
-      const matchesSearch =
-        product.name.toLowerCase().includes(lowerQuery) ||
-        (product.description || '').toLowerCase().includes(lowerQuery) ||
-        (product.collections || []).some((tag) => tag.toLowerCase().includes(lowerQuery));
-      
+
       const productCategoryList = typeof product.category === 'string'
         ? product.category.split(',').map(c => c.trim()).filter(Boolean)
         : (Array.isArray(product.category) ? product.category : [product.category].filter(Boolean));
+
+      const matchesSearch =
+        !lowerQuery ||
+        product.name.toLowerCase().includes(lowerQuery) ||
+        (product.description || '').toLowerCase().includes(lowerQuery) ||
+        (product.collections || []).some((tag) => tag.toLowerCase().includes(lowerQuery)) ||
+        (product.mainCategory || '').toLowerCase().includes(lowerQuery) ||
+        productCategoryList.some((cat) => cat.toLowerCase().includes(lowerQuery));
 
       const matchesCategory =
         selectedCategory === 'All' || 
@@ -523,6 +527,19 @@ export const Shop = ({ onProductClick }) => {
           onClick={() => setShowMobileFilters(false)}
           aria-hidden="true"
         />
+
+        {/* Mobile Search Bar */}
+        <div className="mobile-search-bar">
+          <div className="search-bar">
+            <Search size={18} />
+            <input
+              type="text"
+              placeholder="Search lollies by name, category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
 
         {/* Mobile Filter Toggle */}
         <div className="mobile-filter-bar">
