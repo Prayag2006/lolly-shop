@@ -203,20 +203,26 @@ export const Shop = ({ onProductClick }) => {
     }
   };
 
+  // Admin-configured cap for the price filter (0/unset = auto, derived from product prices)
+  const adminMaxPriceCap = Number(settings?.shopFilters?.maxPrice) || 0;
+
   // Dynamically calculate the highest product price
   const dynamicMaxPrice = React.useMemo(() => {
+    if (adminMaxPriceCap > 0) return adminMaxPriceCap;
     if (!products || products.length === 0) return 30;
     const maxVal = Math.max(...products.map(p => p.price || 0));
     return Math.max(30, Math.ceil(maxVal / 10) * 10);
-  }, [products]);
+  }, [products, adminMaxPriceCap]);
 
-  // Set initial maxPrice dynamically once products load
+  // Set initial maxPrice dynamically once products (or the admin cap) load
   useEffect(() => {
-    if (products && products.length > 0) {
+    if (adminMaxPriceCap > 0) {
+      setMaxPrice(adminMaxPriceCap);
+    } else if (products && products.length > 0) {
       const maxVal = Math.max(...products.map(p => p.price || 0));
       setMaxPrice(Math.max(30, Math.ceil(maxVal / 10) * 10));
     }
-  }, [products]);
+  }, [products, adminMaxPriceCap]);
 
   // Sync state with URL parameters
   useEffect(() => {

@@ -130,6 +130,9 @@ export const StoreProvider = ({ children }) => {
       description: "Get 15% off on all sour gummies this weekend. Use code at checkout!",
       code: "SOUR15",
       image: ""
+    },
+    shopFilters: {
+      maxPrice: 200
     }
   });
   
