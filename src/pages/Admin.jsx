@@ -101,6 +101,8 @@ const CourierTrackingCell = ({ ord, updateOrderDelivery }) => {
   );
 };
 
+const isOtherSubcategory = (sub) => typeof sub === 'string' && sub.trim().toUpperCase() === 'OTHER';
+
 const parseSubcategories = (catVal) => {
   if (Array.isArray(catVal)) return catVal.filter(Boolean);
   if (typeof catVal === 'string' && catVal.trim()) {
@@ -185,6 +187,7 @@ export const Admin = () => {
   ]);
   const [productImageSource, setProductImageSource] = useState('url'); // 'url' | 'upload'
   const [extraImageUrlInput, setExtraImageUrlInput] = useState('');
+  const [otherSubcategoryText, setOtherSubcategoryText] = useState('');
   const [formSuccess, setFormSuccess] = useState('');
   const [newCategoryInput, setNewCategoryInput] = useState('');
   const [categoryMessage, setCategoryMessage] = useState('');
@@ -398,6 +401,7 @@ export const Admin = () => {
 
   const resetProductForm = () => {
     setEditingProductId(null);
+    setOtherSubcategoryText('');
     setWeightOptions([
       { weight: '100g', price: '' },
       { weight: '250g', price: '' },
@@ -767,6 +771,7 @@ export const Admin = () => {
   const handleEditProduct = (product) => {
     setEditingProductId(product.id);
     setActiveTab('add-product');
+    setOtherSubcategoryText('');
     const options = product.weightPrices && Object.keys(product.weightPrices).length > 0
       ? Object.entries(product.weightPrices).map(([weight, price]) => ({
           weight,
@@ -839,9 +844,16 @@ export const Admin = () => {
       ? newProduct.image
       : (payloadImages[0] || 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600');
 
-    const selectedSubs = parseSubcategories(newProduct.category);
-    const categoryVal = selectedSubs.length > 0 
-      ? selectedSubs.join(', ') 
+    if (parseSubcategories(newProduct.category).some(isOtherSubcategory) && !otherSubcategoryText.trim()) {
+      alert('Please specify the "Other" subcategory in the text box, or uncheck it.');
+      return;
+    }
+
+    const selectedSubs = parseSubcategories(newProduct.category).map(sub =>
+      isOtherSubcategory(sub) && otherSubcategoryText.trim() ? otherSubcategoryText.trim() : sub
+    );
+    const categoryVal = selectedSubs.length > 0
+      ? selectedSubs.join(', ')
       : (newProduct.mainCategory || 'General');
 
     const payload = {
@@ -2412,6 +2424,7 @@ export const Admin = () => {
                                             updated = [...currentSubs, sub];
                                           } else {
                                             updated = currentSubs.filter(item => item !== sub);
+                                            if (isOtherSubcategory(sub)) setOtherSubcategoryText('');
                                           }
                                           setNewProduct(prev => ({ ...prev, category: updated }));
                                         }}
@@ -2421,6 +2434,30 @@ export const Admin = () => {
                                     </label>
                                   );
                                 })}
+                              </div>
+                            )}
+
+                            {/* "Other" Subcategory Free-Text Input */}
+                            {parseSubcategories(newProduct.category).some(isOtherSubcategory) && (
+                              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dotted var(--color-border)' }}>
+                                <label style={{ fontSize: '11px', fontWeight: '700', color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', display: 'block', marginBottom: '4px' }}>
+                                  Please specify "Other" subcategory *
+                                </label>
+                                <input
+                                  type="text"
+                                  value={otherSubcategoryText}
+                                  onChange={(e) => setOtherSubcategoryText(e.target.value)}
+                                  placeholder="e.g. Chocolate Lollies"
+                                  style={{
+                                    width: '100%',
+                                    padding: '6px 10px',
+                                    fontSize: '12px',
+                                    border: '1.5px solid var(--color-primary)',
+                                    borderRadius: '6px',
+                                    outline: 'none',
+                                    boxSizing: 'border-box'
+                                  }}
+                                />
                               </div>
                             )}
                           </div>
