@@ -8,6 +8,12 @@ const settingsSchema = new mongoose.Schema({
     flatRate: { type: Number, default: 19.00 }
   },
 
+  // Shop Page Filters
+  shopFilters: {
+    // Cap for the "Max Price" slider on the Shop page. 0 = auto (derived from product prices).
+    maxPrice: { type: Number, default: 200 }
+  },
+
   // Announcement Marquees
   marquees: {
     type: [{

@@ -4012,6 +4012,34 @@ export const Admin = () => {
                   </button>
                 </div>
 
+                {/* Shop Page Price Filter */}
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '28px' }}>
+                  <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--color-primary)', margin: '0 0 14px' }}>
+                    🎚️ Shop Page Price Filter
+                  </h3>
+                  <div className="form-group" style={{ maxWidth: '300px' }}>
+                    <label style={{ fontWeight: '700', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Max Price Slider Cap ($NZD)</label>
+                    <div style={{ position: 'relative', marginTop: '6px' }}>
+                      <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', fontWeight: '600', color: '#615a75' }}>$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Auto (based on products)"
+                        style={{ paddingLeft: '28px' }}
+                        value={tempSettings?.shopFilters?.maxPrice || ''}
+                        onChange={(e) => setTempSettings(prev => ({
+                          ...prev,
+                          shopFilters: { ...prev.shopFilters, maxPrice: e.target.value === '' ? 0 : Number(e.target.value) }
+                        }))}
+                      />
+                    </div>
+                    <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginTop: '8px', lineHeight: '1.4' }}>
+                      Sets the top end of the "Max Price" slider on the Shop page (currently shown as $30 by default). Leave blank or 0 to auto-calculate from your highest-priced product instead.
+                    </p>
+                  </div>
+                </div>
+
                 {settingsSuccess && (
                   <div style={{ padding: '12px 16px', borderRadius: '12px', background: '#ecfdf5', color: '#166534', border: '1px solid #d1fae5', fontSize: '14px', fontWeight: '700' }}>
                     {settingsSuccess}
