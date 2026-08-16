@@ -27,11 +27,12 @@ export const Login = () => {
   const [success, setSuccess] = useState('');
   
   const redirectTarget = searchParams.get('redirect') || '/';
+  const isStaffAccountRole = (role) => ['admin', 'manager', 'product_manager', 'order_manager', 'custom'].includes(role);
 
   // If already logged in, redirect immediately
   useEffect(() => {
     if (currentUser) {
-      navigate(currentUser.role === 'admin' && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
+      navigate(isStaffAccountRole(currentUser.role) && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
     }
   }, [currentUser, navigate, redirectTarget]);
 
@@ -56,7 +57,7 @@ export const Login = () => {
     const result = await login(username, password);
     if (result.success) {
       setSuccess(`Welcome back, ${result.user.name}! 👑`);
-      const isStaffRole = ['admin', 'manager', 'product_manager', 'order_manager'].includes(result.user.role);
+      const isStaffRole = isStaffAccountRole(result.user.role);
       setTimeout(() => {
         navigate(isStaffRole && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
       }, 1000);
@@ -137,7 +138,7 @@ export const Login = () => {
           setIsGoogleSubmitting(false);
           if (loginRes.success) {
             setSuccess(`Google authentication verified! Welcome back, ${loginRes.user.name}! 👑`);
-            const isStaffRole = ['admin', 'manager', 'product_manager', 'order_manager'].includes(loginRes.user.role);
+            const isStaffRole = isStaffAccountRole(loginRes.user.role);
             setTimeout(() => {
               navigate(isStaffRole && redirectTarget === '/' ? '/admin' : redirectTarget, { replace: true });
             }, 1000);

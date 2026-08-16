@@ -4,6 +4,9 @@ import { ShoppingBag, Menu, X, User, ChevronDown } from 'lucide-react';
 import { useStore } from '../context/StoreContext';
 import './Navbar.css';
 
+const STAFF_ROLES = ['admin', 'manager', 'product_manager', 'order_manager', 'custom'];
+const isStaffRole = (role) => STAFF_ROLES.includes(role);
+
 const megaMenuData = [
   {
     title: 'NZ Lollies',
@@ -183,7 +186,7 @@ export const Navbar = ({ onCartOpen }) => {
                     <strong>{currentUser.name || currentUser.email || 'User'}</strong>
                     <small>{currentUser.email}</small>
                   </div>
-                  {currentUser.role === 'admin' ? (
+                  {isStaffRole(currentUser.role) ? (
                     <Link to="/admin" className="dropdown-item" onClick={() => setActiveDropdown(null)}>👑 Admin Dashboard</Link>
                   ) : (
                     <Link to="/profile" className="dropdown-item" onClick={() => setActiveDropdown(null)}>👤 My Profile</Link>
@@ -334,7 +337,7 @@ export const Navbar = ({ onCartOpen }) => {
               </div>
             )}
           </div>
-          {currentUser && currentUser.role === 'admin' && (
+          {currentUser && isStaffRole(currentUser.role) && (
             <Link
               to="/admin"
               className="mobile-nav-link admin-link-mobile"
@@ -343,7 +346,7 @@ export const Navbar = ({ onCartOpen }) => {
               <User size={18} style={{ marginRight: '8px' }} /> Admin Dashboard
             </Link>
           )}
-          {currentUser && currentUser.role !== 'admin' && (
+          {currentUser && !isStaffRole(currentUser.role) && (
             <Link
               to="/profile"
               className="mobile-nav-link profile-link-mobile"
