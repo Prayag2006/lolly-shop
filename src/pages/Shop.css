@@ -83,10 +83,41 @@
 }
 
 /* ===== HORIZONTAL COLLECTIONS BAR ===== */
+.shop-collections-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
 .shop-collections-bar {
   display: block;
   margin-bottom: 16px;
   width: 100%;
+  min-width: 0;
+}
+
+/* Scroll arrows: desktop-only affordance, mobile relies on touch swipe */
+.category-scroll-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.category-scroll-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  box-shadow: 0 4px 12px rgba(231, 44, 131, 0.15);
 }
 
 .parent-categories-row {
@@ -225,6 +256,15 @@
 }
 [data-theme='dark'] .subcategory-pill.active {
   background: rgba(231, 44, 131, 0.15);
+}
+
+/* ===== MOBILE SEARCH BAR ===== */
+.mobile-search-bar {
+  display: none;
+}
+
+.mobile-search-bar .search-bar input {
+  background: var(--color-white);
 }
 
 /* ===== MOBILE FILTER BAR ===== */
@@ -548,6 +588,12 @@
     font-size: 14px;
   }
 
+  /* Show mobile search bar */
+  .mobile-search-bar {
+    display: block;
+    margin-bottom: 14px;
+  }
+
   /* Show mobile filter bar */
   .mobile-filter-bar {
     display: flex;
@@ -589,6 +635,11 @@
   /* Show backdrop when drawer is open */
   .sidebar-backdrop {
     display: block;
+  }
+
+  /* Touch devices scroll the category row by swiping; arrows just clutter it */
+  .category-scroll-btn {
+    display: none;
   }
 
   .shop-grid {
