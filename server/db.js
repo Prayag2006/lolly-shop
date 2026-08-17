@@ -38,14 +38,22 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const isServerless = !!(process.env.VERCEL || process.env.NETLIFY || process.env.AWS_LAMBDA || process.env.LAMBDA);
 
+// Point DNS resolution at Google's public resolvers everywhere, including serverless.
+// Vercel/AWS Lambda's default resolver was intermittently failing to reach one of the Atlas
+// replica set members (ac-sod29dn-shard-00-01.0intrz7.mongodb.net / 159.41.242.249), causing
+// "connection N to 159.41.242.249:27017 timed out" on /api/products in production even though
+// the same URI connects instantly from outside Lambda once Google DNS is forced. This used to
+// be skipped in serverless on the assumption Lambda disallows dns.setServers(); it doesn't —
+// it's just wrapped in try/catch below so it degrades safely if some runtime does block it.
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+  console.log('Failed to set custom DNS servers:', e.message);
+}
+
 const require = createRequire(import.meta.url);
 let Database;
 if (!isServerless) {
-  try {
-    dns.setServers(['8.8.8.8', '8.8.4.4']);
-  } catch (e) {
-    console.log('Failed to set DNS servers locally:', e.message);
-  }
   try {
     // Use a variable for the module name so bundlers (esbuild/Vercel) cannot statically
     // analyze and attempt to bundle this native addon — it must be excluded from the bundle.
