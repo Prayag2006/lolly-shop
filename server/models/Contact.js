@@ -9,6 +9,8 @@ const contactSchema = new mongoose.Schema({
   submittedAt: { type: String, default: () => new Date().toLocaleString('en-NZ') }
 }, { timestamps: true });
 
+contactSchema.index({ createdAt: -1 });
+
 contactSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });

@@ -8,6 +8,8 @@ const testimonialSchema = new mongoose.Schema({
   avatar: { type: String, default: '' }
 }, { timestamps: true });
 
+testimonialSchema.index({ createdAt: -1 });
+
 // Convert _id to id virtual on JSON serialization
 testimonialSchema.virtual('id').get(function() {
   return this._id.toHexString();

@@ -10,6 +10,8 @@ const auditLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now }
 });
 
+auditLogSchema.index({ timestamp: -1 });
+
 auditLogSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });

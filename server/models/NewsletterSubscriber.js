@@ -5,6 +5,8 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   active: { type: Boolean, default: true }
 }, { timestamps: true });
 
+newsletterSubscriberSchema.index({ createdAt: -1 });
+
 newsletterSubscriberSchema.virtual('id').get(function() {
   return this._id.toHexString();
 });

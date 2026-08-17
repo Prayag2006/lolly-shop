@@ -67,6 +67,8 @@ const productSchema = new mongoose.Schema({
   reviews: { type: [reviewSchema], default: [] }
 }, { timestamps: true, suppressReservedKeysWarning: true });
 
+productSchema.index({ createdAt: -1 });
+
 productSchema.set('toJSON', {
   transform: (doc, ret) => {
     ret.id = ret.id || (ret._id ? ret._id.toString() : '');

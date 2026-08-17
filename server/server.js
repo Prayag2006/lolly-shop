@@ -625,11 +625,11 @@ app.get('/api/products', async (req, res) => {
   }
 
   try {
-    const isConnected = await ensureMongoConnected(2000);
+    const isConnected = await ensureMongoConnected(3000);
     if (isConnected || mongoose.connection.readyState === 1) {
       try {
-        const queryPromise = Product.find().sort({ createdAt: -1 }).maxTimeMS(2000).lean();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 2000));
+        const queryPromise = Product.find().sort({ createdAt: -1 }).maxTimeMS(4500).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 4500));
         let products = await Promise.race([queryPromise, timeoutPromise]);
         
         if (products && products.length > 0) {
@@ -1157,7 +1157,15 @@ app.get('/api/orders', async (req, res) => {
     const isAdmin = isStaffAuthorized(req, 'orders');
     let dbOrders = [];
     if (sqlAvailable()) {
-      dbOrders = await Order.find().sort({ createdAt: -1 });
+      try {
+        const query = Order.find().sort({ createdAt: -1 });
+        if (typeof query.maxTimeMS === 'function') query.maxTimeMS(3000);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000));
+        dbOrders = await Promise.race([query, timeoutPromise]);
+      } catch (qErr) {
+        console.warn('MongoDB orders query timed out, using local data only:', qErr.message);
+        dbOrders = [];
+      }
     }
     const localOrders = readLocalData('orders.json', []);
     
@@ -2425,18 +2433,30 @@ app.put('/api/orders/:id/feedback', async (req, res) => {
 
 // ── TESTIMONIALS API ──
 app.get('/api/testimonials', async (req, res) => {
+  const cached = getApiCache('testimonials_all');
+  if (cached) {
+    return res.json(cached);
+  }
   try {
     if (sqlAvailable()) {
-      const count = await Testimonial.countDocuments();
-      if (count === 0) {
-        await Testimonial.insertMany(defaultTestimonials);
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000));
+        const count = await Promise.race([Testimonial.countDocuments(), timeoutPromise]);
+        if (count === 0) {
+          await Testimonial.insertMany(defaultTestimonials);
+        }
+        const query = Testimonial.find().sort({ createdAt: -1 });
+        if (typeof query.maxTimeMS === 'function') query.maxTimeMS(3000);
+        const testimonials = await Promise.race([query, new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000))]);
+        setApiCache('testimonials_all', testimonials);
+        return res.json(testimonials);
+      } catch (qErr) {
+        console.warn('MongoDB testimonials query timed out, serving local fallback:', qErr.message);
       }
-      const testimonials = await Testimonial.find().sort({ createdAt: -1 });
-      res.json(testimonials);
-    } else {
-      const testimonials = readLocalData('testimonials.json', seededTestimonials);
-      res.json(testimonials);
     }
+    const testimonials = readLocalData('testimonials.json', seededTestimonials);
+    setApiCache('testimonials_all', testimonials);
+    res.json(testimonials);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching testimonials', error: error.message });
   }
@@ -2968,14 +2988,26 @@ Escalate politely to: BestLollyShop@gmail.com
 
 // ── CONTACT SUBMISSIONS API ──
 app.get('/api/contacts', async (req, res) => {
+  const cached = getApiCache('contacts_all');
+  if (cached) {
+    return res.json(cached);
+  }
   try {
     if (sqlAvailable()) {
-      const submissions = await Contact.find().sort({ createdAt: -1 });
-      res.json(submissions);
-    } else {
-      const submissions = readLocalData('contacts.json', []);
-      res.json(submissions);
+      try {
+        const query = Contact.find().sort({ createdAt: -1 });
+        if (typeof query.maxTimeMS === 'function') query.maxTimeMS(3000);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000));
+        const submissions = await Promise.race([query, timeoutPromise]);
+        setApiCache('contacts_all', submissions);
+        return res.json(submissions);
+      } catch (qErr) {
+        console.warn('MongoDB contacts query timed out, serving local fallback:', qErr.message);
+      }
     }
+    const submissions = readLocalData('contacts.json', []);
+    setApiCache('contacts_all', submissions);
+    res.json(submissions);
   } catch (error) {
     res.status(500).json({ message: 'Error fetching contact requests', error: error.message });
   }
@@ -3975,14 +4007,26 @@ const logAudit = async (req, action, details) => {
 
 // ── AUDIT LOGS ENDPOINT ──
 app.get('/api/audit-logs', async (req, res) => {
+  const cached = getApiCache('audit_logs_all');
+  if (cached) {
+    return res.json(cached);
+  }
   try {
     if (sqlAvailable()) {
-      const logs = await AuditLog.find().sort({ timestamp: -1 }).limit(100);
-      res.json(logs);
-    } else {
-      const logs = readLocalData('auditlogs.json', []);
-      res.json(logs.slice(0, 100));
+      try {
+        const query = AuditLog.find().sort({ timestamp: -1 }).limit(100);
+        if (typeof query.maxTimeMS === 'function') query.maxTimeMS(3000);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000));
+        const logs = await Promise.race([query, timeoutPromise]);
+        setApiCache('audit_logs_all', logs);
+        return res.json(logs);
+      } catch (qErr) {
+        console.warn('MongoDB audit-logs query timed out, serving local fallback:', qErr.message);
+      }
     }
+    const logs = readLocalData('auditlogs.json', []).slice(0, 100);
+    setApiCache('audit_logs_all', logs);
+    res.json(logs);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving audit logs', error: error.message });
   }
@@ -4280,13 +4324,26 @@ app.delete('/api/redirects/:id', checkPermission('seo'), async (req, res) => {
 
 // ── NEWSLETTER SUBSCRIBERS ENDPOINTS ──
 app.get('/api/newsletter-subscribers', async (req, res) => {
+  const cached = getApiCache('newsletter_subs_all');
+  if (cached) {
+    return res.json(cached);
+  }
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(2000);
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      const subs = await NewsletterSubscriber.find().sort({ createdAt: -1 });
-      return res.json(subs);
+      try {
+        const query = NewsletterSubscriber.find().sort({ createdAt: -1 });
+        if (typeof query.maxTimeMS === 'function') query.maxTimeMS(3000);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 3000));
+        const subs = await Promise.race([query, timeoutPromise]);
+        setApiCache('newsletter_subs_all', subs);
+        return res.json(subs);
+      } catch (qErr) {
+        console.warn('MongoDB newsletter-subscribers query timed out, serving local fallback:', qErr.message);
+      }
     }
     const subs = readLocalData('subscribers.json', []);
+    setApiCache('newsletter_subs_all', subs);
     res.json(subs);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving subscribers', error: error.message });
