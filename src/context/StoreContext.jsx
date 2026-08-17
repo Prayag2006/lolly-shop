@@ -186,20 +186,39 @@ export const StoreProvider = ({ children }) => {
     fetchCustomPages();
     fetchStaffUsers();
     fetchSystemStatus();
+  }, []);
 
-    // Comprehensive real-time polling for admin & store updates (every 3s)
-    const pollInterval = setInterval(() => {
-      fetchOrders();
-      fetchContacts();
-      fetchNewsletterSubscribers();
+  // Real-time polling. StoreProvider wraps the whole app, so every visitor's browser tab —
+  // not just admins in the dashboard — used to poll 7 endpoints (including admin-only
+  // orders/contacts/newsletter-subscribers/audit-logs/system-status) every 3 seconds. Under
+  // real traffic that hammered the MongoDB Atlas connection pool ("connection N to ... timed
+  // out"), which is why /api/products was intermittently slow or failing to load for
+  // shoppers. Admin-only data now only polls while a staff/admin account is logged in, and the
+  // public storefront refresh (products/testimonials) runs on a much longer interval.
+  useEffect(() => {
+    const isStaff = !!currentUser?.role && currentUser.role !== 'user';
+
+    const publicPoll = setInterval(() => {
       fetchProducts();
       fetchTestimonials();
-      fetchAuditLogs();
-      fetchSystemStatus();
-    }, 3000);
+    }, 15000);
 
-    return () => clearInterval(pollInterval);
-  }, []);
+    let adminPoll;
+    if (isStaff) {
+      adminPoll = setInterval(() => {
+        fetchOrders();
+        fetchContacts();
+        fetchNewsletterSubscribers();
+        fetchAuditLogs();
+        fetchSystemStatus();
+      }, 3000);
+    }
+
+    return () => {
+      clearInterval(publicPoll);
+      if (adminPoll) clearInterval(adminPoll);
+    };
+  }, [currentUser]);
 
   useEffect(() => {
     if (currentUser) {
