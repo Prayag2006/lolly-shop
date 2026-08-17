@@ -9,6 +9,7 @@ import jwt from 'jsonwebtoken';
 import mongoose from 'mongoose';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
+import { put } from '@vercel/blob';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -79,6 +80,58 @@ export const invalidateApiCache = (prefix = '') => {
 };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+
+// ── Vercel Blob image storage ──
+// Product image/video fields used to be saved as raw base64 data URIs directly inside the
+// MongoDB document. That bloated some product docs to 300KB+ each (vs ~1KB for a normal doc
+// with just an image URL), which is why /api/products queries were taking 40+ seconds — the
+// driver was transferring megabytes of embedded image bytes on every single list request.
+// These helpers intercept base64 data URIs on product create/update and upload them to Vercel
+// Blob instead, storing only the resulting URL in Mongo, so documents stay tiny.
+const isBase64DataUri = (v) => typeof v === 'string' && /^data:[a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+;base64,/.test(v);
+
+const uploadBase64ToBlob = async (dataUri, pathHint) => {
+  const match = dataUri.match(/^data:([a-zA-Z0-9.+-]+\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+  if (!match) return dataUri;
+  const [, contentType, base64] = match;
+  const ext = (contentType.split('/')[1] || 'bin').split('+')[0];
+  const buffer = Buffer.from(base64, 'base64');
+  const filename = `products/${pathHint}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const blob = await put(filename, buffer, { access: 'public', contentType, addRandomSuffix: false });
+  return blob.url;
+};
+
+// Mutates a product request body in place, replacing any base64 data URI fields
+// (image, images[], images360[], video, weightImages{}) with uploaded Blob URLs.
+const convertProductImagesToBlob = async (body, idHint = `p-${Date.now()}`) => {
+  if (!body || typeof body !== 'object') return body;
+
+  if (isBase64DataUri(body.image)) {
+    body.image = await uploadBase64ToBlob(body.image, `${idHint}-main`);
+  }
+  if (Array.isArray(body.images)) {
+    body.images = await Promise.all(body.images.map((img, i) =>
+      isBase64DataUri(img) ? uploadBase64ToBlob(img, `${idHint}-img${i}`) : img
+    ));
+  }
+  if (Array.isArray(body.images360)) {
+    body.images360 = await Promise.all(body.images360.map((img, i) =>
+      isBase64DataUri(img) ? uploadBase64ToBlob(img, `${idHint}-360-${i}`) : img
+    ));
+  }
+  if (isBase64DataUri(body.video)) {
+    body.video = await uploadBase64ToBlob(body.video, `${idHint}-video`);
+  }
+  if (body.weightImages && typeof body.weightImages === 'object') {
+    const entries = Object.entries(body.weightImages);
+    const converted = await Promise.all(entries.map(async ([k, v]) => [
+      k,
+      isBase64DataUri(v) ? await uploadBase64ToBlob(v, `${idHint}-w-${k}`) : v
+    ]));
+    body.weightImages = Object.fromEntries(converted);
+  }
+  return body;
+};
 
 // Secure cryptographic password hashing helpers (PBKDF2)
 const hashPassword = (password) => {
@@ -719,6 +772,12 @@ app.post('/api/products', async (req, res) => {
       req.body.id = `p-${Date.now()}`;
     }
 
+    try {
+      await convertProductImagesToBlob(req.body, req.body.id);
+    } catch (blobErr) {
+      console.error('Failed to upload product images to Blob, saving as-is:', blobErr.message);
+    }
+
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
       const newProduct = new Product(req.body);
       await newProduct.save();
@@ -755,6 +814,12 @@ app.put('/api/products/:id', async (req, res) => {
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
       req.body.inStock = req.body.quantity > 0;
+    }
+
+    try {
+      await convertProductImagesToBlob(req.body, targetId);
+    } catch (blobErr) {
+      console.error('Failed to upload product images to Blob, saving as-is:', blobErr.message);
     }
 
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
@@ -3819,6 +3884,86 @@ app.post('/api/products/import', async (req, res) => {
     }
   } catch (error) {
     res.status(400).json({ message: 'Error importing products', error: error.message });
+  }
+});
+
+// ── ONE-TIME MIGRATION: move existing base64-embedded product images to Vercel Blob ──
+// Guarded by a random secret (MIGRATION_SECRET env var) rather than admin auth, since this
+// is meant to be run once via direct API call, not exposed in the admin UI. Safe to remove
+// once the migration has been run against production.
+app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
+  try {
+    const secret = process.env.MIGRATION_SECRET;
+    if (!secret || req.headers['x-migration-secret'] !== secret) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    await ensureMongoConnected(5000);
+    if (!(sqlAvailable() || mongoose.connection.readyState === 1)) {
+      return res.status(503).json({ message: 'Database not available' });
+    }
+
+    const products = await Product.find().lean();
+    let migrated = 0;
+    let skipped = 0;
+    const results = [];
+
+    for (const p of products) {
+      const idHint = String(p.id || p._id);
+      const setFields = {};
+      let beforeBytes = 0;
+      let changed = false;
+
+      if (isBase64DataUri(p.image)) {
+        beforeBytes += p.image.length;
+        setFields.image = await uploadBase64ToBlob(p.image, `${idHint}-main`);
+        changed = true;
+      }
+      if (Array.isArray(p.images) && p.images.some(isBase64DataUri)) {
+        beforeBytes += p.images.reduce((sum, i) => sum + (isBase64DataUri(i) ? i.length : 0), 0);
+        setFields.images = await Promise.all(p.images.map((img, i) =>
+          isBase64DataUri(img) ? uploadBase64ToBlob(img, `${idHint}-img${i}`) : img
+        ));
+        changed = true;
+      }
+      if (Array.isArray(p.images360) && p.images360.some(isBase64DataUri)) {
+        beforeBytes += p.images360.reduce((sum, i) => sum + (isBase64DataUri(i) ? i.length : 0), 0);
+        setFields.images360 = await Promise.all(p.images360.map((img, i) =>
+          isBase64DataUri(img) ? uploadBase64ToBlob(img, `${idHint}-360-${i}`) : img
+        ));
+        changed = true;
+      }
+      if (isBase64DataUri(p.video)) {
+        beforeBytes += p.video.length;
+        setFields.video = await uploadBase64ToBlob(p.video, `${idHint}-video`);
+        changed = true;
+      }
+      if (p.weightImages && typeof p.weightImages === 'object') {
+        const entries = Object.entries(p.weightImages);
+        if (entries.some(([, v]) => isBase64DataUri(v))) {
+          beforeBytes += entries.reduce((sum, [, v]) => sum + (isBase64DataUri(v) ? String(v).length : 0), 0);
+          const converted = await Promise.all(entries.map(async ([k, v]) => [
+            k,
+            isBase64DataUri(v) ? await uploadBase64ToBlob(v, `${idHint}-w-${k}`) : v
+          ]));
+          setFields.weightImages = Object.fromEntries(converted);
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        await Product.findByIdAndUpdate(p._id, { $set: setFields });
+        migrated++;
+        results.push({ name: p.name, beforeBytes });
+      } else {
+        skipped++;
+      }
+    }
+
+    invalidateApiCache('product');
+    res.json({ success: true, migrated, skipped, results });
+  } catch (error) {
+    console.error('Image migration error:', error);
+    res.status(500).json({ message: 'Migration failed', error: error.message });
   }
 });
 
