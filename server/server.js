@@ -3902,7 +3902,26 @@ app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
       return res.status(503).json({ message: 'Database not available' });
     }
 
-    const products = await Product.find().lean();
+    // One Atlas replica member is intermittently unreachable from Vercel's network (see the
+    // Google-DNS comment near the top of this file). Retry the initial fetch a few times so a
+    // pooled connection that happens to land on the bad node doesn't fail the whole migration.
+    let products = null;
+    let lastErr = null;
+    for (let attempt = 1; attempt <= 5 && !products; attempt++) {
+      try {
+        const queryPromise = Product.find().maxTimeMS(8000).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('query timeout')), 8000));
+        products = await Promise.race([queryPromise, timeoutPromise]);
+      } catch (err) {
+        lastErr = err;
+        console.warn(`Migration fetch attempt ${attempt} failed:`, err.message);
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+    if (!products) {
+      return res.status(503).json({ message: 'Could not fetch products after 5 attempts', error: lastErr?.message });
+    }
+
     let migrated = 0;
     let skipped = 0;
     const results = [];
@@ -3951,9 +3970,25 @@ app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
       }
 
       if (changed) {
-        await Product.findByIdAndUpdate(p._id, { $set: setFields });
-        migrated++;
-        results.push({ name: p.name, beforeBytes });
+        let saved = false;
+        for (let attempt = 1; attempt <= 3 && !saved; attempt++) {
+          try {
+            const savePromise = Product.findByIdAndUpdate(p._id, { $set: setFields }).maxTimeMS(8000);
+            const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('save timeout')), 8000));
+            await Promise.race([savePromise, timeoutPromise]);
+            saved = true;
+          } catch (err) {
+            console.warn(`Save attempt ${attempt} failed for ${p.name}:`, err.message);
+            await new Promise((r) => setTimeout(r, 1000));
+          }
+        }
+        if (saved) {
+          migrated++;
+          results.push({ name: p.name, beforeBytes });
+        } else {
+          skipped++;
+          results.push({ name: p.name, error: 'save failed after retries' });
+        }
       } else {
         skipped++;
       }
