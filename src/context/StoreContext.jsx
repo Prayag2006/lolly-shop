@@ -39,7 +39,31 @@ export const StoreProvider = ({ children }) => {
     } catch (e) {}
   };
 
+  const sanitizeProducts = (data) => {
+    if (!Array.isArray(data)) return [];
+    return data.map((p, idx) => {
+      const validId = String(p.id || p._id || `p-item-${idx}`);
+      return {
+        ...p,
+        id: validId,
+        _id: p._id || validId
+      };
+    });
+  };
+
   const [products, setProducts] = useState(() => {
+    // Instant Hydration: load from cached products in localStorage for 0.0s instant display
+    try {
+      const cached = localStorage.getItem('lollyshop_cached_products');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        const list = Array.isArray(parsed) ? parsed : (parsed.data || []);
+        if (Array.isArray(list) && list.length > 0) {
+          return sanitizeProducts(list);
+        }
+      }
+    } catch (e) {}
+
     const customStorage = getCustomProductsFromStorage();
     const customMap = new Map(customStorage.map(p => [String(p.id || p._id), p]));
     const initial = fallbackProducts.map((p, i) => {
@@ -52,91 +76,129 @@ export const StoreProvider = ({ children }) => {
   });
   const [orders, setOrders] = useState([]);
   const [contactSubmissions, setContactSubmissions] = useState([]);
-  const [brands, setBrands] = useState(defaultInitialBrands);
-
-  const [testimonials, setTestimonials] = useState([]);
-  const [settings, setSettings] = useState({
-    marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
-    heroSliderSettings: {
-      autoPlay: true,
-      interval: 5000,
-      animationEffect: 'slide',
-      showProgressBar: true,
-      pauseOnHover: true
-    },
-    heroSlides: [
-      {
-        id: 'slide-1',
-        enabled: true,
-        heading: 'BEST LOLLY SHOP | NZ ONLINE STORE',
-        subheading: "Buy Lollies Online NZ — New Zealand's Favourite Candy Store",
-        description: "Indulge in our exquisite selection of bulk lollies, retro kiwi sweets, party pick & mix, and luxury chocolates. Freshly packed in Auckland and delivered straight to your door across NZ.",
-        badgeText: '100% NZ Owned & Operated',
-        buttonText: 'Explore Sweet Shop',
-        buttonLink: '/shop',
-        secondaryButtonText: 'Best Sellers',
-        secondaryButtonLink: '#favourites',
-        heroImage: '/hero_candy_display.png',
-        themeGlow: 'glow-pink',
-        floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
-        infoCards: [
-          { icon: '🍭', title: '100% Pure Joy', subtitle: 'Natural Fruit Extracts' },
-          { icon: '🚚', title: 'Free Delivery', subtitle: 'Hamilton, New Zealand' }
-        ]
-      },
-      {
-        id: 'slide-2',
-        enabled: true,
-        heading: 'EXPLORE OUR SOUR | & CHEWY CANDIES',
-        subheading: 'Mind-Blowing Sour Straps, Rings & Gummy Bears',
-        description: 'Tantalize your taste buds with our extreme sour collection! From fizzy rainbow belts to mouth-watering sour peach rings, find your ultimate sour rush here.',
-        badgeText: '🔥 Trending & Viral Sweets',
-        buttonText: 'Shop Sour Sweets',
-        buttonLink: '/shop?category=Sour%20Lollies',
-        secondaryButtonText: 'View Collections',
-        secondaryButtonLink: '/shop',
-        heroImage: '/hero_sour_candy.jpg',
-        themeGlow: 'glow-gold',
-        floatingIcons: ['🍋', '⚡', '🍬', '💥', '🍭'],
-        infoCards: [
-          { icon: '⚡', title: 'Fizzy & Sour', subtitle: 'Real Fruit Flavours' },
-          { icon: '🎉', title: 'Party Bundles', subtitle: 'Bulk Savings Available' }
-        ]
-      },
-      {
-        id: 'slide-3',
-        enabled: true,
-        heading: 'HAND-CRAFTED LUXURY | CHOCOLATES & TRUFFLES',
-        subheading: 'Pure Decadence Delivered Nationwide Across NZ',
-        description: 'Rich Belgian dark chocolate, creamy milk truffles, and artisanal hazelnut pralines. Perfect for luxury gifting or an indulgent everyday sweet treat.',
-        badgeText: '🍫 Premium Gourmet Selection',
-        buttonText: 'Explore Chocolates',
-        buttonLink: '/shop?category=Chocolates',
-        secondaryButtonText: 'Gift Boxes',
-        secondaryButtonLink: '/shop',
-        heroImage: '/hero_chocolate_display.jpg',
-        themeGlow: 'glow-purple',
-        floatingIcons: ['🍫', '✨', '🍩', '👑', '🍓'],
-        infoCards: [
-          { icon: '👑', title: 'Artisanal Quality', subtitle: 'Master Confectioners' },
-          { icon: '🎁', title: 'Luxury Packaging', subtitle: 'Ready for Gifting' }
-        ]
+  const [brands, setBrands] = useState(() => {
+    try {
+      const cached = localStorage.getItem('lollyshop_cached_brands');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-    ],
-    popupOffer: {
-      enabled: true,
-      delay: 3000,
-      title: "🎉 Special Sweet Deal!",
-      description: "Get 15% off on all sour gummies this weekend. Use code at checkout!",
-      code: "SOUR15",
-      image: ""
-    },
-    shopFilters: {
-      maxPrice: 200
-    }
+    } catch (e) {}
+    return defaultInitialBrands;
+  });
+
+  const [testimonials, setTestimonials] = useState(() => {
+    try {
+      const cached = localStorage.getItem('lollyshop_cached_testimonials');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
+
+  const [settings, setSettings] = useState(() => {
+    const defaultVal = {
+      marqueeText: "🍬 NZ'S FAVOURITE LOLLY SHOP — DELIVERING SWEET TREATS NATIONWIDE!",
+      heroSliderSettings: {
+        autoPlay: true,
+        interval: 5000,
+        animationEffect: 'slide',
+        showProgressBar: true,
+        pauseOnHover: true
+      },
+      heroSlides: [
+        {
+          id: 'slide-1',
+          enabled: true,
+          heading: 'BEST LOLLY SHOP | NZ ONLINE STORE',
+          subheading: "Buy Lollies Online NZ — New Zealand's Favourite Candy Store",
+          description: "Indulge in our exquisite selection of bulk lollies, retro kiwi sweets, party pick & mix, and luxury chocolates. Freshly packed in Auckland and delivered straight to your door across NZ.",
+          badgeText: '100% NZ Owned & Operated',
+          buttonText: 'Explore Sweet Shop',
+          buttonLink: '/shop',
+          secondaryButtonText: 'Best Sellers',
+          secondaryButtonLink: '#favourites',
+          heroImage: '/hero_candy_display.png',
+          themeGlow: 'glow-pink',
+          floatingIcons: ['🍬', '🍭', '🍫', '🍑', '🍒'],
+          infoCards: [
+            { icon: '🍭', title: '100% Pure Joy', subtitle: 'Natural Fruit Extracts' },
+            { icon: '🚚', title: 'Free Delivery', subtitle: 'Hamilton, New Zealand' }
+          ]
+        },
+        {
+          id: 'slide-2',
+          enabled: true,
+          heading: 'EXPLORE OUR SOUR | & CHEWY CANDIES',
+          subheading: 'Mind-Blowing Sour Straps, Rings & Gummy Bears',
+          description: 'Tantalize your taste buds with our extreme sour collection! From fizzy rainbow belts to mouth-watering sour peach rings, find your ultimate sour rush here.',
+          badgeText: '🔥 Trending & Viral Sweets',
+          buttonText: 'Shop Sour Sweets',
+          buttonLink: '/shop?category=Sour%20Lollies',
+          secondaryButtonText: 'View Collections',
+          secondaryButtonLink: '/shop',
+          heroImage: '/hero_sour_candy.jpg',
+          themeGlow: 'glow-gold',
+          floatingIcons: ['🍋', '⚡', '🍬', '💥', '🍭'],
+          infoCards: [
+            { icon: '⚡', title: 'Fizzy & Sour', subtitle: 'Real Fruit Flavours' },
+            { icon: '🎉', title: 'Party Bundles', subtitle: 'Bulk Savings Available' }
+          ]
+        },
+        {
+          id: 'slide-3',
+          enabled: true,
+          heading: 'HAND-CRAFTED LUXURY | CHOCOLATES & TRUFFLES',
+          subheading: 'Pure Decadence Delivered Nationwide Across NZ',
+          description: 'Rich Belgian dark chocolate, creamy milk truffles, and artisanal hazelnut pralines. Perfect for luxury gifting or an indulgent everyday sweet treat.',
+          badgeText: '🍫 Premium Gourmet Selection',
+          buttonText: 'Explore Chocolates',
+          buttonLink: '/shop?category=Chocolates',
+          secondaryButtonText: 'Gift Boxes',
+          secondaryButtonLink: '/shop',
+          heroImage: '/hero_chocolate_display.jpg',
+          themeGlow: 'glow-purple',
+          floatingIcons: ['🍫', '✨', '🍩', '👑', '🍓'],
+          infoCards: [
+            { icon: '👑', title: 'Artisanal Quality', subtitle: 'Master Confectioners' },
+            { icon: '🎁', title: 'Luxury Packaging', subtitle: 'Ready for Gifting' }
+          ]
+        }
+      ],
+      popupOffer: {
+        enabled: true,
+        delay: 3000,
+        title: "🎉 Special Sweet Deal!",
+        description: "Get 15% off on all sour gummies this weekend. Use code at checkout!",
+        code: "SOUR15",
+        image: ""
+      },
+      shopFilters: {
+        maxPrice: 200
+      }
+    };
+    try {
+      const cached = localStorage.getItem('lollyshop_cached_settings');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') return { ...defaultVal, ...parsed };
+      }
+    } catch (e) {}
+    return defaultVal;
   });
   
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    try {
+      const cached = localStorage.getItem('lollyshop_cached_categories');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return [];
+  });
   const [mediaList, setMediaList] = useState([]);
 
   const [cart, setCart] = useState(() => {
@@ -168,40 +230,40 @@ export const StoreProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  // Fetch all DB details on Mount
+  // Fast Mount Fetch: Only request public storefront data for shoppers to guarantee ultra-fast initial load
   useEffect(() => {
     fetchProducts();
-    fetchBrands();
-    fetchOrders();
-    fetchContacts();
-    fetchTestimonials();
-    fetchSettings();
     fetchCategories();
-    fetchMediaList();
+    fetchBrands();
+    fetchSettings();
+    fetchTestimonials();
     fetchOffers();
-    fetchAuditLogs();
-    fetchBlogPosts();
-    fetchRedirects();
-    fetchNewsletterSubscribers();
     fetchCustomPages();
-    fetchStaffUsers();
-    fetchSystemStatus();
-  }, []);
+    fetchBlogPosts();
 
-  // Real-time polling. StoreProvider wraps the whole app, so every visitor's browser tab —
-  // not just admins in the dashboard — used to poll 7 endpoints (including admin-only
-  // orders/contacts/newsletter-subscribers/audit-logs/system-status) every 3 seconds. Under
-  // real traffic that hammered the MongoDB Atlas connection pool ("connection N to ... timed
-  // out"), which is why /api/products was intermittently slow or failing to load for
-  // shoppers. Admin-only data now only polls while a staff/admin account is logged in, and the
-  // public storefront refresh (products/testimonials) runs on a much longer interval.
+    // Admin/Staff only endpoints - fetched exclusively when staff/admin is authenticated
+    if (currentUser?.role && currentUser.role !== 'user') {
+      fetchOrders();
+      fetchContacts();
+      fetchAuditLogs();
+      fetchNewsletterSubscribers();
+      fetchStaffUsers();
+      fetchSystemStatus();
+      fetchMediaList();
+      fetchRedirects();
+    }
+  }, [currentUser?.role]);
+
+  // Real-time polling:
+  // Shoppers refresh storefront periodically without hammering the database.
+  // Admin-only polling runs strictly when staff/admin is logged in.
   useEffect(() => {
     const isStaff = !!currentUser?.role && currentUser.role !== 'user';
 
     const publicPoll = setInterval(() => {
       fetchProducts();
       fetchTestimonials();
-    }, 15000);
+    }, 30000);
 
     let adminPoll;
     if (isStaff) {
@@ -211,20 +273,14 @@ export const StoreProvider = ({ children }) => {
         fetchNewsletterSubscribers();
         fetchAuditLogs();
         fetchSystemStatus();
-      }, 3000);
+      }, 5000);
     }
 
     return () => {
       clearInterval(publicPoll);
       if (adminPoll) clearInterval(adminPoll);
     };
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      fetchStaffUsers();
-    }
-  }, [currentUser]);
+  }, [currentUser?.role]);
 
   const fetchSettings = async () => {
     try {
@@ -232,6 +288,9 @@ export const StoreProvider = ({ children }) => {
       const data = await res.json();
       if (res.ok && data) {
         setSettings(data);
+        try {
+          localStorage.setItem('lollyshop_cached_settings', JSON.stringify(data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error fetching settings from server:', err);
@@ -251,23 +310,14 @@ export const StoreProvider = ({ children }) => {
       });
       const data = await res.json();
       setSettings(data);
+      try {
+        localStorage.setItem('lollyshop_cached_settings', JSON.stringify(data));
+      } catch (e) {}
       return data;
     } catch (err) {
       console.error('Error updating settings:', err);
       throw err;
     }
-  };
-
-  const sanitizeProducts = (data) => {
-    if (!Array.isArray(data)) return [];
-    return data.map((p, idx) => {
-      const validId = String(p.id || p._id || `p-item-${idx}`);
-      return {
-        ...p,
-        id: validId,
-        _id: p._id || validId
-      };
-    });
   };
 
   const fetchProducts = async () => {
@@ -283,6 +333,11 @@ export const StoreProvider = ({ children }) => {
             }
             return sanitized;
           });
+
+          // Save fresh products to localStorage for instant 0.0s future rehydration
+          try {
+            localStorage.setItem('lollyshop_cached_products', JSON.stringify(sanitized));
+          } catch (e) {}
 
           // Sync localStorage and remove any items that were deleted from server
           try {
@@ -317,6 +372,9 @@ export const StoreProvider = ({ children }) => {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
         setBrands(data);
+        try {
+          localStorage.setItem('lollyshop_cached_brands', JSON.stringify(data));
+        } catch (e) {}
       } else {
         setBrands(defaultInitialBrands);
       }
@@ -361,6 +419,9 @@ export const StoreProvider = ({ children }) => {
       const data = await res.json();
       if (Array.isArray(data)) {
         setTestimonials(data);
+        try {
+          localStorage.setItem('lollyshop_cached_testimonials', JSON.stringify(data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error fetching testimonials from server:', err);
@@ -822,6 +883,9 @@ export const StoreProvider = ({ children }) => {
       const data = await res.json();
       if (Array.isArray(data)) {
         setCategories(data);
+        try {
+          localStorage.setItem('lollyshop_cached_categories', JSON.stringify(data));
+        } catch (e) {}
       }
     } catch (err) {
       console.error('Error fetching categories:', err);

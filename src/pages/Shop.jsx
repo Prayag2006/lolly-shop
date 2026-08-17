@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Search, SlidersHorizontal, ArrowUpDown, ChevronLeft, ChevronRight } from 'lucide-react';
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard, ProductCardSkeleton } from '../components/ProductCard';
 import { useStore } from '../context/StoreContext';
 import { CustomDropdown } from '../components/CustomDropdown';
 import { SEO } from '../components/SEO';
@@ -705,7 +705,13 @@ export const Shop = ({ onProductClick }) => {
               </div>
             </div>
 
-            {filteredProducts.length === 0 ? (
+            {!products || products.length === 0 ? (
+              <div className="shop-grid">
+                {[...Array(8)].map((_, i) => (
+                  <ProductCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
               <div className="no-results glass-card">
                 <span className="no-results-emoji">😢</span>
                 <h3>No treats found</h3>

@@ -324,7 +324,7 @@ export const ensureDatabase = () => {
 
 const autoSeedMongo = async () => {
   try {
-    const productCount = await MongoProduct.countDocuments();
+    const productCount = await MongoProduct.estimatedDocumentCount().catch(() => 1);
     if (productCount === 0) {
       console.log('MongoDB Atlas products collection is empty. Auto-seeding default products...');
       const productsToSeed = initialProducts.map(p => ({
@@ -340,19 +340,19 @@ const autoSeedMongo = async () => {
       console.log(`Auto-seeded ${productsToSeed.length} products to MongoDB.`);
     }
 
-    const brandCount = await MongoBrand.countDocuments();
+    const brandCount = await MongoBrand.estimatedDocumentCount().catch(() => 1);
     if (brandCount === 0) {
       await MongoBrand.insertMany(initialBrands);
       console.log(`Auto-seeded ${initialBrands.length} brands to MongoDB.`);
     }
 
-    const userCount = await MongoUser.countDocuments();
+    const userCount = await MongoUser.estimatedDocumentCount().catch(() => 1);
     if (userCount === 0) {
       await MongoUser.insertMany(defaultUsers);
       console.log(`Auto-seeded ${defaultUsers.length} users to MongoDB.`);
     }
 
-    const testimonialCount = await MongoTestimonial.countDocuments();
+    const testimonialCount = await MongoTestimonial.estimatedDocumentCount().catch(() => 1);
     if (testimonialCount === 0) {
       await MongoTestimonial.insertMany(defaultTestimonials);
       console.log(`Auto-seeded ${defaultTestimonials.length} testimonials to MongoDB.`);

@@ -6,6 +6,20 @@ import { CandyVisual } from './SvgCandies';
 import { getProductSlugUrl } from '../utils/productUtils';
 import './ProductCard.css';
 
+export const ProductCardSkeleton = () => (
+  <div className="product-card glass-card skeleton-card">
+    <div className="card-visual-wrapper skeleton-box" style={{ height: '200px' }}></div>
+    <div className="card-content" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div className="skeleton-line" style={{ width: '80%', height: '18px', borderRadius: '4px' }}></div>
+      <div className="skeleton-line" style={{ width: '40%', height: '14px', borderRadius: '4px' }}></div>
+      <div className="card-footer" style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="skeleton-line" style={{ width: '50px', height: '22px', borderRadius: '4px' }}></div>
+        <div className="skeleton-line" style={{ width: '60px', height: '32px', borderRadius: '20px' }}></div>
+      </div>
+    </div>
+  </div>
+);
+
 export const ProductCard = ({ product, onProductClick }) => {
   const { addToCart } = useStore();
   const navigate = useNavigate();
@@ -19,8 +33,6 @@ export const ProductCard = ({ product, onProductClick }) => {
     btn.classList.add('pop-active');
     setTimeout(() => btn.classList.remove('pop-active'), 300);
   };
-
-
 
   return (
     <div 
@@ -41,6 +53,7 @@ export const ProductCard = ({ product, onProductClick }) => {
           alt={`Buy ${product.name} Online NZ | Best Lolly Shop`} 
           className="card-product-image"
           loading="lazy"
+          decoding="async"
           onError={(e) => {
             e.target.onerror = null;
             e.target.src = 'https://images.unsplash.com/photo-1581798459219-318e76aecc7b?auto=format&fit=crop&q=80&w=600';
@@ -71,7 +84,6 @@ export const ProductCard = ({ product, onProductClick }) => {
           </div>
           <span className="rating-num">({product.reviewsCount})</span>
         </div>
-
 
         {/* Pricing & Cart Action */}
         <div className="card-footer">

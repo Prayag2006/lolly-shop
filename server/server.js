@@ -24,24 +24,57 @@ import { ensureDatabase, sqlReady, mongoReady, Product, User, Order, Contact, Br
 import Stripe from 'stripe';
 import { initialProducts, initialBrands, defaultUsers, defaultTestimonials } from './fallbackData.js';
 
-const ensureMongoConnected = async () => {
+const ensureMongoConnected = async (timeoutMs = 3000) => {
   if (mongoose.connection.readyState === 1) return true;
   try {
-    await mongoReady;
+    await Promise.race([
+      mongoReady,
+      new Promise((resolve) => setTimeout(() => resolve(false), timeoutMs))
+    ]);
   } catch (e) {}
   if (mongoose.connection.readyState === 1) return true;
   const activeMongoUri = process.env.MONGODB_URI;
   if (!activeMongoUri) return false;
   try {
-    await mongoose.connect(activeMongoUri, {
-      dbName: 'lollyshop',
-      serverSelectionTimeoutMS: 15000,
-      connectTimeoutMS: 15000
-    });
+    await Promise.race([
+      mongoose.connect(activeMongoUri, {
+        dbName: 'lollyshop',
+        serverSelectionTimeoutMS: timeoutMs,
+        connectTimeoutMS: timeoutMs
+      }),
+      new Promise((resolve) => setTimeout(() => resolve(false), timeoutMs))
+    ]);
     return mongoose.connection.readyState === 1;
   } catch (err) {
-    console.warn('MongoDB connection retry notice:', err.message);
     return false;
+  }
+};
+
+// ── Ultra-Fast In-Memory Cache for Storefront Endpoints ──
+const apiCache = new Map();
+const CACHE_TTL_MS = 60 * 1000; // 60 seconds
+
+export const getApiCache = (key) => {
+  const entry = apiCache.get(key);
+  if (entry && (Date.now() - entry.timestamp) < CACHE_TTL_MS) {
+    return entry.data;
+  }
+  return null;
+};
+
+export const setApiCache = (key, data) => {
+  apiCache.set(key, { data, timestamp: Date.now() });
+};
+
+export const invalidateApiCache = (prefix = '') => {
+  if (!prefix) {
+    apiCache.clear();
+    return;
+  }
+  for (const key of apiCache.keys()) {
+    if (key.startsWith(prefix)) {
+      apiCache.delete(key);
+    }
   }
 };
 
@@ -584,47 +617,57 @@ app.get('/api/health', (req, res) => {
 // ── PRODUCTS API ──
 
 app.get('/api/products', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=60, stale-while-revalidate=300');
+
+  const cached = getApiCache('products_all');
+  if (cached) {
+    return res.json(cached);
+  }
+
   try {
-    await ensureMongoConnected();
-    if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      let products = await Product.find().sort({ createdAt: -1 });
-      if (!products || products.length === 0) {
-        console.log('MongoDB products collection is empty. Auto-seeding initial products...');
-        const productsToSeed = initialProducts.map((p, idx) => ({
-          id: `p-${idx + 1}`,
-          ...p,
-          weightPrices: p.weightPrices || {
-            '100g': p.price,
-            '250g': Number((p.price * 2.2).toFixed(2)),
-            '500g': Number((p.price * 4.0).toFixed(2)),
-            '1kg': Number((p.price * 7.5).toFixed(2))
-          }
-        }));
-        await Product.insertMany(productsToSeed);
-        products = await Product.find().sort({ createdAt: -1 });
+    const isConnected = await ensureMongoConnected(2000);
+    if (isConnected || mongoose.connection.readyState === 1) {
+      try {
+        const queryPromise = Product.find().sort({ createdAt: -1 }).maxTimeMS(2000).lean();
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Mongo query timeout')), 2000));
+        let products = await Promise.race([queryPromise, timeoutPromise]);
+        
+        if (products && products.length > 0) {
+          const formatted = products.map(p => {
+            const validId = String(p.id || p._id || '');
+            return { ...p, id: validId, _id: validId };
+          });
+          setApiCache('products_all', formatted);
+          return res.json(formatted);
+        }
+      } catch (qErr) {
+        console.warn('MongoDB query timed out, serving fast local fallback:', qErr.message);
       }
-      const formatted = products.map(p => {
-        const obj = p.toObject ? p.toObject({ virtuals: true }) : p;
-        const validId = String(obj.id || obj._id || '');
-        return { ...obj, id: validId, _id: validId };
-      });
-      return res.json(formatted);
     }
+
     const products = readLocalData('products.json', seededProducts);
+    setApiCache('products_all', products);
     res.json(products);
   } catch (error) {
-    res.status(500).json({ message: 'Error retrieving products', error: error.message });
+    console.error('Error retrieving products, returning local fallback:', error.message);
+    const products = readLocalData('products.json', seededProducts);
+    setApiCache('products_all', products);
+    res.json(products);
   }
 });
 
 app.get('/api/products/:id', async (req, res) => {
   try {
-    await ensureMongoConnected();
     const targetId = req.params.id;
-    if (sqlAvailable() || mongoose.connection.readyState === 1) {
+    const cacheKey = `product_${targetId}`;
+    const cached = getApiCache(cacheKey);
+    if (cached) return res.json(cached);
+
+    const isConnected = await ensureMongoConnected(2000);
+    if (isConnected || mongoose.connection.readyState === 1) {
       let product = null;
       if (mongoose.Types.ObjectId.isValid(targetId)) {
-        product = await Product.findById(targetId);
+        product = await Product.findById(targetId).lean();
       }
       if (!product) {
         product = await Product.findOne({
@@ -633,16 +676,17 @@ app.get('/api/products/:id', async (req, res) => {
             { sku: targetId },
             { name: targetId }
           ]
-        });
+        }).lean();
       }
       if (!product) {
-        const allProds = await Product.find();
+        const allProds = await Product.find().lean();
         product = allProds.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId) || String(p.sku) === String(targetId));
       }
       if (!product) return res.status(404).json({ message: 'Product not found' });
-      const obj = product.toObject ? product.toObject({ virtuals: true }) : product;
-      const validId = String(obj.id || obj._id || '');
-      return res.json({ ...obj, id: validId, _id: validId });
+      const validId = String(product.id || product._id || '');
+      const formatted = { ...product, id: validId, _id: validId };
+      setApiCache(cacheKey, formatted);
+      return res.json(formatted);
     }
     const products = readLocalData('products.json', seededProducts);
     const product = products.find(p => String(p.id) === String(targetId) || String(p._id) === String(targetId));
@@ -655,7 +699,8 @@ app.get('/api/products/:id', async (req, res) => {
 
 app.post('/api/products', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
       req.body.inStock = req.body.quantity > 0;
@@ -704,7 +749,8 @@ app.post('/api/products', async (req, res) => {
 
 app.put('/api/products/:id', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     const targetId = req.params.id;
     if (req.body.quantity !== undefined) {
       req.body.quantity = Math.max(0, Number(req.body.quantity) || 0);
@@ -756,7 +802,8 @@ app.put('/api/products/:id', async (req, res) => {
 
 app.delete('/api/products/:id', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     const targetId = req.params.id;
     if (sqlAvailable() || mongoose.connection.readyState === 1) {
       let deleted = null;
@@ -803,15 +850,10 @@ app.delete('/api/products/:id', async (req, res) => {
 
 app.put('/api/products/:id/stock', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     const { inStock } = req.body;
     if (sqlAvailable()) {
-      // Note: the id fallback queries below intentionally only match { id: req.params.id },
-      // not { _id: req.params.id } — Mongoose casts every branch of an $or against its schema
-      // type before running the query, so including a non-ObjectId string under `_id` throws
-      // a CastError and 400s the whole request before the `id` branch ever gets a chance to
-      // match. The ObjectId case is already handled by the explicit isValid() check above.
-      // If toggled to In Stock but quantity is 0, give it a default stock of 10
       const updateData = { inStock };
       if (inStock) {
         let prod;
@@ -861,7 +903,8 @@ app.put('/api/products/:id/stock', async (req, res) => {
 
 app.put('/api/products/:id/quantity', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     let { quantity } = req.body;
     quantity = Math.max(0, Number(quantity) || 0);
     const inStock = quantity > 0;
@@ -894,7 +937,8 @@ app.put('/api/products/:id/quantity', async (req, res) => {
 
 app.post('/api/products/:id/reviews', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     const { userName, rating, comment } = req.body;
     const rate = Number(rating);
     if (!userName?.trim() || isNaN(rate) || rate < 1 || rate > 5 || !comment?.trim()) {
@@ -958,7 +1002,8 @@ app.post('/api/products/:id/reviews', async (req, res) => {
 
 app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
   try {
-    await ensureMongoConnected();
+    await ensureMongoConnected(3000);
+    invalidateApiCache('product');
     const { id, reviewId } = req.params;
     if (sqlAvailable()) {
       let product;
@@ -1013,25 +1058,34 @@ app.delete('/api/products/:id/reviews/:reviewId', async (req, res) => {
 
 // ── BRANDS API ──
 app.get('/api/brands', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  const cached = getApiCache('brands_all');
+  if (cached) return res.json(cached);
+
   try {
-    await ensureMongoConnected();
-    if (sqlAvailable() || mongoose.connection.readyState === 1) {
-      let brands = await Brand.find();
+    const isConnected = await ensureMongoConnected(2000);
+    if (isConnected || mongoose.connection.readyState === 1) {
+      let brands = await Brand.find().lean();
       if (!brands || brands.length === 0) {
         await Brand.insertMany(seededBrands);
-        brands = await Brand.find();
+        brands = await Brand.find().lean();
       }
+      setApiCache('brands_all', brands);
       return res.json(brands);
     }
     const brands = readLocalData('brands.json', seededBrands);
-    res.json(brands && brands.length > 0 ? brands : seededBrands);
+    const result = brands && brands.length > 0 ? brands : seededBrands;
+    setApiCache('brands_all', result);
+    res.json(result);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching brands', error: error.message });
+    const brands = readLocalData('brands.json', seededBrands);
+    res.json(brands && brands.length > 0 ? brands : seededBrands);
   }
 });
 
 app.post('/api/brands', async (req, res) => {
   try {
+    invalidateApiCache('brands');
     if (sqlAvailable()) {
       const newBrand = new Brand(req.body);
       await newBrand.save();
@@ -1053,6 +1107,7 @@ app.post('/api/brands', async (req, res) => {
 
 app.put('/api/brands/:id', async (req, res) => {
   try {
+    invalidateApiCache('brands');
     if (sqlAvailable()) {
       const updated = await Brand.findByIdAndUpdate(req.params.id, req.body, { new: true });
       if (!updated) return res.status(404).json({ message: 'Brand not found' });
@@ -1077,6 +1132,7 @@ app.put('/api/brands/:id', async (req, res) => {
 
 app.delete('/api/brands/:id', async (req, res) => {
   try {
+    invalidateApiCache('brands');
     if (sqlAvailable()) {
       const deleted = await Brand.findByIdAndDelete(req.params.id);
       if (!deleted) return res.status(404).json({ message: 'Brand not found' });
@@ -3379,10 +3435,14 @@ app.put('/api/auth/profile', async (req, res) => {
 
 // ── CATEGORIES API ──
 app.get('/api/categories', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  const cached = getApiCache('categories_all');
+  if (cached) return res.json(cached);
+
   try {
     let list = [];
     if (sqlAvailable()) {
-      list = await Category.find().sort({ displayOrder: 1, name: 1 });
+      list = await Category.find().sort({ displayOrder: 1, name: 1 }).lean();
     } else {
       list = readLocalData('categories.json', []);
     }
@@ -3408,13 +3468,14 @@ app.get('/api/categories', async (req, res) => {
 
       if (sqlAvailable()) {
         await Category.insertMany(catsToSeed);
-        list = await Category.find().sort({ displayOrder: 1, name: 1 });
+        list = await Category.find().sort({ displayOrder: 1, name: 1 }).lean();
       } else {
         writeLocalData('categories.json', catsToSeed);
         list = catsToSeed;
       }
     }
 
+    setApiCache('categories_all', list);
     res.json(list);
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving categories', error: error.message });
@@ -3425,6 +3486,7 @@ app.post('/api/categories', async (req, res) => {
   try {
     const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+    invalidateApiCache('categories');
 
     if (sqlAvailable()) {
       const newCat = new Category(req.body);
@@ -3450,6 +3512,7 @@ app.put('/api/categories/:id', async (req, res) => {
   try {
     const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+    invalidateApiCache('categories');
 
     if (sqlAvailable()) {
       const updated = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -3473,6 +3536,7 @@ app.delete('/api/categories/:id', async (req, res) => {
   try {
     const isAdmin = isStaffAuthorized(req, 'categories');
     if (!isAdmin) return res.status(403).json({ message: 'Forbidden' });
+    invalidateApiCache('categories');
 
     if (sqlAvailable()) {
       const deleted = await Category.findByIdAndDelete(req.params.id);
@@ -3763,6 +3827,12 @@ const sanitizeSettingsForResponse = (settingsObj, req) => {
 };
 
 app.get('/api/settings', async (req, res) => {
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=120, stale-while-revalidate=300');
+  const isAdmin = isStaffAuthorized(req, 'settings');
+  const cacheKey = isAdmin ? 'settings_admin' : 'settings_public';
+  const cached = getApiCache(cacheKey);
+  if (cached) return res.json(cached);
+
   try {
     if (sqlAvailable()) {
       let settings = await Settings.findOne({ key: 'main_settings' });
@@ -3793,10 +3863,14 @@ app.get('/api/settings', async (req, res) => {
         }
       }
 
-      res.json(sanitizeSettingsForResponse(settings, req));
+      const sanitized = sanitizeSettingsForResponse(settings, req);
+      setApiCache(cacheKey, sanitized);
+      res.json(sanitized);
     } else {
       const settings = readLocalData('settings.json', defaultSettings);
-      res.json(sanitizeSettingsForResponse(settings, req));
+      const sanitized = sanitizeSettingsForResponse(settings, req);
+      setApiCache(cacheKey, sanitized);
+      res.json(sanitized);
     }
   } catch (error) {
     res.status(500).json({ message: 'Error retrieving settings', error: error.message });
@@ -3805,6 +3879,7 @@ app.get('/api/settings', async (req, res) => {
 
 app.put('/api/settings', checkPermission('settings'), async (req, res) => {
   try {
+    invalidateApiCache('settings');
     if (sqlAvailable()) {
       const updated = await Settings.findOneAndUpdate(
         { key: 'main_settings' },

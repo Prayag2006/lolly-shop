@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Hero } from '../components/Hero';
-import { ProductCard } from '../components/ProductCard';
+import { ProductCard, ProductCardSkeleton } from '../components/ProductCard';
 import { SEO } from '../components/SEO';
 import {
   Star,
@@ -395,13 +395,19 @@ export const Home = ({ onProductClick }) => {
           </div>
 
           <div className="products-grid">
-            {popularProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onProductClick={onProductClick}
-              />
-            ))}
+            {popularProducts.length === 0 ? (
+              [...Array(4)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))
+            ) : (
+              popularProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onProductClick={onProductClick}
+                />
+              ))
+            )}
           </div>
           
           <div className="section-footer-cta">
@@ -545,13 +551,19 @@ export const Home = ({ onProductClick }) => {
           </div>
 
           <div className="products-grid">
-            {discoveries.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onProductClick={onProductClick}
-              />
-            ))}
+            {discoveries.length === 0 ? (
+              [...Array(4)].map((_, i) => (
+                <ProductCardSkeleton key={i} />
+              ))
+            ) : (
+              discoveries.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onProductClick={onProductClick}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
