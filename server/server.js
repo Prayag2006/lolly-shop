@@ -3902,31 +3902,38 @@ app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
       return res.status(503).json({ message: 'Database not available' });
     }
 
-    // One Atlas replica member is intermittently unreachable from Vercel's network (see the
-    // Google-DNS comment near the top of this file). Retry the initial fetch a few times so a
-    // pooled connection that happens to land on the bad node doesn't fail the whole migration.
-    let products = null;
-    let lastErr = null;
-    for (let attempt = 1; attempt <= 5 && !products; attempt++) {
-      try {
-        const queryPromise = Product.find().maxTimeMS(8000).lean();
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('query timeout')), 8000));
-        products = await Promise.race([queryPromise, timeoutPromise]);
-      } catch (err) {
-        lastErr = err;
-        console.warn(`Migration fetch attempt ${attempt} failed:`, err.message);
-        await new Promise((r) => setTimeout(r, 1500));
-      }
-    }
-    if (!products) {
-      return res.status(503).json({ message: 'Could not fetch products after 5 attempts', error: lastErr?.message });
-    }
+    // Fetching all 35 products (including the still-bloated base64 ones) in a single query
+    // means transferring the full ~4.2MB up front, which legitimately takes 40+ seconds -- that's
+    // the exact problem this migration exists to fix, so a short timeout on THIS fetch just kills
+    // itself before finishing. Get a lightweight id-only list first (fast, tiny payload), then
+    // process each product individually so one slow/bad document can't sink the whole batch.
+    const idList = await Product.find().select('_id').lean().maxTimeMS(15000);
 
     let migrated = 0;
     let skipped = 0;
+    let failed = 0;
     const results = [];
 
-    for (const p of products) {
+    for (const { _id } of idList) {
+      // Fetch this one product's full document with a generous per-document timeout -- big
+      // embedded-image docs can legitimately take several seconds to transfer.
+      let p = null;
+      for (let attempt = 1; attempt <= 3 && !p; attempt++) {
+        try {
+          const fetchPromise = Product.findById(_id).lean().maxTimeMS(20000);
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('fetch timeout')), 20000));
+          p = await Promise.race([fetchPromise, timeoutPromise]);
+        } catch (err) {
+          console.warn(`Fetch attempt ${attempt} failed for product ${_id}:`, err.message);
+          await new Promise((r) => setTimeout(r, 1000));
+        }
+      }
+      if (!p) {
+        failed++;
+        results.push({ id: String(_id), error: 'fetch failed after retries' });
+        continue;
+      }
+
       const idHint = String(p.id || p._id);
       const setFields = {};
       let beforeBytes = 0;
@@ -3986,7 +3993,7 @@ app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
           migrated++;
           results.push({ name: p.name, beforeBytes });
         } else {
-          skipped++;
+          failed++;
           results.push({ name: p.name, error: 'save failed after retries' });
         }
       } else {
@@ -3995,7 +4002,7 @@ app.post('/api/admin/migrate-images-to-blob', async (req, res) => {
     }
 
     invalidateApiCache('product');
-    res.json({ success: true, migrated, skipped, results });
+    res.json({ success: true, migrated, skipped, failed, results });
   } catch (error) {
     console.error('Image migration error:', error);
     res.status(500).json({ message: 'Migration failed', error: error.message });
