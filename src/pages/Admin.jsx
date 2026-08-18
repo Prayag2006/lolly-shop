@@ -2869,20 +2869,6 @@ export const Admin = () => {
 
                   <div className="form-row">
                     <div className="form-group" style={{ width: '100%' }}>
-                      <label htmlFor="pdesc">Short Product Highlight (Card & Quick View)</label>
-                      <textarea
-                        id="pdesc"
-                        rows="3"
-                        placeholder="Enter short highlight description for product cards..."
-                        value={newProduct.description}
-                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid var(--color-border)', background: 'var(--color-background)', color: 'var(--color-text)', fontSize: '14px', outline: 'none', resize: 'vertical' }}
-                      ></textarea>
-                    </div>
-                  </div>
-
-                  <div className="form-row">
-                    <div className="form-group" style={{ width: '100%' }}>
                       <label htmlFor="plongdesc">📖 Detailed Long Description & Story (Supports multi-paragraph text, taste notes, storage tips)</label>
                       <textarea
                         id="plongdesc"
