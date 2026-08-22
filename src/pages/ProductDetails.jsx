@@ -633,10 +633,13 @@ export const ProductDetails = () => {
                   className="rec-action-btn"
                   onClick={(e) => {
                     e.stopPropagation();
-                    addToCart(p, 1, '100g');
+                    const recWeight = (p.weightPrices && Object.keys(p.weightPrices).length > 0)
+                      ? Object.keys(p.weightPrices)[0]
+                      : '100g';
+                    addToCart(p, 1, recWeight);
                     const banner = document.getElementById('add-success-banner');
                     if (banner) {
-                      banner.innerText = `Added 1x ${p.name} (100g) to your sweet cart! 🍭`;
+                      banner.innerText = `Added 1x ${p.name} (${recWeight}) to your sweet cart! 🍭`;
                       banner.classList.add('visible');
                       setTimeout(() => banner.classList.remove('visible'), 4000);
                     }

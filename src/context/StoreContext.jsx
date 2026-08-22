@@ -461,19 +461,27 @@ export const StoreProvider = ({ children }) => {
     return product.price;
   };
 
-  const addToCart = (product, quantity = 1, weight = '100g') => {
-    const weightPrice = getWeightPrice(product, weight);
+  const getDefaultWeight = (product) => {
+    if (product?.weightPrices && Object.keys(product.weightPrices).length > 0) {
+      return Object.keys(product.weightPrices)[0];
+    }
+    return '100g';
+  };
+
+  const addToCart = (product, quantity = 1, weight) => {
+    const resolvedWeight = weight || getDefaultWeight(product);
+    const weightPrice = getWeightPrice(product, resolvedWeight);
 
     setCart(prevCart => {
-      const existing = prevCart.find(item => item.id === product.id && item.selectedWeight === weight);
+      const existing = prevCart.find(item => item.id === product.id && item.selectedWeight === resolvedWeight);
       if (existing) {
         return prevCart.map(item =>
-          (item.id === product.id && item.selectedWeight === weight)
+          (item.id === product.id && item.selectedWeight === resolvedWeight)
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prevCart, { ...product, price: weightPrice, selectedWeight: weight, quantity }];
+      return [...prevCart, { ...product, price: weightPrice, selectedWeight: resolvedWeight, quantity }];
     });
   };
 
